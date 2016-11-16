@@ -4,7 +4,6 @@ import java.io.*;
 import java.net.*;
 import java.util.Scanner;
 import pt.sirs.smsPacket.smsPacket;
-import pt.sirs.smsPacket.Exceptions.InvalidSMSPacketValuesException;
 import pt.sirs.client.Client;
 
 public class ClientApplication {
