@@ -10,7 +10,7 @@ public class smsPacket implements  Serializable{
 	//private cena de cifra
 	
 	public smsPacket(String ib, String am) throws InvalidSMSPacketValuesException{
-		if(ib.length()==25 && am.length()==8){
+		if(ib.length()==25 && am.length()<=8){
 			iban=ib;
 			amount=am;
 		}
@@ -34,6 +34,6 @@ public class smsPacket implements  Serializable{
 	
 	@Override
 	public String toString(){
-		return "Sou a mensagem com o iban: " + getIban() + "e com o amount: " + getAmount() + ".";
+		return "Sou a mensagem com o iban: " + getIban() + " e com o amount: " + getAmount() + ".";
 	}
 }
