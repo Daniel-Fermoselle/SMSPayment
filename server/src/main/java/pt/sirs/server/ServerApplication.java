@@ -8,7 +8,7 @@ import pt.sirs.server.Server;
 
 public class ServerApplication {
 	
-	public static final int SERVER_PORT = 100000;
+	public static final int SERVER_PORT = 10000;
 	//Number of connects that the server will have on his queue
 	public static final int QUEUE_SIZE = 10;
 
