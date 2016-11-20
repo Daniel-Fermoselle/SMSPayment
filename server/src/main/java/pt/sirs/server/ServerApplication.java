@@ -2,7 +2,6 @@ package pt.sirs.server;
 
 import java.io.*;
 import java.net.*;
-import java.util.Scanner;
 import pt.sirs.smsPacket.smsPacket;
 import pt.sirs.server.Server;
 
@@ -12,7 +11,15 @@ public class ServerApplication {
 	//Number of connects that the server will have on his queue
 	public static final int QUEUE_SIZE = 10;
 
-    public static void main(String[] args) {
+	public static void main(String args[])
+    {
+		ServerApplication server = new ServerApplication();
+        while(true){
+            server.run();
+        }
+    }
+	
+    void run() {
     	ServerSocket providerSocket = null;
     	ObjectOutputStream out = null;
     	ObjectInputStream in = null;
@@ -29,9 +36,10 @@ public class ServerApplication {
             in = new ObjectInputStream(connection.getInputStream());
             Server s = new Server();
             try{
-            	smsPacket sms = (smsPacket)in.readObject();
-            	System.out.println("Object of class " + sms.getClass().getName() + " is " + sms);
-                System.out.println("client>" + sms);
+            	byte [] sms = (byte[]) in.readObject();
+            	smsPacket packet = s.getMessage(sms);
+            	//System.out.println("Object of class " + sms.getClass().getName() + " is " + sms);
+                System.out.println("client>" + packet.toString());
                 //sendMessage("bye");
             }
             catch(ClassNotFoundException classnot){

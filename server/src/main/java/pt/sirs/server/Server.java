@@ -19,7 +19,6 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
 import pt.sirs.smsPacket.smsPacket;
-import pt.sirs.smsPacket.Exceptions.InvalidSMSPacketValuesException;
 
 public class Server {
     public Server(){}
@@ -29,7 +28,7 @@ public class Server {
 		smsPacket sms=null;
 
 		try {
-			File file = new File("keys/server.jks");//MUDAR QUANDO NECESSARIO
+			File file = new File("/home/daniel/Desktop/SIRS-1617/SMSPayment/server/keys/server.jks");//MUDAR QUANDO NECESSARIO
 			FileInputStream is = new FileInputStream(file);
 			KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
 
@@ -41,18 +40,18 @@ public class Server {
 			
 		      final Cipher cipher = Cipher.getInstance("RSA");
 		      // encrypt the plain text using the public key
-		      cipher.init(Cipher.ENCRYPT_MODE, key);
+		      cipher.init(Cipher.DECRYPT_MODE, key);
 		      byte[] toDecipher = cipher.doFinal(smsReceived);
 		      
 		      
-		      File file2 = new File("keys/server.cer");//MUDAR QUANDO NECESSARIO
+		      File file2 = new File("/home/daniel/Desktop/SIRS-1617/SMSPayment/server/keys/client.cer");//MUDAR QUANDO NECESSARIO
 				FileInputStream is2;
 				
-					is2 = new FileInputStream(file);
+					is2 = new FileInputStream(file2);
 				
 				
 				KeyStore keystore2 = KeyStore.getInstance(KeyStore.getDefaultType());
-		        keystore2.load(is, password.toCharArray());
+		        keystore2.load(is2, password.toCharArray());
 				Certificate cert = keystore.getCertificate(alias); 
 		      
 		      

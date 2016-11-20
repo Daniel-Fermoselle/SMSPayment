@@ -9,9 +9,11 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.UnrecoverableKeyException;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -52,7 +54,8 @@ public class Client {
 		try {
 			sms = new smsPacket(myIban,OtherIban,amount);
 
-			File file = new File("keys/client.jks");//MUDAR QUANDO NECESSARIO
+			System.out.println("ESTOU AQUI");
+			File file = new File("/home/daniel/Desktop/SIRS-1617/SMSPayment/client/keys/client.jks");//MUDAR QUANDO NECESSARIO
 			FileInputStream is = new FileInputStream(file);
 			KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
 
@@ -115,7 +118,8 @@ public class Client {
 		byte[] cipherText = null;
 
 		try {
-			File file = new File("keys/server.cer");//MUDAR QUANDO NECESSARIO
+			System.out.println("ESTOU AQUI2");
+			/*File file = new File("/home/daniel/Desktop/SIRS-1617/SMSPayment/client/keys/server.cer");//MUDAR QUANDO NECESSARIO
 			FileInputStream is;
 			
 				is = new FileInputStream(file);
@@ -123,15 +127,21 @@ public class Client {
 			
 			KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
 	
-	        /*Information for certificate to be generated */ 
+	        /*Information for certificate to be generated 
+			
 	        String password = "SIRS1617";
 	        String alias = "example";
 	        keystore.load(is, password.toCharArray());
-			Certificate cert = keystore.getCertificate(alias); 
+			Certificate cert = keystore.getCertificate(alias); */
+			
+			FileInputStream fin = new FileInputStream("/home/daniel/Desktop/SIRS-1617/SMSPayment/client/keys/server.cer");
+			CertificateFactory f = CertificateFactory.getInstance("X.509");
+			X509Certificate certificate = (X509Certificate)f.generateCertificate(fin);
+			PublicKey pk = certificate.getPublicKey();
 			
 		      final Cipher cipher = Cipher.getInstance("RSA");
 		      // encrypt the plain text using the public key
-		      cipher.init(Cipher.ENCRYPT_MODE, cert.getPublicKey());
+		      cipher.init(Cipher.ENCRYPT_MODE, pk);
 		      cipherText = cipher.doFinal(smsToSend.getBytes());
 			
 			return cipherText;
@@ -159,13 +169,7 @@ public class Client {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return cipherText;//CUIDADO
-		} 
-		
-		catch (KeyStoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return cipherText;//CUIDADO
-		} 
+		}
 		
 		catch (InvalidKeyException e) {
 			// TODO Auto-generated catch block

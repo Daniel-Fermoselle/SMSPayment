@@ -8,7 +8,7 @@ import pt.sirs.client.Client;
 
 public class ClientApplication {
 	
-	public static final String IBAN = "PT0123456789012345678901234";
+	public static final String IBAN = "PT01234567890123456789012";
 	public static final int INITMONEY = 0;
 	
 	public static void main(String[] args) {
@@ -35,7 +35,7 @@ public class ClientApplication {
 	    	}
 	    	
 	    	while(!command.equals("exit")){
-	    		String [] line = command.split(" ");
+	    		/*String [] line = command.split(" ");
 	    		if(line.length!=2){
 	    			System.out.println("Wrong format, try again");//Just debugging prints
 	    			continue;
@@ -45,9 +45,10 @@ public class ClientApplication {
 	    		String [] temp = line[0].split("Iban:");
 	    		String iban = temp[1];
 	    		temp = line[1].split("Amount:");
-	    		String amount = temp[1];
+	    		String amount = temp[1];*/
 	    		
-	    		smsPacket sms = c.getSmsPacket(iban, amount);
+	    		//smsPacket sms = c.getSmsPacket(iban, amount);
+	    		smsPacket sms = c.getSmsPacket("0000000000000000000000000", "1");//TESTING
 	    		byte[] toSend = c.getToSend(sms);
 	    		out.writeObject(toSend);
 	            out.flush();
