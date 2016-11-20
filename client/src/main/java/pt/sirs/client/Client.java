@@ -29,10 +29,10 @@ public class Client {
 	}
 	
 	
-	public smsPacket getSmsPacket(String iban, String amount){
+	public smsPacket getSmsPacket(String OtherIban, String amount){
 		smsPacket sms=null;//CUIDADO
 		try {
-			sms = new smsPacket(iban,amount);
+			sms = new smsPacket(myIban,OtherIban,amount);
 			return sms;
 		} catch (InvalidSMSPacketValuesException e) {
 			System.out.println(e.getMessage());

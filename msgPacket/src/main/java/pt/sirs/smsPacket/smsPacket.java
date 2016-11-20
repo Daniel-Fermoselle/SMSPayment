@@ -9,28 +9,37 @@ import pt.sirs.smsPacket.Exceptions.InvalidSMSPacketValuesException;
 
 public class smsPacket implements  Serializable{
 	private static final long serialVersionUID = 1L;
-	private String iban;
+	private String myIban;
+	private String otherIban;
 	private String amount;
 	private Signature sig;
 	
-	public smsPacket(String ib, String am) throws InvalidSMSPacketValuesException{
-		if(ib.length()==25 && am.length()<=8){
-			iban=ib;
+	public smsPacket(String mib, String oib, String am) throws InvalidSMSPacketValuesException{
+		if(mib.length()==25 && oib.length()==25 && am.length()<=8){
+			myIban=mib;
+			otherIban=oib;
 			amount=am;
 			//sig=null;//CUIDADO
 			
 		}
 		else{
-			throw new InvalidSMSPacketValuesException(ib,am);
+			throw new InvalidSMSPacketValuesException(mib,oib,am);
 		}
 	}
 	
-	public void setIban(String ib){
-		iban=ib;
+	public void setMyIban(String ib){
+		myIban=ib;
 	}
-	public String getIban(){
-		return iban;
+	public String getMyIban(){
+		return myIban;
 	}
+	public void setOtherIban(String ib){
+		otherIban=ib;
+	}
+	public String getOtherIban(){
+		return otherIban;
+	}
+	
 	public void setAmount(String am){
 		amount=am;
 	}
@@ -40,13 +49,13 @@ public class smsPacket implements  Serializable{
 	
 	public String cipherMobile(/*recebe uma/duas key*/){
 		String message;
-		message=iban+"-"+amount+"-"+"digest";//inserir o digest cifrado com a chave privada do sender assumindo '-' nao usados no digest
+		message=myIban+"-"+amount+"-"+"digest";//inserir o digest cifrado com a chave privada do sender assumindo '-' nao usados no digest
 		//cifrar message com chave publica do receiver
 		return message;
 	}
 	
 	public void setSignature(/*recebe private key para signature*/){
-		String elements=iban.concat(amount);
+		String elements=myIban.concat(otherIban).concat(amount);
 		try {
 			
 			sig = Signature.getInstance("SHA256withRSA"); //tem de ser 256 porque e o suportado pelo java
@@ -65,6 +74,6 @@ public class smsPacket implements  Serializable{
 	
 	@Override
 	public String toString(){
-		return "Sou a mensagem com o iban: " + getIban() + " e com o amount: " + getAmount() + ".";
+		return "Sou a mensagem com o MyIban: " + this.getMyIban() + " com o OtherIban: " + this.getOtherIban() +" e com o amount: " + this.getAmount() + ".";
 	}
 }

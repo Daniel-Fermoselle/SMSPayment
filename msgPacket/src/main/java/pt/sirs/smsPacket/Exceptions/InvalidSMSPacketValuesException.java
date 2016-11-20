@@ -3,16 +3,21 @@ package pt.sirs.smsPacket.Exceptions;
 public class InvalidSMSPacketValuesException extends Exception {
 	private static final long serialVersionUID = 1L;
 
-    private String iban;
+    private String myIban;
+    private String otherIban;
     private String amount;
 
-    public InvalidSMSPacketValuesException(String ib, String am) {
-        iban=ib;
+    public InvalidSMSPacketValuesException(String mib, String oib, String am) {
+    	myIban=mib;
+    	otherIban=oib;
         amount=am;
     }
 
-    public String getIban() {
-        return iban;
+    public String getMyIban() {
+        return myIban;
+    }
+    public String getOtherIban() {
+        return otherIban;
     }
     
     public String getAmount() {
@@ -21,7 +26,7 @@ public class InvalidSMSPacketValuesException extends Exception {
 
 
     public String getMessage() {
-        return "Amount or Iban values wrong check values\nIban: " + getIban() + "\nAmount: " + getAmount();
+        return "Amount or Iban values wrong check values\nMyIban: " + getMyIban() + "\nOtherIban: " +  getOtherIban() + "\nAmount: " + getAmount();
     }
 
 }
