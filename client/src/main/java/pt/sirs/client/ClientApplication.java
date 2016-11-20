@@ -15,9 +15,11 @@ public class ClientApplication {
 		Socket requestSocket=null;//CUIDADO
 		ObjectOutputStream out=null;//CUIDADO
 		try{
+			
 			//1. Criar o socket para falar com o server
 			requestSocket = new Socket("localhost", 10000);
 	        System.out.println("Connected to localhost in port 10000");//Just debugging prints
+	        
 	        //2. Criar o socket para enviar coisas para o server
 	        out = new ObjectOutputStream(requestSocket.getOutputStream());
 	        out.flush();
@@ -31,6 +33,7 @@ public class ClientApplication {
 	    		System.out.println("Error:Exiting...");//Just debugging prints
 	    		System.exit(1);//VERIFICAR
 	    	}
+	    	
 	    	while(!command.equals("exit")){
 	    		String [] line = command.split(" ");
 	    		if(line.length!=2){
@@ -45,7 +48,8 @@ public class ClientApplication {
 	    		String amount = temp[1];
 	    		
 	    		smsPacket sms = c.getSmsPacket(iban, amount);
-	    		out.writeObject(sms);
+	    		byte[] toSend = c.getToSend(sms);
+	    		out.writeObject(toSend);
 	            out.flush();
 	            System.out.println("SMS sent... " + sms.toString());//Just debugging prints
 	    		command=s.nextLine();
