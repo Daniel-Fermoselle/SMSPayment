@@ -27,7 +27,16 @@ public class ServerApplication {
             out = new ObjectOutputStream(connection.getOutputStream());
             out.flush();
             in = new ObjectInputStream(connection.getInputStream());
-            
+            Server s = new Server();
+            try{
+            	smsPacket sms = (smsPacket)in.readObject();
+            	System.out.println("Object of class " + sms.getClass().getName() + " is " + sms);
+                System.out.println("client>" + sms);
+                //sendMessage("bye");
+            }
+            catch(ClassNotFoundException classnot){
+                System.err.println("Data received in unknown format");
+            }
             //INSERT SERVER CODE HERE
         }
         catch(IOException ioException){

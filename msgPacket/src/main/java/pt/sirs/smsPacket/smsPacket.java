@@ -3,6 +3,7 @@ import java.io.Serializable;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import static javax.xml.bind.DatatypeConverter.printBase64Binary;
@@ -50,11 +51,32 @@ public class smsPacket implements  Serializable{
 		return amount;
 	}
 	
-	public String cipherMobile(/*recebe uma/duas key*/){
+	public String cipherMobile(){
 		String message;
-		message=myIban+"-"+amount+"-"+digest;//inserir o digest cifrado com a chave privada do sender assumindo '-' nao usados no digest
+		message=myIban+"-"+ otherIban + "-"+amount+"-"+digest;//inserir o digest cifrado com a chave privada do sender assumindo '-' nao usados no digest
 		//cifrar message com chave publica do receiver
 		return message;
+	}
+	
+	public smsPacket decipherMobile(String message, PublicKey key){
+		//TODO TEST MESSAGE FORMATING
+		String [] divided= message.split("-");
+		smsPacket sms;
+		try {
+			sms = new smsPacket(divided[0],divided[1],divided[2]);
+			if(sms.verifySign(divided[3], key)){
+				return sms;
+			}
+			
+			return null;//CUIDADO
+			
+		} 
+		//TODO CHECK THIS CATCH
+		catch (InvalidSMSPacketValuesException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;//CUIDADO
+		}
 	}
 	
 	public void setSignature(PrivateKey key){
@@ -84,6 +106,45 @@ public class smsPacket implements  Serializable{
 			e.printStackTrace();
 		}
 	}
+	
+	public boolean verifySign(String toVerify,PublicKey key){
+		System.out.println(this.toString());//DEBUGING
+		String elements=myIban.concat(otherIban).concat(amount);
+		String digestToCheck="";
+		try {
+			
+			Signature sig = Signature.getInstance("SHA256withRSA"); //tem de ser 256 porque e o suportado pelo java
+			sig.initSign((PrivateKey) key);
+			sig.update(elements.getBytes());
+			byte[] signature = sig.sign();
+			digestToCheck = printBase64Binary(signature);
+			if(toVerify.equals(digestToCheck)){
+				return true;
+			}
+			return false;
+		}
+		//TODO REVER TODOS OS CATCH	
+		catch (SignatureException e) {
+			System.out.println("Error while creating the signature");
+			e.printStackTrace();
+			return false;//CUIDADO
+		}
+		
+		catch (NoSuchAlgorithmException e) {
+			System.out.println("Error while creating the signature");
+			e.printStackTrace();
+			return false;//CUIDADO
+		} 
+		
+		catch (InvalidKeyException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;//CUIDADO
+		}
+		
+	}
+	
+	
 	
 	@Override
 	public String toString(){
