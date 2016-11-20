@@ -12,6 +12,7 @@ import java.security.PrivateKey;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.util.ArrayList;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -21,8 +22,12 @@ import javax.crypto.NoSuchPaddingException;
 import pt.sirs.smsPacket.smsPacket;
 
 public class Server {
-    public Server(){}
-    
+	
+	private ArrayList<Account> accounts;
+	
+    public Server(){
+    	this.accounts = new ArrayList<Account>();
+    }    
     
     public smsPacket getMessage(byte[] smsReceived) {
 		smsPacket sms=null;
