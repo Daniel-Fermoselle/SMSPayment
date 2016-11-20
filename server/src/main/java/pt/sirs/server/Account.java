@@ -1,5 +1,7 @@
 package pt.sirs.server;
 
+import pt.sirs.server.Exceptions.AmountToHighException;
+
 public class Account{
 	
 	private String iban;
@@ -26,6 +28,16 @@ public class Account{
 		this.balance = balance;
 	}
 	
+	public void debit(int amount){
+		if(this.balance < amount){
+			Integer amountS = amount;
+			throw new AmountToHighException(amountS.toString());
+		}
+		this.balance = this.balance - amount;
+	}
 	
+	public void credit(int amount){
+		this.balance = this.balance + amount;
+	}
 
 }
