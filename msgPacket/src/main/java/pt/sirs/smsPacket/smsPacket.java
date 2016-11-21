@@ -1,6 +1,7 @@
 package pt.sirs.smsPacket;
 import java.io.Serializable;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -16,14 +17,14 @@ public class smsPacket implements  Serializable{
 	private String myIban;
 	private String otherIban;
 	private String amount;
-	private String digest;
+	private String signature;
 	
 	public smsPacket(String mib, String oib, String am) throws InvalidSMSPacketValuesException{
 		if(mib.length()==25 && oib.length()==25 && am.length()<=8){
 			myIban=mib;
 			otherIban=oib;
 			amount=am;
-			//digest="";//CUIDADO
+			//signature="";//CUIDADO
 			
 		}
 		else{
@@ -53,7 +54,7 @@ public class smsPacket implements  Serializable{
 	
 	public String cipherMobile(){
 		String message;
-		message=myIban+"-"+ otherIban + "-"+amount+"-"+digest;//inserir o digest cifrado com a chave privada do sender assumindo '-' nao usados no digest
+		message=myIban+"-"+ otherIban + "-"+amount+"-"+signature;//inserir o digest cifrado com a chave privada do sender assumindo '-' nao usados na signature
 		//cifrar message com chave publica do receiver
 		return message;
 	}
@@ -82,12 +83,16 @@ public class smsPacket implements  Serializable{
 	public void setSignature(PrivateKey key){
 		String elements=myIban.concat(otherIban).concat(amount);
 		try {
-			
+			MessageDigest md = MessageDigest.getInstance("SHA-256");
+
+			md.update(elements.getBytes()); // Change this to "UTF-16" if needed
+			byte[] digest = md.digest();
+
 			Signature sig = Signature.getInstance("SHA256withRSA"); //tem de ser 256 porque e o suportado pelo java
 			sig.initSign(key);
-			sig.update(elements.getBytes());
-			byte[] signature = sig.sign();
-    		digest = printBase64Binary(signature);
+			sig.update(digest);
+			byte[] signBytes = sig.sign();
+    		signature = printBase64Binary(signBytes);
 			
 		}
 		//TODO REVER TODOS OS CATCH	
