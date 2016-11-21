@@ -140,9 +140,10 @@ public class Client {
 			X509Certificate certificate = (X509Certificate)f.generateCertificate(fin);
 			PublicKey pk = certificate.getPublicKey();
 			
-		      final Cipher cipher = Cipher.getInstance("RSA");
+		      final Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 		      // encrypt the plain text using the public key
 		      cipher.init(Cipher.ENCRYPT_MODE, pk);
+		      System.out.println("Tamanho: " + smsToSend.getBytes().length);
 		      cipherText = cipher.doFinal(smsToSend.getBytes());
 			
 			return cipherText;
