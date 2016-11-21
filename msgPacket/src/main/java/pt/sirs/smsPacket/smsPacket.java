@@ -95,6 +95,7 @@ public class smsPacket implements  Serializable{
 			byte[] signBytes = sig.sign();
 			System.out.println("signBytes: " + signBytes.length);//DEBUG
     		signature = printBase64Binary(signBytes);
+    		System.out.println("signature: " + signature.length());//DEBUG
 			
 		}
 		//TODO REVER TODOS OS CATCH	
