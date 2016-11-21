@@ -143,7 +143,7 @@ public class Client {
 		      final Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 		      // encrypt the plain text using the public key
 		      cipher.init(Cipher.ENCRYPT_MODE, pk);
-		      System.out.println("Tamanho: " + smsToSend.getBytes().length);
+		      System.out.println("Tamanho: " + smsToSend.getBytes().length);//DEBUG
 		      cipherText = cipher.doFinal(smsToSend.getBytes());
 			
 			return cipherText;

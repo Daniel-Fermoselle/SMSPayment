@@ -83,15 +83,17 @@ public class smsPacket implements  Serializable{
 	public void setSignature(PrivateKey key){
 		String elements=myIban.concat(otherIban).concat(amount);
 		try {
+			System.out.println("elements: " + elements.length());//DEBUG
 			MessageDigest md = MessageDigest.getInstance("SHA-256");
 
 			md.update(elements.getBytes()); // Change this to "UTF-16" if needed
 			byte[] digest = md.digest();
-
+			System.out.println("digest: " + digest.length);//DEBUG
 			Signature sig = Signature.getInstance("SHA256withRSA"); //tem de ser 256 porque e o suportado pelo java
 			sig.initSign(key);
 			sig.update(digest);
 			byte[] signBytes = sig.sign();
+			System.out.println("signBytes: " + signBytes.length);//DEBUG
     		signature = printBase64Binary(signBytes);
 			
 		}
