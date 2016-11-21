@@ -61,6 +61,14 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>appassembler-maven-plugin</artifactId>
                 <version>1.10</version>
+                <configuration>
+	                <platforms>
+	                    <platform>windows</platform>
+	                    <platform>unix</platform>
+	                </platforms>
+	                <programs>
+	                </programs>
+            	</configuration>
                 <executions>
                     <execution>
                         <phase>install</phase>
