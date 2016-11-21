@@ -33,13 +33,13 @@ public class Server {
 		smsPacket sms=null;
 
 		try {
-			File file = new File("/home/daniel/Desktop/SIRS-1617/SMSPayment/server/keys/server.jks");//MUDAR QUANDO NECESSARIO
+			String file = "keys/server.jks";//MUDAR QUANDO NECESSARIO
 			FileInputStream is = new FileInputStream(file);
 			KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
 
             /*Information for certificate to be generated */ 
-            String password = "SIRS1617";
-            String alias = "example";
+            String password = "ins3cur3";
+            String alias = "server";
             keystore.load(is, password.toCharArray());
             PrivateKey key = (PrivateKey)keystore.getKey(alias, password.toCharArray()); 
 			
@@ -49,7 +49,7 @@ public class Server {
 		      byte[] toDecipher = cipher.doFinal(smsReceived);
 		      
 		      
-		      File file2 = new File("/home/daniel/Desktop/SIRS-1617/SMSPayment/server/keys/client.cer");//MUDAR QUANDO NECESSARIO
+		      String file2 = "keys/client.cer";//MUDAR QUANDO NECESSARIO
 				FileInputStream is2;
 				
 					is2 = new FileInputStream(file2);

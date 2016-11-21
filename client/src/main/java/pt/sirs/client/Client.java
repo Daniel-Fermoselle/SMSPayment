@@ -51,17 +51,18 @@ public class Client {
 	
 	public smsPacket getSmsPacket(String OtherIban, String amount){
 		smsPacket sms=null;//CUIDADO
+		FileInputStream is;
 		try {
 			sms = new smsPacket(myIban,OtherIban,amount);
 
 			System.out.println("ESTOU AQUI");
-			File file = new File("/home/daniel/Desktop/SIRS-1617/SMSPayment/client/keys/client.jks");//MUDAR QUANDO NECESSARIO
-			FileInputStream is = new FileInputStream(file);
+			String file = "keys/client.jks";//MUDAR QUANDO NECESSARIO
+			is = new FileInputStream(file);
 			KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
 
             /*Information for certificate to be generated */ 
-            String password = "SIRS1617";
-            String alias = "example";
+            String password = "ins3cur3";
+            String alias = "client";
             keystore.load(is, password.toCharArray());
             PrivateKey key = (PrivateKey)keystore.getKey(alias, password.toCharArray());
 			
@@ -134,7 +135,7 @@ public class Client {
 	        keystore.load(is, password.toCharArray());
 			Certificate cert = keystore.getCertificate(alias); */
 			
-			FileInputStream fin = new FileInputStream("/home/daniel/Desktop/SIRS-1617/SMSPayment/client/keys/server.cer");
+			FileInputStream fin = new FileInputStream("keys/server.cer");
 			CertificateFactory f = CertificateFactory.getInstance("X.509");
 			X509Certificate certificate = (X509Certificate)f.generateCertificate(fin);
 			PublicKey pk = certificate.getPublicKey();
