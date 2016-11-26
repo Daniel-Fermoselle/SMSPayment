@@ -3,7 +3,7 @@ package pt.sirs.client;
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
-import pt.sirs.smsPacket.smsPacket;
+import pt.sirs.smsPacket.SmsPacket;
 import pt.sirs.client.Client;
 
 public class ClientApplication {
@@ -48,8 +48,9 @@ public class ClientApplication {
 	    		String amount = temp[1];*/
 	    		
 	    		//smsPacket sms = c.getSmsPacket(iban, amount);
-	    		smsPacket sms = c.getSmsPacket("0000000000000000000000000", "1");//TESTING
-	    		byte[] toSend = c.getToSend(sms);
+	    		SmsPacket sms = c.getSmsPacket("PT00000000000000000000000", "1");//TESTING
+	    		
+	    		String toSend = c.getToSend(sms);
 	    		out.writeObject(toSend);
 	            out.flush();
 	            System.out.println("SMS sent... " + sms.toString());//Just debugging prints
@@ -62,8 +63,8 @@ public class ClientApplication {
 		catch(UnknownHostException unknownHost){
             System.err.println("Tentativa de conexao com server desconhecido");
         }
-        catch(IOException ioException){
-            ioException.printStackTrace();
+        catch(Exception Exception){
+            Exception.printStackTrace();
         }
 		
     	finally{

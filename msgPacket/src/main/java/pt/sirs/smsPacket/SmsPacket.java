@@ -12,72 +12,29 @@ import static javax.xml.bind.DatatypeConverter.printBase64Binary;
 import pt.sirs.smsPacket.Exceptions.InvalidSMSPacketValuesException;
 
 
-public class smsPacket implements  Serializable{
+public class SmsPacket implements  Serializable{
 	private static final long serialVersionUID = 1L;
 	private String myIban;
 	private String otherIban;
 	private String amount;
 	private String signature;
 	
-	public smsPacket(String mib, String oib, String am) throws InvalidSMSPacketValuesException{
+	public SmsPacket(String mib, String oib, String am) throws InvalidSMSPacketValuesException{
 		if(mib.length()==25 && oib.length()==25 && am.length()<=8){
-			myIban=mib;
-			otherIban=oib;
-			amount=am;
-			//signature="";//CUIDADO
-			
+			myIban = mib;
+			otherIban = oib;
+			amount = am;			
 		}
 		else{
 			throw new InvalidSMSPacketValuesException(mib,oib,am);
 		}
 	}
 	
-	public void setMyIban(String ib){
-		myIban=ib;
-	}
-	public String getMyIban(){
-		return myIban;
-	}
-	public void setOtherIban(String ib){
-		otherIban=ib;
-	}
-	public String getOtherIban(){
-		return otherIban;
-	}
 	
-	public void setAmount(String am){
-		amount=am;
-	}
-	public String getAmount(){
-		return amount;
-	}
-	
-	public String cipherMobile(){
+	public String getConcatSmsFields(){
 		String message;
-		message=myIban+"-"+ otherIban + "-"+amount+"-"+signature;//inserir o digest cifrado com a chave privada do sender assumindo '-' nao usados na signature
-		//cifrar message com chave publica do receiver
+		message = myIban + "-" + otherIban + "-" + amount;
 		return message;
-	}
-	
-	public smsPacket decipherMobile(String message, PublicKey key){
-		//TODO TEST MESSAGE FORMATING
-		String [] divided= message.split("-");
-		smsPacket sms;
-		try {
-			sms = new smsPacket(divided[0],divided[1],divided[2]);
-			if(sms.verifySign(divided[3], key)){
-				return sms;
-			}
-			
-			return null;//CUIDADO
-			
-		} 
-		//TODO CHECK THIS CATCH
-		catch (InvalidSMSPacketValuesException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;//CUIDADO
-		}
 	}
 	
 	public void setSignature(PrivateKey key){
@@ -152,7 +109,25 @@ public class smsPacket implements  Serializable{
 		
 	}
 	
+	public void setMyIban(String myIban){
+		this.myIban = myIban;
+	}
+	public String getMyIban(){
+		return myIban;
+	}
+	public void setOtherIban(String otherIban){
+		this.otherIban = otherIban;
+	}
+	public String getOtherIban(){
+		return otherIban;
+	}
 	
+	public void setAmount(String amount){
+		this.amount = amount;
+	}
+	public String getAmount(){
+		return amount;
+	}
 	
 	@Override
 	public String toString(){
