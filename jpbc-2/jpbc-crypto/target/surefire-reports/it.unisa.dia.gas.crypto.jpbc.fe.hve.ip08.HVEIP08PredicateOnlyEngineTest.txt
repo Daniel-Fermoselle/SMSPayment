@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: it.unisa.dia.gas.crypto.jpbc.fe.hve.ip08.HVEIP08PredicateOnlyEngineTest
--------------------------------------------------------------------------------
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 1, Time elapsed: 1.184 sec

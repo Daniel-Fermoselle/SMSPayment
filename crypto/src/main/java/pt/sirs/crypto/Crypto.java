@@ -14,18 +14,6 @@ import javax.crypto.spec.IvParameterSpec;
 
 import org.apache.commons.codec.binary.Base64;
 
-import it.unisa.dia.gas.crypto.jpbc.signature.bls01.engines.BLS01HalfSigner;
-import it.unisa.dia.gas.crypto.jpbc.signature.bls01.engines.BLS01Signer;
-import it.unisa.dia.gas.crypto.jpbc.signature.bls01.generators.BLS01KeyPairGenerator;
-import it.unisa.dia.gas.crypto.jpbc.signature.bls01.generators.BLS01ParametersGenerator;
-import it.unisa.dia.gas.crypto.jpbc.signature.bls01.params.BLS01KeyGenerationParameters;
-import it.unisa.dia.gas.crypto.jpbc.signature.bls01.params.BLS01Parameters;
-import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
-import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
-import org.bouncycastle.crypto.CipherParameters;
-import org.bouncycastle.crypto.CryptoException;
-import org.bouncycastle.crypto.digests.SHA1Digest;;
-
 public class Crypto {
 	
 	public static String cipherSMS(String sms, Key sharedKey) throws Exception{
@@ -84,60 +72,4 @@ public class Crypto {
 		return ivParams;
 	}	
 	
-	public static void GenerateKey() throws Exception{
-
-	
-       // Setup
-           AsymmetricCipherKeyPair keyPair = keyGen(setup());
-   
-           // Test same message
-       String message = "Hello World!";
-       System.out.println(verify(sign(message, keyPair.getPrivate()), message, keyPair.getPublic()));
-   
-           // Test different messages
-       System.out.println(verify(sign(message, keyPair.getPrivate()), "Hello Italy!", keyPair.getPublic()));
-		     
-
-	}
-	
-	 public static BLS01Parameters setup() {
-	    BLS01ParametersGenerator setup = new BLS01ParametersGenerator();
-	    setup.init(PairingFactory.getPairingParameters("params/curves/a.properties"));
-	
-	    return setup.generateParameters();
-	 }
-		   
-    public static AsymmetricCipherKeyPair keyGen(BLS01Parameters parameters) {
-        BLS01KeyPairGenerator keyGen = new BLS01KeyPairGenerator();
-        keyGen.init(new BLS01KeyGenerationParameters(null, parameters));
-
-        return keyGen.generateKeyPair();
-    }
-	    
-    public static byte[] sign(String message, CipherParameters privateKey) {
-    	byte[] bytes = message.getBytes();
-    	BLS01HalfSigner signer = new BLS01HalfSigner(new SHA1Digest());
-    	signer.init(true, privateKey);
-    	signer.update(bytes, 0, bytes.length);
-
-    	byte[] signature = null;
-    	try {
-    		signature = signer.generateSignature();
-    	} catch (CryptoException e) {
-    		throw new RuntimeException(e);
-    	}
-    	System.out.println(signature.length);
-    	return signature;
-    }
-
-    public static boolean verify(byte[] signature, String message, CipherParameters publicKey) {
-    	byte[] bytes = message.getBytes();
-
-    	BLS01HalfSigner signer = new BLS01HalfSigner(new SHA1Digest());
-    	signer.init(false, publicKey);
-    	signer.update(bytes, 0, bytes.length);
-
-    	return signer.verifySignature(signature);
-    }
-
  }

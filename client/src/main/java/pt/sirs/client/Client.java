@@ -31,7 +31,6 @@ public class Client {
 	public String getToSend(SmsPacket sms) throws Exception {
 		String cipherText;
 		Key sharedKey;
-		Crypto.GenerateKey();
 		sharedKey = Crypto.getKeyFromKeyStore(KEYSTORE_LOCATION, KEYSTORE_PASS, ALIAS, KEY_PASS);
 		cipherText = Crypto.cipherSMS(sms.getConcatSmsFields(), sharedKey);
 		return cipherText;
