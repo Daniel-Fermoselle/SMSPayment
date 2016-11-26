@@ -2,7 +2,6 @@ package pt.sirs.server;
 
 import java.io.*;
 import java.net.*;
-import pt.sirs.smsPacket.smsPacket;
 import pt.sirs.server.Server;
 
 public class ServerApplication {
@@ -13,13 +12,10 @@ public class ServerApplication {
 
 	public static void main(String args[])
     {
-		ServerApplication server = new ServerApplication();
-        while(true){
-            server.run();
-        }
+        run();
     }
 	
-    void run() {
+    private static void run() {
     	ServerSocket providerSocket = null;
     	ObjectOutputStream out = null;
     	ObjectInputStream in = null;
@@ -34,21 +30,14 @@ public class ServerApplication {
             out = new ObjectOutputStream(connection.getOutputStream());
             out.flush();
             in = new ObjectInputStream(connection.getInputStream());
-            Server s = new Server();
-            try{
-            	byte [] sms = (byte[]) in.readObject();
-            	smsPacket packet = s.getMessage(sms);
-            	//System.out.println("Object of class " + sms.getClass().getName() + " is " + sms);
-                System.out.println("client>" + packet.toString());
-                //sendMessage("bye");
+            Server server = new Server();
+            while(true){
+	        	String sms = (String) in.readObject();
+	        	String feedback = server.processSms(sms);
             }
-            catch(ClassNotFoundException classnot){
-                System.err.println("Data received in unknown format");
-            }
-            //INSERT SERVER CODE HERE
         }
-        catch(IOException ioException){
-            ioException.printStackTrace();
+        catch(Exception e){
+            e.printStackTrace();
         }
         finally{
             //4: Closing connection

@@ -2,6 +2,9 @@ package pt.sirs.client;
 
 import pt.sirs.smsPacket.SmsPacket;
 import java.security.Key;
+
+import javax.crypto.spec.IvParameterSpec;
+
 import pt.sirs.crypto.Crypto;
 import pt.sirs.smsPacket.Exceptions.InvalidSMSPacketValuesException;
 

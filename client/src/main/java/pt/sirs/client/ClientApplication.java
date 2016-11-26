@@ -12,8 +12,8 @@ public class ClientApplication {
 	public static final int INITMONEY = 0;
 	
 	public static void main(String[] args) {
-		Socket requestSocket=null;//CUIDADO
-		ObjectOutputStream out=null;//CUIDADO
+		Socket requestSocket = null;//CUIDADO
+		ObjectOutputStream out = null;//CUIDADO
 		try{
 			
 			//1. Criar o socket para falar com o server
@@ -48,9 +48,11 @@ public class ClientApplication {
 	    		String amount = temp[1];*/
 	    		
 	    		//smsPacket sms = c.getSmsPacket(iban, amount);
-	    		SmsPacket sms = c.getSmsPacket("PT00000000000000000000000", "1");//TESTING
-	    		
+	    		SmsPacket sms = c.getSmsPacket("PT00000000000000000000000", "12345678");//TESTING
+	    		System.out.println(sms.getConcatSmsFields() + "  len" + sms.getConcatSmsFields().length());
 	    		String toSend = c.getToSend(sms);
+	    		System.out.println(toSend);
+	    		System.out.println(toSend.length());
 	    		out.writeObject(toSend);
 	            out.flush();
 	            System.out.println("SMS sent... " + sms.toString());//Just debugging prints
