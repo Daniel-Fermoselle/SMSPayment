@@ -14,6 +14,11 @@ public class Server {
 	
     public Server(){
     	this.accounts = new ArrayList<Account>();
+    	this.accounts.add(new Account("PT12345678901234567890123", 100, "nasTyMSR", "1"));
+    	this.accounts.add(new Account("PT12345678901234567890124", 100, "sigmaJEM", "12"));
+    	this.accounts.add(new Account("PT12345678901234567890125", 100, "Alpha", "123"));
+    	this.accounts.add(new Account("PT12345678901234567890126", 100, "jse", "1234"));
+    	
     }    
     
 

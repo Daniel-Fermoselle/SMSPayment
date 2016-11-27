@@ -1,6 +1,8 @@
 package pt.sirs.server;
 
 import pt.sirs.server.Exceptions.AmountToHighException;
+import pt.sirs.server.Exceptions.InvalidPasswordException;
+import pt.sirs.server.Exceptions.InvalidUsernameException;
 
 public class Account{
 	
@@ -10,6 +12,10 @@ public class Account{
 	private String password;
 
 	public Account(String iban, int balance, String username, String password){
+		if(password.length()<4 && password.length()>15)
+		{ throw new InvalidPasswordException(password); }
+		if(username.length()>10)
+		{ throw new InvalidUsernameException(username); }
 		this.iban = iban;
 		this.balance = balance;
 		this.username = username;
