@@ -3,6 +3,9 @@ package pt.sirs.server;
 import java.security.Key;
 import java.util.ArrayList;
 import pt.sirs.crypto.Crypto;
+import pt.sirs.server.Exceptions.IBANAlreadyExistsException;
+import pt.sirs.server.Exceptions.ServerException;
+import pt.sirs.server.Exceptions.UserAlreadyExistsException;
 
 public class Server {
 	
@@ -12,14 +15,26 @@ public class Server {
 	private static final String KEY_PASS = "mypass";
 	private ArrayList<Account> accounts;
 	
-    public Server(){
+    public Server() throws ServerException {
     	this.accounts = new ArrayList<Account>();
-    	this.accounts.add(new Account("PT12345678901234567890123", 100, "nasTyMSR", "1"));
-    	this.accounts.add(new Account("PT12345678901234567890124", 100, "sigmaJEM", "12"));
-    	this.accounts.add(new Account("PT12345678901234567890125", 100, "Alpha", "123"));
-    	this.accounts.add(new Account("PT12345678901234567890126", 100, "jse", "1234"));
+    	addAccount(new Account("PT12345678901234567890123", 100, "nasTyMSR", "1"));
+    	addAccount(new Account("PT12345678901234567890124", 100, "sigmaJEM", "12"));
+    	addAccount(new Account("PT12345678901234567890125", 100, "Alpha", "123"));
+    	addAccount(new Account("PT12345678901234567890126", 100, "jse", "1234"));
     	
     }    
+    
+    public void addAccount(Account account) throws ServerException{
+    	for(Account a : this.accounts){
+    		if(a.getIban().equals(account.getIban())){
+    			throw new IBANAlreadyExistsException(account.getIban());
+    		}
+    		if(a.getUsername().equals(account.getUsername())){
+    			throw new UserAlreadyExistsException(account.getUsername());
+    		}
+    	}
+    	this.accounts.add(account);
+    }
     
 
 	public String processSms(String cipheredSms) throws Exception {
