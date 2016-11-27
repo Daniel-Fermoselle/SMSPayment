@@ -1,20 +1,24 @@
 package pt.sirs.crypto;
 
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.math.BigInteger;
 import java.security.Key;
-import java.security.KeyStore;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Random;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.codec.binary.Base64;
 
+import pt.sirs.crypto.DeffieHellman;
+
 public class Crypto {
+	private static int bitLength=512;	
 	
 	public static byte[] cipherSMS(String sms, Key sharedKey, IvParameterSpec ivspec) throws Exception{
 		byte[] cipherText;
@@ -48,18 +52,6 @@ public class Crypto {
 		return decodedCipheredSms;
 	}
 
-	public static Key getKeyFromKeyStore(String keystoreLocation, String keystorePass, String alias, String keyPass) throws Exception{
-
-            InputStream keystoreStream = new FileInputStream(keystoreLocation);
-            KeyStore keystore = KeyStore.getInstance("JCEKS");
-            keystore.load(keystoreStream, keystorePass.toCharArray());
-            if (!keystore.containsAlias(alias)) {
-                throw new RuntimeException("Alias for key not found");
-            }
-            Key key = keystore.getKey(alias, keyPass.toCharArray());
-            return key;
-	}
-	
 	public static IvParameterSpec generateIV() throws NoSuchAlgorithmException{
 		SecureRandom randomSecureRandom;
 		IvParameterSpec ivParams;
@@ -71,5 +63,30 @@ public class Crypto {
 		
 		return ivParams;
 	}	
+	
+	public static BigInteger[] GeneratePandG(){
+		BigInteger generatorValue,primeValue;
+		primeValue = DeffieHellman.findPrime();
+	    generatorValue	= DeffieHellman.findPrimeRoot(primeValue);
+	    BigInteger[] toReturn = new BigInteger[2];
+	    toReturn[0] = primeValue;
+	    toReturn[1] = generatorValue;
+	    return toReturn;
+	}
+	
+	public static BigInteger generateSecretValue(){
+	  	Random randomGenerator = new Random();
+	    return new BigInteger(bitLength-2,randomGenerator);
+	}	
+
+	public static SecretKeySpec generateKeyFromBigInt(BigInteger sharedKey) throws Exception{
+		String getAValue = sharedKey.toString();
+	    byte [] key = getAValue.getBytes("UTF-8");
+	    
+	    MessageDigest sha = MessageDigest.getInstance("SHA-256");
+	    key =  sha.digest(key);
+	    key = Arrays.copyOf(key, 16);
+	    return  new SecretKeySpec(key,"AES");
+	}
 	
  }

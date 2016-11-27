@@ -2,8 +2,6 @@ package pt.sirs.client;
 
 import java.io.*;
 import java.net.*;
-import java.util.Scanner;
-import pt.sirs.smsPacket.SmsPacket;
 import pt.sirs.client.Client;
 
 public class ClientApplication {
@@ -41,6 +39,21 @@ public class ClientApplication {
 	    	String passwordString = new String(passwordChars);
 	    	
 	    	Client client = new Client(username, passwordString);
+	    	
+	    	//Sharing values p and g
+	    	out.writeObject(client.generateValueSharingSMS("p"));
+            out.flush();
+	    	out.writeObject(client.generateValueSharingSMS("g"));
+            out.flush();
+            //Generate secret value
+            client.generateSecretValue();
+            
+            //Generate client public value
+            out.writeObject(client.generatePublicValue());
+            out.flush();
+
+            //Generate sharedKey
+            client.generateSharedKey((String) in.readObject());
 	    	
 	    	String login = client.generateLoginSms();
 	    	System.out.println(login + " TAMANHO: " + login.length());
