@@ -47,23 +47,25 @@ public class Server {
 		decipheredSms = Crypto.decipherSMS(msg, this.sharedKey, new IvParameterSpec(iv));
 		System.out.println("Password is:" + decipheredSms + "   len " + decipheredSms.length());
 		
-		return generateLoginFeedback(a.getPassword(), decipheredSms);
+		return generateLoginFeedback(a, decipheredSms);
     }
     
     public String processTransactionSms(String cipheredSms) throws Exception{
 		byte[] iv, msg;
 		String decipheredSms;
 		Account sender, receiver;
+		SecretKeySpec sharedKey;
 		
 		byte[] decodedCipheredSms =  Crypto.decode(cipheredSms);
 		
 		sender = getAccountByUsername(new String(decodedCipheredSms));
+		sharedKey = sender.getSharedKey();
 		
 		iv = Arrays.copyOfRange(decodedCipheredSms, 0, 16);
 		//Possible problem if encoding used more than 1 byte in 1 character
 		msg = Arrays.copyOfRange(decodedCipheredSms, 16 + 2 + sender.getUsername().length(), decodedCipheredSms.length);
 		
-		decipheredSms = Crypto.decipherSMS(msg, this.sharedKey, new IvParameterSpec(iv));
+		decipheredSms = Crypto.decipherSMS(msg, sharedKey, new IvParameterSpec(iv));
 
 		receiver = getAccountByIban(decipheredSms);
 		String[] parts = decipheredSms.split("-");
@@ -73,15 +75,16 @@ public class Server {
 		return ((Integer) sender.getBalance()).toString();
     }
 	
-	public String generateLoginFeedback(String aPassword, String smsPassword) throws Exception{
+	public String generateLoginFeedback(Account a, String smsPassword) throws Exception{
 		String feedback = "ChamPog";
 		
-		if(smsPassword.contains(aPassword)){
+		if(smsPassword.contains(a.getPassword())){
 			feedback = "PogChamp";
+			a.setSharedKey(sharedKey);
 		}
 		
 		IvParameterSpec ivspec = Crypto.generateIV();
-		byte[] cipheredText = Crypto.cipherSMS(feedback, this.sharedKey, ivspec);
+		byte[] cipheredText = Crypto.cipherSMS(feedback, a.getSharedKey(), ivspec);
 		
 		byte[] finalMsg = new byte[ivspec.getIV().length + cipheredText.length];
 		System.arraycopy(ivspec.getIV(), 0, finalMsg, 0, ivspec.getIV().length);

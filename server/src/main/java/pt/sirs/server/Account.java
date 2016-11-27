@@ -1,5 +1,7 @@
 package pt.sirs.server;
 
+import javax.crypto.spec.SecretKeySpec;
+
 import pt.sirs.server.Exceptions.AmountToHighException;
 import pt.sirs.server.Exceptions.InvalidPasswordException;
 import pt.sirs.server.Exceptions.InvalidUsernameException;
@@ -10,6 +12,7 @@ public class Account{
 	private int balance;
 	private String username;
 	private String password;
+	private SecretKeySpec sharedKey;
 
 	public Account(String iban, int balance, String username, String password){
 		if(password.length()<4 && password.length()>15)
@@ -29,7 +32,7 @@ public class Account{
 		}
 		this.balance = this.balance - amount;
 	}
-	
+
 	public void credit(int amount){
 		this.balance = this.balance + amount;
 	}
@@ -64,6 +67,14 @@ public class Account{
 
 	public void setPassword(String password) {
 		this.password = password;
+	}
+	
+	public SecretKeySpec getSharedKey() {
+		return sharedKey;
+	}
+
+	public void setSharedKey(SecretKeySpec sharedKey) {
+		this.sharedKey = sharedKey;
 	}
 
 }
