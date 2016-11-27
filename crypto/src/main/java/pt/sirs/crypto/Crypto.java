@@ -89,10 +89,8 @@ public class Crypto {
 	
 	public static BigInteger[] GeneratePandG(){
 		BigInteger generatorValue,primeValue;
-		primeValue = DeffieHellman.findPrime();// BigInteger.valueOf((long)g);
-	    System.out.println("the prime is "+primeValue);
-	    generatorValue	= DeffieHellman.findPrimeRoot(primeValue);//BigInteger.valueOf((long)p);
-	    System.out.println("the generator of the prime is "+generatorValue);
+		primeValue = DeffieHellman.findPrime();
+	    generatorValue	= DeffieHellman.findPrimeRoot(primeValue);
 	    BigInteger[] toReturn = new BigInteger[2];
 	    toReturn[0] = primeValue;
 	    toReturn[1] = generatorValue;
@@ -110,7 +108,6 @@ public class Crypto {
 	    
 	    MessageDigest sha = MessageDigest.getInstance("SHA-256");
 	    key =  sha.digest(key);
-	    System.out.println(key.length + "   key: " + key);
 	    key = Arrays.copyOf(key, 16);
 	    return  new SecretKeySpec(key,"AES");
 	}

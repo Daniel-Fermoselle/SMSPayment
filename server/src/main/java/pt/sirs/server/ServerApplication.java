@@ -35,6 +35,21 @@ public class ServerApplication {
             
             Server server = new Server();
             
+            //Receive p and g values for DH
+            server.setP((String) in.readObject());
+            server.setG((String) in.readObject());
+            //Generate secret value
+            server.generateSecretValue();
+            //Generate server public value
+            server.generatePublicValue();
+            
+            //Receive public value from client and generate sharedKey
+            server.generateSharedKey((String) in.readObject());
+            
+            //Send public value to client
+            out.writeObject(server.getPublicValue());
+            out.flush();
+            
             String sms = (String) in.readObject();
 	    	System.out.println(sms + " TAMANHO: " + sms.length());
             String feedback = server.processLoginSms(sms);

@@ -42,6 +42,21 @@ public class ClientApplication {
 	    	
 	    	Client client = new Client(username, passwordString);
 	    	
+	    	//Sharing values p and g
+	    	out.writeObject(client.generateValueSharingSMS("p"));
+            out.flush();
+	    	out.writeObject(client.generateValueSharingSMS("g"));
+            out.flush();
+            //Generate secret value
+            client.generateSecretValue();
+            
+            //Generate client public value
+            out.writeObject(client.generatePublicValue());
+            out.flush();
+
+            //Generate sharedKey
+            client.generateSharedKey((String) in.readObject());
+	    	
 	    	String login = client.generateLoginSms();
 	    	System.out.println(login + " TAMANHO: " + login.length());
     		out.writeObject(login);

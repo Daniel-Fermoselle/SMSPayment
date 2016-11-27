@@ -1,9 +1,11 @@
 package pt.sirs.client;
 
+import java.math.BigInteger;
 import java.security.Key;
 import java.util.Arrays;
 
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import pt.sirs.crypto.Crypto;
 
@@ -16,10 +18,20 @@ public class Client {
 	private int myMoney; 
 	private String myUsername;
 	private String myPassword;
+	private BigInteger p;
+	private BigInteger g;
+	private BigInteger secretValue;
+	private BigInteger publicValue;
+	private SecretKeySpec sharedKey;
+	
 	
 	public Client(String myUsername, String myPassword) {
 		this.myUsername = myUsername;
 		this.myPassword = myPassword;
+		BigInteger[] pair = Crypto.GeneratePandG();
+		p = pair[0];
+		g = pair[1];
+		secretValue = Crypto.generateSecretValue();
 	}
 	
 	public String generateLoginSms() throws Exception{
@@ -29,8 +41,8 @@ public class Client {
 		String usernameS = "-" + this.myUsername + "-";
 		
 		ivspec = Crypto.generateIV();
-		sharedKey = Crypto.getKeyFromKeyStore(KEYSTORE_LOCATION, KEYSTORE_PASS, ALIAS, KEY_PASS);	
-		cipheredText = Crypto.cipherSMS(this.myPassword, sharedKey, ivspec);	
+		//sharedKey = Crypto.getKeyFromKeyStore(KEYSTORE_LOCATION, KEYSTORE_PASS, ALIAS, KEY_PASS);	
+		cipheredText = Crypto.cipherSMS(this.myPassword, this.sharedKey, ivspec);	
 		
 
 		//Concatenate IV with username with cipheredText --> IV-username-cipheredText
@@ -52,8 +64,8 @@ public class Client {
 		String msgToCipher = iban + "-" + amount;
 		
 		ivspec = Crypto.generateIV();
-		sharedKey = Crypto.getKeyFromKeyStore(KEYSTORE_LOCATION, KEYSTORE_PASS, ALIAS, KEY_PASS);	
-		cipheredText = Crypto.cipherSMS(msgToCipher, sharedKey, ivspec);		
+		//sharedKey = Crypto.getKeyFromKeyStore(KEYSTORE_LOCATION, KEYSTORE_PASS, ALIAS, KEY_PASS);	
+		cipheredText = Crypto.cipherSMS(msgToCipher, this.sharedKey, ivspec);		
 
 		//Concatenate IV with username with cipheredText --> IV-username-cipheredText
 		byte[] usernameB = usernameS.getBytes();
@@ -76,12 +88,44 @@ public class Client {
 		iv = Arrays.copyOfRange(decodedCipheredSms, 0, 16);
 		msg = Arrays.copyOfRange(decodedCipheredSms, 16, decodedCipheredSms.length);
 		
-		sharedKey = Crypto.getKeyFromKeyStore(KEYSTORE_LOCATION, KEYSTORE_PASS, ALIAS, KEY_PASS);
-		decipheredSms = Crypto.decipherSMS(msg, sharedKey, new IvParameterSpec(iv));
+		//sharedKey = Crypto.getKeyFromKeyStore(KEYSTORE_LOCATION, KEYSTORE_PASS, ALIAS, KEY_PASS);
+		decipheredSms = Crypto.decipherSMS(msg, this.sharedKey, new IvParameterSpec(iv));
 		
 		return decipheredSms;
 		
 		
+	}
+	
+	public String generateValueSharingSMS(String value){
+		if(value.equals("p")){
+			System.out.println(Crypto.encode(this.p.toByteArray()) + "  LENG P: " + Crypto.encode(this.p.toByteArray()).length());
+			return Crypto.encode(this.p.toByteArray());
+		}
+		if(value.equals("g")){
+			System.out.println(Crypto.encode(this.g.toByteArray()) + "  LENG G: " + Crypto.encode(this.g.toByteArray()).length());
+			return Crypto.encode(this.g.toByteArray());
+		}
+		else
+			//TODO throw invalid char exception
+			return null;
+	}
+	
+	public void generateSecretValue() {
+		this.secretValue = Crypto.generateSecretValue();
+	}
+	
+	public String generatePublicValue(){
+		publicValue = g.modPow(secretValue, p);
+		System.out.println(Crypto.encode(publicValue.toByteArray()) + "  LENG PublicValue: " + Crypto.encode(publicValue.toByteArray()).length());
+		return Crypto.encode(publicValue.toByteArray());
+	}
+	
+	public void generateSharedKey(String stringPublicValue) throws Exception{
+		byte[] bytePublicValue = Crypto.decode(stringPublicValue);
+		BigInteger publicValue = new BigInteger(bytePublicValue);
+		BigInteger sharedKey = publicValue.modPow(secretValue, p);
+		System.out.println(Crypto.encode(sharedKey.toByteArray()) + "  LENG SharedKey: " + Crypto.encode(sharedKey.toByteArray()).length());
+		this.sharedKey = Crypto.generateKeyFromBigInt(sharedKey);
 	}
 	
 	public void setMyMoney(int myMoney){
