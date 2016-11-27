@@ -1,14 +1,12 @@
 package pt.sirs.server;
 
 import java.math.BigInteger;
-import java.security.Key;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.apache.commons.codec.binary.Base64;
 
 import pt.sirs.crypto.Crypto;
 import pt.sirs.server.Exceptions.IBANAlreadyExistsException;
@@ -16,11 +14,6 @@ import pt.sirs.server.Exceptions.ServerException;
 import pt.sirs.server.Exceptions.UserAlreadyExistsException;
 
 public class Server {
-	public static final String KEYSTORE_LOCATION = "keys/aes-keystore.jck";
-	public static final String KEYSTORE_PASS = "mypass";
-	public static final String ALIAS = "aes";
-	public static final String KEY_PASS = "mypass";
-	
 	private ArrayList<Account> accounts;
 	private BigInteger p;
 	private BigInteger g;
@@ -29,6 +22,7 @@ public class Server {
 	private SecretKeySpec sharedKey;
 	
     public Server() throws ServerException {
+    	
     	this.accounts = new ArrayList<Account>();
     	addAccount(new Account("PT12345678901234567890123", 100, "nasTyMSR", "1"));
     	addAccount(new Account("PT12345678901234567890124", 100, "sigmaJEM", "12"));
@@ -51,7 +45,6 @@ public class Server {
     
     public String processLoginSms(String cipheredSms) throws Exception{
 		byte[] iv, msg;
-		Key sharedKey;
 		String decipheredSms;
 		Account a;
 		
@@ -63,7 +56,6 @@ public class Server {
 		//Possible problem if encoding used more than 1 byte in 1 character
 		msg = Arrays.copyOfRange(decodedCipheredSms, 16 + 2 + a.getUsername().length(), decodedCipheredSms.length);
 		
-		//sharedKey = Crypto.getKeyFromKeyStore(KEYSTORE_LOCATION, KEYSTORE_PASS, ALIAS, KEY_PASS);
 		decipheredSms = Crypto.decipherSMS(msg, this.sharedKey, new IvParameterSpec(iv));
 		System.out.println("Password is:" + decipheredSms + "   len " + decipheredSms.length());
 		
@@ -78,7 +70,6 @@ public class Server {
 		}
 		
 		IvParameterSpec ivspec = Crypto.generateIV();
-		//Key sharedKey = Crypto.getKeyFromKeyStore(KEYSTORE_LOCATION, KEYSTORE_PASS, ALIAS, KEY_PASS);	
 		byte[] cipheredText = Crypto.cipherSMS(feedback, this.sharedKey, ivspec);
 		
 		byte[] finalMsg = new byte[ivspec.getIV().length + cipheredText.length];

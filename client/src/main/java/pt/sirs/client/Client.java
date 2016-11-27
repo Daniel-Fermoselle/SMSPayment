@@ -10,10 +10,6 @@ import javax.crypto.spec.SecretKeySpec;
 import pt.sirs.crypto.Crypto;
 
 public class Client {
-	public static final String KEYSTORE_LOCATION = "keys/aes-keystore.jck";
-	public static final String KEYSTORE_PASS = "mypass";
-	public static final String ALIAS = "aes";
-	public static final String KEY_PASS = "mypass";
 	
 	private int myMoney; 
 	private String myUsername;
@@ -37,11 +33,9 @@ public class Client {
 	public String generateLoginSms() throws Exception{
 		IvParameterSpec ivspec;
 		byte[] cipheredText;
-		Key sharedKey;
 		String usernameS = "-" + this.myUsername + "-";
 		
 		ivspec = Crypto.generateIV();
-		//sharedKey = Crypto.getKeyFromKeyStore(KEYSTORE_LOCATION, KEYSTORE_PASS, ALIAS, KEY_PASS);	
 		cipheredText = Crypto.cipherSMS(this.myPassword, this.sharedKey, ivspec);	
 		
 
@@ -59,12 +53,10 @@ public class Client {
 	public String generateTransactionSms(String iban, String amount) throws Exception{
 		IvParameterSpec ivspec;
 		byte[] cipheredText;
-		Key sharedKey;
 		String usernameS = "-" + this.myUsername + "-";
 		String msgToCipher = iban + "-" + amount;
 		
 		ivspec = Crypto.generateIV();
-		//sharedKey = Crypto.getKeyFromKeyStore(KEYSTORE_LOCATION, KEYSTORE_PASS, ALIAS, KEY_PASS);	
 		cipheredText = Crypto.cipherSMS(msgToCipher, this.sharedKey, ivspec);		
 
 		//Concatenate IV with username with cipheredText --> IV-username-cipheredText
@@ -80,7 +72,6 @@ public class Client {
 	
 	public String processLoginFeedback(String cipheredSms) throws Exception{
 		byte[] iv, msg;
-		Key sharedKey;
 		String decipheredSms;
 		
 		byte[] decodedCipheredSms =  Crypto.decode(cipheredSms);
@@ -92,8 +83,6 @@ public class Client {
 		decipheredSms = Crypto.decipherSMS(msg, this.sharedKey, new IvParameterSpec(iv));
 		
 		return decipheredSms;
-		
-		
 	}
 	
 	public String generateValueSharingSMS(String value){
