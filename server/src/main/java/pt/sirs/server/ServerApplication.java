@@ -22,18 +22,27 @@ public class ServerApplication {
         try{
             //1. creating a server socket
             providerSocket = new ServerSocket(SERVER_PORT, QUEUE_SIZE);
+            
             //2. Wait for connection
             System.out.println("Waiting for connection");
             Socket connection = providerSocket.accept();
             System.out.println("Connection received from " + connection.getInetAddress().getHostName());
+            
             //3. get Input and Output streams
             out = new ObjectOutputStream(connection.getOutputStream());
             out.flush();
             in = new ObjectInputStream(connection.getInputStream());
+            
             Server server = new Server();
+            
+            String sms = (String) in.readObject();
+	    	System.out.println(sms + " TAMANHO: " + sms.length());
+            String feedback = server.processLoginSms(sms);
+            System.out.println(feedback + " TAMANHO: " + feedback.length());
+    		out.writeObject(feedback);
+            out.flush();
+            
             while(true){
-	        	String sms = (String) in.readObject();
-	        	String feedback = server.processSms(sms);
             }
         }
         catch(Exception e){

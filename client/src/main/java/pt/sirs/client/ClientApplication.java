@@ -14,6 +14,7 @@ public class ClientApplication {
 	public static void main(String[] args) {
 		Socket requestSocket = null;//CUIDADO
 		ObjectOutputStream out = null;//CUIDADO
+		ObjectInputStream in = null;
 		try{
 			
 			//1. Criar o socket para falar com o server
@@ -23,45 +24,50 @@ public class ClientApplication {
 	        //2. Criar o socket para enviar coisas para o server
 	        out = new ObjectOutputStream(requestSocket.getOutputStream());
 	        out.flush();
-	    
-	    	Client c = new Client(IBAN,INITMONEY);
-	    	Scanner s = new Scanner(System.in);
-	    	String command = "";
+            in = new ObjectInputStream(requestSocket.getInputStream());
+	   
+	        Console console = System.console();
+	        if (console == null) {
+	            System.out.println("Couldn't get Console instance");
+	            System.exit(0);
+	        }
 	    	System.out.println("Started...");//Just debugging prints
-	    	command=s.nextLine();
-	    	if(command==null){
-	    		System.out.println("Error:Exiting...");//Just debugging prints
-	    		System.exit(1);//VERIFICAR
-	    	}
 	    	
-	    	while(!command.equals("exit")){
-	    		/*String [] line = command.split(" ");
-	    		if(line.length!=2){
-	    			System.out.println("Wrong format, try again");//Just debugging prints
-	    			continue;
-	    			//System.exit(2);//VERIFICAR
-	    		}
-	    		//Line processing
-	    		String [] temp = line[0].split("Iban:");
-	    		String iban = temp[1];
-	    		temp = line[1].split("Amount:");
-	    		String amount = temp[1];*/
+	    	console.printf("Please enter your username: ");
+	    	String username = console.readLine();
+	    	
+	    	console.printf("Please enter your password: ");
+	    	char[] passwordChars = console.readPassword();
+	    	String passwordString = new String(passwordChars);
+	    	
+	    	Client client = new Client(username, passwordString);
+	    	
+	    	String login = client.generateLoginSms();
+	    	System.out.println(login + " TAMANHO: " + login.length());
+    		out.writeObject(login);
+            out.flush();
+            
+            String feedback = (String) in.readObject();
+            System.out.println(feedback + " TAMANHO: " + feedback.length());
+            System.out.println(client.processLoginFeedback(feedback));
+            
+	    	
+	    	while(true){
+	    		String iban, amount;
 	    		
-	    		//smsPacket sms = c.getSmsPacket(iban, amount);
-	    		SmsPacket sms = c.getSmsPacket("PT00000000000000000000000", "12345678");//TESTING
-	    		System.out.println(sms.getConcatSmsFields() + "  len" + sms.getConcatSmsFields().length());
-	    		String toSend = c.getToSend(sms);
-	    		System.out.println(toSend);
-	    		System.out.println(toSend.length());
-	    		out.writeObject(toSend);
+		    	console.printf("Please enter the IBAN to transfer: ");
+		    	iban = console.readLine();
+		    	
+		    	console.printf("Please enter an amount to transfer: ");
+		    	amount = console.readLine();
+		    	
+		    	String transaction = client.generateTransactionSms(iban, amount);
+		    	System.out.println(transaction + " TAMANHO: " + transaction.length());
+	    		out.writeObject(transaction);
 	            out.flush();
-	            System.out.println("SMS sent... " + sms.toString());//Just debugging prints
-	    		command=s.nextLine();
 	    	}
-	    	System.out.println("Exiting...");//Just debugging prints
 		}
 		
-		//Sera necessario ter assim as excepcoes tendo em conta que isto vai ser um servico de sms (question mark)
 		catch(UnknownHostException unknownHost){
             System.err.println("Tentativa de conexao com server desconhecido");
         }

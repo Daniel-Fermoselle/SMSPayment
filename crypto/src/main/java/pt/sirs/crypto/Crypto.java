@@ -16,36 +16,36 @@ import org.apache.commons.codec.binary.Base64;
 
 public class Crypto {
 	
-	public static String cipherSMS(String sms, Key sharedKey) throws Exception{
+	public static byte[] cipherSMS(String sms, Key sharedKey, IvParameterSpec ivspec) throws Exception{
 		byte[] cipherText;
-		IvParameterSpec ivspec;
 		
-		ivspec = generateIV();
 		Cipher encryptCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 		encryptCipher.init(Cipher.ENCRYPT_MODE, sharedKey, ivspec);
 		cipherText = encryptCipher.doFinal(sms.getBytes());
 		
-		//Concatenate IV with cipherText
-		byte[] IVCipherText = new byte[ivspec.getIV().length + cipherText.length];
-		System.arraycopy(ivspec.getIV(), 0, IVCipherText, 0, ivspec.getIV().length);
-		System.arraycopy(cipherText, 0, IVCipherText, ivspec.getIV().length, cipherText.length);
-		
-		String encodedCipherText = new String(Base64.encodeBase64(IVCipherText));
-		return encodedCipherText;
+		return cipherText;
 	}
 	
-	public static String decipherSMS(String cipheredSms, Key sharedKey) throws Exception{
-		byte[] decipherText, iv, msg;
+	public static String decipherSMS(byte[] msg, Key sharedKey, IvParameterSpec ivspec) throws Exception{
+		byte[] decipherText;
 		
-		byte[] decodedCipheredSms =  Base64.decodeBase64(cipheredSms.getBytes());
-
-		iv = Arrays.copyOfRange(decodedCipheredSms, 0, 16);
-		msg = Arrays.copyOfRange(decodedCipheredSms, 16, decodedCipheredSms.length);
-		System.out.println("MSG len " + msg.length);
 		Cipher decryptCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-		decryptCipher.init(Cipher.DECRYPT_MODE, sharedKey, new IvParameterSpec(iv));
+		decryptCipher.init(Cipher.DECRYPT_MODE, sharedKey, ivspec);
 		decipherText = decryptCipher.doFinal(msg);
+		
 		return new String(decipherText);
+	}
+	
+	public static String encode(byte[] msg){
+		String encodedMsg = new String(Base64.encodeBase64(msg));
+		
+		return encodedMsg;
+	}
+	
+	public static byte[] decode(String msg){
+		byte[] decodedCipheredSms =  Base64.decodeBase64(msg.getBytes());
+		
+		return decodedCipheredSms;
 	}
 
 	public static Key getKeyFromKeyStore(String keystoreLocation, String keystorePass, String alias, String keyPass) throws Exception{

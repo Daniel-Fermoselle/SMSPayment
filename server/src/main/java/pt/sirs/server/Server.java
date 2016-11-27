@@ -2,6 +2,12 @@ package pt.sirs.server;
 
 import java.security.Key;
 import java.util.ArrayList;
+import java.util.Arrays;
+
+import javax.crypto.spec.IvParameterSpec;
+
+import org.apache.commons.codec.binary.Base64;
+
 import pt.sirs.crypto.Crypto;
 import pt.sirs.server.Exceptions.IBANAlreadyExistsException;
 import pt.sirs.server.Exceptions.ServerException;
@@ -36,20 +42,54 @@ public class Server {
     	this.accounts.add(account);
     }
     
-
-	public String processSms(String cipheredSms) throws Exception {
+    public String processLoginSms(String cipheredSms) throws Exception{
+		byte[] iv, msg;
 		Key sharedKey;
 		String decipheredSms;
-		String feedback = "pog";
-		System.out.println(cipheredSms + "   len " + cipheredSms.length());
+		Account a;
+		
+		byte[] decodedCipheredSms =  Crypto.decode(cipheredSms);
+		
+		a = checkUsername(new String(decodedCipheredSms));
+		
+		iv = Arrays.copyOfRange(decodedCipheredSms, 0, 16);
+		//Possible problem if encoding used more than 1 byte in 1 character
+		msg = Arrays.copyOfRange(decodedCipheredSms, 16 + 2 + a.getUsername().length(), decodedCipheredSms.length);
+		
 		sharedKey = Crypto.getKeyFromKeyStore(KEYSTORE_LOCATION, KEYSTORE_PASS, ALIAS, KEY_PASS);
-		decipheredSms = Crypto.decipherSMS(cipheredSms, sharedKey);
-		System.out.println(decipheredSms + "   len " + decipheredSms.length());
-
-		//Verify signature
-		//Execute operation
-		//Generate Feedback
-		return feedback;
+		decipheredSms = Crypto.decipherSMS(msg, sharedKey, new IvParameterSpec(iv));
+		System.out.println("Password is:" + decipheredSms + "   len " + decipheredSms.length());
+		
+		return generateLoginFeedback(a.getPassword(), decipheredSms);
+    }
+	
+	public String generateLoginFeedback(String aPassword, String smsPassword) throws Exception{
+		String feedback = "ChamPog";
+		
+		if(smsPassword.contains(aPassword)){
+			feedback = "PogChamp";
+		}
+		
+		IvParameterSpec ivspec = Crypto.generateIV();
+		Key sharedKey = Crypto.getKeyFromKeyStore(KEYSTORE_LOCATION, KEYSTORE_PASS, ALIAS, KEY_PASS);	
+		byte[] cipheredText = Crypto.cipherSMS(feedback, sharedKey, ivspec);
+		
+		byte[] finalMsg = new byte[ivspec.getIV().length + cipheredText.length];
+		System.arraycopy(ivspec.getIV(), 0, finalMsg, 0, ivspec.getIV().length);
+		System.arraycopy(cipheredText, 0, finalMsg, ivspec.getIV().length, cipheredText.length);
+		
+		System.out.println(feedback);
+		
+		return Crypto.encode(finalMsg);
+	}
+	
+	public Account checkUsername(String msg){
+		for(Account user : this.accounts){
+			if(msg.contains(user.getUsername())){
+				return user;
+			}
+		}
+		return null;
 	}
     
 }
