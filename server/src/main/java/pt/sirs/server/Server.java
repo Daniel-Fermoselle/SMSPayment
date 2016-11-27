@@ -30,18 +30,6 @@ public class Server {
     	
     }    
     
-    public void addAccount(Account account) throws ServerException{
-    	for(Account a : this.accounts){
-    		if(a.getIban().equals(account.getIban())){
-    			throw new IBANAlreadyExistsException(account.getIban());
-    		}
-    		if(a.getUsername().equals(account.getUsername())){
-    			throw new UserAlreadyExistsException(account.getUsername());
-    		}
-    	}
-    	this.accounts.add(account);
-    }
-    
     public String processLoginSms(String cipheredSms) throws Exception{
 		byte[] iv, msg;
 		Key sharedKey;
@@ -50,7 +38,7 @@ public class Server {
 		
 		byte[] decodedCipheredSms =  Crypto.decode(cipheredSms);
 		
-		a = checkUsername(new String(decodedCipheredSms));
+		a = getAccountByUsername(new String(decodedCipheredSms));
 		
 		iv = Arrays.copyOfRange(decodedCipheredSms, 0, 16);
 		//Possible problem if encoding used more than 1 byte in 1 character
@@ -61,6 +49,31 @@ public class Server {
 		System.out.println("Password is:" + decipheredSms + "   len " + decipheredSms.length());
 		
 		return generateLoginFeedback(a.getPassword(), decipheredSms);
+    }
+    
+    public String processTransactionSms(String cipheredSms) throws Exception{
+		byte[] iv, msg;
+		Key sharedKey;
+		String decipheredSms;
+		Account sender, receiver;
+		
+		byte[] decodedCipheredSms =  Crypto.decode(cipheredSms);
+		
+		sender = getAccountByUsername(new String(decodedCipheredSms));
+		
+		iv = Arrays.copyOfRange(decodedCipheredSms, 0, 16);
+		//Possible problem if encoding used more than 1 byte in 1 character
+		msg = Arrays.copyOfRange(decodedCipheredSms, 16 + 2 + sender.getUsername().length(), decodedCipheredSms.length);
+		
+		sharedKey = Crypto.getKeyFromKeyStore(KEYSTORE_LOCATION, KEYSTORE_PASS, ALIAS, KEY_PASS);
+		decipheredSms = Crypto.decipherSMS(msg, sharedKey, new IvParameterSpec(iv));
+
+		receiver = getAccountByIban(decipheredSms);
+		String[] parts = decipheredSms.split("-");
+		sender.debit(Integer.parseInt(parts[1]));
+		receiver.credit(Integer.parseInt(parts[1]));
+		
+		return ((Integer) sender.getBalance()).toString();
     }
 	
 	public String generateLoginFeedback(String aPassword, String smsPassword) throws Exception{
@@ -83,9 +96,30 @@ public class Server {
 		return Crypto.encode(finalMsg);
 	}
 	
-	public Account checkUsername(String msg){
+    public void addAccount(Account account) throws ServerException{
+    	for(Account a : this.accounts){
+    		if(a.getIban().equals(account.getIban())){
+    			throw new IBANAlreadyExistsException(account.getIban());
+    		}
+    		if(a.getUsername().equals(account.getUsername())){
+    			throw new UserAlreadyExistsException(account.getUsername());
+    		}
+    	}
+    	this.accounts.add(account);
+    }
+	
+	public Account getAccountByUsername(String msg){
 		for(Account user : this.accounts){
 			if(msg.contains(user.getUsername())){
+				return user;
+			}
+		}
+		return null;
+	}
+	
+	public Account getAccountByIban(String msg){
+		for(Account user : this.accounts){
+			if(msg.contains(user.getIban())){
 				return user;
 			}
 		}

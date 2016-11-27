@@ -43,6 +43,9 @@ public class ServerApplication {
             out.flush();
             
             while(true){
+                String transaction = (String) in.readObject();
+    	    	System.out.println(transaction + " TAMANHO: " + transaction.length());
+    	    	System.out.println(server.processTransactionSms(transaction));
             }
         }
         catch(Exception e){
