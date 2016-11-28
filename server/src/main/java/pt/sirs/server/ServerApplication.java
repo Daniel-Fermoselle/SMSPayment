@@ -97,7 +97,10 @@ public class ServerApplication {
 		
         String transaction = (String) in.readObject();
     	System.out.println(transaction + " TAMANHO: " + transaction.length());
-    	System.out.println(server.processTransactionSms(transaction));
+        String feedback = server.processTransactionSms(transaction);
+        System.out.println(feedback + " TAMANHO: " + feedback.length());
+		out.writeObject(feedback);
+        out.flush();
 		
 		return server;
 	}

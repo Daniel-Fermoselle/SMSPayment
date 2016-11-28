@@ -120,6 +120,10 @@ public class ClientApplication {
     	System.out.println(transaction + " TAMANHO: " + transaction.length());
 		out.writeObject(transaction);
         out.flush();
+        
+        String feedback = (String) in.readObject();
+        System.out.println(feedback + " TAMANHO: " + feedback.length());
+        System.out.println(client.processTransactionFeedback(feedback));
 		
 		return client;
 	}

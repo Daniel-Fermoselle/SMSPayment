@@ -81,6 +81,21 @@ public class Client {
 		return decipheredSms;
 	}
 	
+	public String processTransactionFeedback(String cipheredSms) throws Exception{
+		byte[] msg;
+		String decipheredSms;
+		
+		byte[] decodedCipheredSms =  Crypto.decode(cipheredSms);
+		
+		msg = Arrays.copyOfRange(decodedCipheredSms, 0, decodedCipheredSms.length);
+		
+		decipheredSms = Crypto.decipherSMS(msg, this.sharedKey);
+		
+		this.status = decipheredSms;
+		
+		return decipheredSms;
+	}
+	
 	public String generateValueSharingSMS(String value){
 		if(value.equals("p")){
 			System.out.println(Crypto.encode(this.p.toByteArray()) + "  LENG P: " + Crypto.encode(this.p.toByteArray()).length());

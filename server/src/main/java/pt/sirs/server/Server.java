@@ -55,7 +55,7 @@ public class Server {
     public String processTransactionSms(String cipheredSms) throws Exception{
 		byte[] msg;
 		String decipheredSms;
-		Account sender, receiver;
+		Account sender;
 		SecretKeySpec sharedKey;
 		
 		byte[] decodedCipheredSms =  Crypto.decode(cipheredSms);
@@ -67,13 +67,8 @@ public class Server {
 		msg = Arrays.copyOfRange(decodedCipheredSms, 2 + sender.getUsername().length(), decodedCipheredSms.length);
 		
 		decipheredSms = Crypto.decipherSMS(msg, sharedKey);
-
-		receiver = getAccountByIban(decipheredSms);
-		String[] parts = decipheredSms.split("-");
-		sender.debit(Integer.parseInt(parts[1]));
-		receiver.credit(Integer.parseInt(parts[1]));
 		
-		return ((Integer) sender.getBalance()).toString();
+		return generateTransactionFeedback(sender, decipheredSms);
     }
 	
 	public String generateLoginFeedback(Account a, String smsPassword) throws Exception{
@@ -90,6 +85,32 @@ public class Server {
 		System.arraycopy(cipheredText, 0, finalMsg, 0, cipheredText.length);
 		
 		System.out.println(this.status);
+		
+		return Crypto.encode(finalMsg);
+	}
+	
+	public String generateTransactionFeedback(Account sender, String decipheredSms) throws Exception{
+		Account receiver;
+		this.status = FAILED_FEEDBACK;
+		
+		receiver = getAccountByIban(decipheredSms);
+		if(receiver != null){
+			String[] parts = decipheredSms.split("-");
+			sender.debit(Integer.parseInt(parts[1]));
+			receiver.credit(Integer.parseInt(parts[1]));
+			this.status = SUCCESS_FEEDBACK;
+		}
+		
+		byte[] cipheredText = Crypto.cipherSMS(this.status, this.sharedKey);
+		
+		byte[] finalMsg = new byte[cipheredText.length];
+		System.arraycopy(cipheredText, 0, finalMsg, 0, cipheredText.length);
+		
+		System.out.println(this.status);
+		if(this.status.equals(SUCCESS_FEEDBACK)){
+			System.out.println("Receiver: " + ((Integer) receiver.getBalance()).toString() + " <------- " +
+				"Sender: " + ((Integer) sender.getBalance()).toString());
+		}
 		
 		return Crypto.encode(finalMsg);
 	}
