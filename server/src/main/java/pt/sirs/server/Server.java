@@ -13,6 +13,9 @@ import pt.sirs.server.Exceptions.ServerException;
 import pt.sirs.server.Exceptions.UserAlreadyExistsException;
 
 public class Server {
+	public static final String SUCCESS_FEEDBACK = "PogChamp";
+	public static final String FAILED_FEEDBACK = "ChamPog";
+	
 	private ArrayList<Account> accounts;
 	private BigInteger p;
 	private BigInteger g;
@@ -28,7 +31,7 @@ public class Server {
     	addAccount(new Account("PT12345678901234567890124", 100, "sigmaJEM", "12"));
     	addAccount(new Account("PT12345678901234567890125", 100, "Alpha", "123"));
     	addAccount(new Account("PT12345678901234567890126", 100, "jse", "1234"));
-    	this.status = "Nope";
+    	this.status = "Initialized";
     }    
     
     public String processLoginSms(String cipheredSms) throws Exception{
@@ -74,21 +77,19 @@ public class Server {
     }
 	
 	public String generateLoginFeedback(Account a, String smsPassword) throws Exception{
-		String feedback = "ChamPog";
-		this.status = "NopeLogin";
+		this.status = FAILED_FEEDBACK;
 		
 		if(smsPassword.contains(a.getPassword())){
-			feedback = "PogChamp";
-			this.status = "OkLogin";
+			this.status = SUCCESS_FEEDBACK;
 			a.setSharedKey(sharedKey);
 		}
 		
-		byte[] cipheredText = Crypto.cipherSMS(feedback, this.sharedKey);
+		byte[] cipheredText = Crypto.cipherSMS(this.status, this.sharedKey);
 		
 		byte[] finalMsg = new byte[cipheredText.length];
 		System.arraycopy(cipheredText, 0, finalMsg, 0, cipheredText.length);
 		
-		System.out.println(feedback);
+		System.out.println(this.status);
 		
 		return Crypto.encode(finalMsg);
 	}

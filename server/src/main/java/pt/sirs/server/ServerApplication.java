@@ -36,7 +36,7 @@ public class ServerApplication {
             
             Server server = new Server();
             
-            while(!server.getStatus().equals("OkLogin")){
+            while(!server.getStatus().equals(Server.SUCCESS_FEEDBACK)){
             	server = DiffieHellman(server, out, in);            
             	server = Login(server, out, in);
             }
