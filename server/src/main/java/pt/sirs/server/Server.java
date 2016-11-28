@@ -68,6 +68,9 @@ public class Server {
 		
 		decipheredSms = Crypto.decipherSMS(msg, sharedKey);
 		
+		String parts[] = decipheredSms.split("-");
+		if(parts[0].equals("logout")){ return generateLogoutFeedback(); }
+		
 		return generateTransactionFeedback(sender, decipheredSms);
     }
 	
@@ -78,6 +81,19 @@ public class Server {
 			this.status = SUCCESS_FEEDBACK;
 			a.setSharedKey(sharedKey);
 		}
+		
+		byte[] cipheredText = Crypto.cipherSMS(this.status, this.sharedKey);
+		
+		byte[] finalMsg = new byte[cipheredText.length];
+		System.arraycopy(cipheredText, 0, finalMsg, 0, cipheredText.length);
+		
+		System.out.println(this.status);
+		
+		return Crypto.encode(finalMsg);
+	}
+	
+	public String generateLogoutFeedback() throws Exception{
+		this.status = FAILED_FEEDBACK;
 		
 		byte[] cipheredText = Crypto.cipherSMS(this.status, this.sharedKey);
 		

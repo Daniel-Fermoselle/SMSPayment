@@ -49,6 +49,23 @@ public class Client {
 		
 	}
 	
+	public String generateLogoutSms() throws Exception{
+		byte[] cipheredText;
+		String usernameS = "-" + this.myUsername + "-";
+		
+		cipheredText = Crypto.cipherSMS("logout", this.sharedKey);	
+		
+
+		//Concatenate IV with username with cipheredText --> IV-username-cipheredText
+		byte[] usernameB = usernameS.getBytes();
+		byte[] finalMsg = new byte[cipheredText.length + usernameB.length];
+		System.arraycopy(usernameB, 0, finalMsg, 0, usernameB.length);
+		System.arraycopy(cipheredText, 0, finalMsg, usernameB.length, cipheredText.length);
+		
+		return Crypto.encode(finalMsg);
+		
+	}
+	
 	public String generateTransactionSms(String iban, String amount) throws Exception{
 		byte[] cipheredText;
 		String usernameS = "-" + this.myUsername + "-";
@@ -67,6 +84,21 @@ public class Client {
 	}
 	
 	public String processLoginFeedback(String cipheredSms) throws Exception{
+		byte[] msg;
+		String decipheredSms;
+		
+		byte[] decodedCipheredSms =  Crypto.decode(cipheredSms);
+		
+		msg = Arrays.copyOfRange(decodedCipheredSms, 0, decodedCipheredSms.length);
+		
+		decipheredSms = Crypto.decipherSMS(msg, this.sharedKey);
+		
+		this.status = decipheredSms;
+		
+		return decipheredSms;
+	}
+	
+	public String processLogoutFeedback(String cipheredSms) throws Exception{
 		byte[] msg;
 		String decipheredSms;
 		

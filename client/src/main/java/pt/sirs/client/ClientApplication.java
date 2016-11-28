@@ -32,25 +32,36 @@ public class ClientApplication {
 	            System.exit(0);
 	        }
 	        System.out.println("Started...");//Just debugging prints	
-	        
-	        //TODO Make Diffie Hellman happen once
-	        while(!feedback.equals(Client.SUCCESS_FEEDBACK)){
-		    	console.printf("Please enter your username: ");
-		    	String username = console.readLine();	    	
-		    	console.printf("Please enter your password: ");
-		    	char[] passwordChars = console.readPassword();
-		    	String passwordString = new String(passwordChars);
+	        while(true){
+		        //TODO Make Deffie Hellman happen once
+		        while(!feedback.equals(Client.SUCCESS_FEEDBACK)){
+			    	console.printf("Please enter your username: ");
+			    	String username = console.readLine();	    	
+			    	console.printf("Please enter your password: ");
+			    	char[] passwordChars = console.readPassword();
+			    	String passwordString = new String(passwordChars);
+			    	
+			    	client = new Client(username, passwordString);
+			    	
+			    	client = DiffieHellman(client, out, in);	
+			    	client = Login(client, out, in);
+			    	feedback = client.getStatus();
+		        }
 		    	
-		    	client = new Client(username, passwordString);
-		    	
-		    	client = DiffieHellman(client, out, in);	
-		    	client = Login(client, out, in);
-		    	feedback = client.getStatus();
+		    	while(client.getStatus().equals(Client.SUCCESS_FEEDBACK)){
+		    		System.out.println("Choose one of the following options");
+		    		System.out.println("1 - Transaction");
+		    		System.out.println("2 - Logout");
+		    		String choice = console.readLine();
+		    		if(choice.equals("1")){
+		    			client = Transaction(client, out, in, console);
+		    		}
+		    		else if(choice.equals("2")){
+		    			client = Logout(client, out, in);
+		    			feedback = Client.FAILED_FEEDBACK;
+		    		}
+		    	}
 	        }
-	    	
-	    	while(true){
-	    		client = Transaction(client, out, in, console);
-	    	}
 		}
 		
 		catch(UnknownHostException unknownHost){
@@ -124,6 +135,20 @@ public class ClientApplication {
         String feedback = (String) in.readObject();
         System.out.println(feedback + " TAMANHO: " + feedback.length());
         System.out.println(client.processTransactionFeedback(feedback));
+		
+		return client;
+	}
+	
+	public static Client Logout(Client client, ObjectOutputStream out, ObjectInputStream in) throws Exception{
+		
+    	String logout = client.generateLogoutSms();
+    	System.out.println(logout + " TAMANHO: " + logout.length());
+		out.writeObject(logout);
+        out.flush();
+        
+        String feedback = (String) in.readObject();
+        System.out.println(feedback + " TAMANHO: " + feedback.length());
+        System.out.println(client.processLoginFeedback(feedback));
 		
 		return client;
 	}

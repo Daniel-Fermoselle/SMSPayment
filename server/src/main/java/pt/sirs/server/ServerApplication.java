@@ -35,14 +35,15 @@ public class ServerApplication {
             in = new ObjectInputStream(connection.getInputStream());
             
             Server server = new Server();
-            
-            while(!server.getStatus().equals(Server.SUCCESS_FEEDBACK)){
-            	server = DiffieHellman(server, out, in);            
-            	server = Login(server, out, in);
-            }
-            
             while(true){
-            	server = Transaction(server, out, in);
+	            while(!server.getStatus().equals(Server.SUCCESS_FEEDBACK)){
+	            	server = DiffieHellman(server, out, in);            
+	            	server = Login(server, out, in);
+	            }
+	            
+	            while(server.getStatus().equals(Server.SUCCESS_FEEDBACK)){
+	            	server = Transaction(server, out, in);
+	            }
             }
         }
         catch(Exception e){
