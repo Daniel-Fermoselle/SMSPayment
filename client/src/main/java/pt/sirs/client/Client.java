@@ -3,7 +3,6 @@ package pt.sirs.client;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import pt.sirs.crypto.Crypto;
@@ -30,55 +29,48 @@ public class Client {
 	}
 	
 	public String generateLoginSms() throws Exception{
-		IvParameterSpec ivspec;
 		byte[] cipheredText;
 		String usernameS = "-" + this.myUsername + "-";
 		
-		ivspec = Crypto.generateIV();
-		cipheredText = Crypto.cipherSMS(this.myPassword, this.sharedKey, ivspec);	
+		cipheredText = Crypto.cipherSMS(this.myPassword, this.sharedKey);	
 		
 
 		//Concatenate IV with username with cipheredText --> IV-username-cipheredText
 		byte[] usernameB = usernameS.getBytes();
-		byte[] finalMsg = new byte[ivspec.getIV().length + cipheredText.length + usernameB.length];
-		System.arraycopy(ivspec.getIV(), 0, finalMsg, 0, ivspec.getIV().length);
-		System.arraycopy(usernameB, 0, finalMsg, ivspec.getIV().length, usernameB.length);
-		System.arraycopy(cipheredText, 0, finalMsg, ivspec.getIV().length + usernameB.length, cipheredText.length);
+		byte[] finalMsg = new byte[cipheredText.length + usernameB.length];
+		System.arraycopy(usernameB, 0, finalMsg, 0, usernameB.length);
+		System.arraycopy(cipheredText, 0, finalMsg, usernameB.length, cipheredText.length);
 		
 		return Crypto.encode(finalMsg);
 		
 	}
 	
 	public String generateTransactionSms(String iban, String amount) throws Exception{
-		IvParameterSpec ivspec;
 		byte[] cipheredText;
 		String usernameS = "-" + this.myUsername + "-";
 		String msgToCipher = iban + "-" + amount;
 		
-		ivspec = Crypto.generateIV();
-		cipheredText = Crypto.cipherSMS(msgToCipher, this.sharedKey, ivspec);		
+		cipheredText = Crypto.cipherSMS(msgToCipher, this.sharedKey);		
 
 		//Concatenate IV with username with cipheredText --> IV-username-cipheredText
 		byte[] usernameB = usernameS.getBytes();
-		byte[] finalMsg = new byte[ivspec.getIV().length + cipheredText.length + usernameB.length];
-		System.arraycopy(ivspec.getIV(), 0, finalMsg, 0, ivspec.getIV().length);
-		System.arraycopy(usernameB, 0, finalMsg, ivspec.getIV().length, usernameB.length);
-		System.arraycopy(cipheredText, 0, finalMsg, ivspec.getIV().length + usernameB.length, cipheredText.length);
+		byte[] finalMsg = new byte[cipheredText.length + usernameB.length];
+		System.arraycopy(usernameB, 0, finalMsg, 0, usernameB.length);
+		System.arraycopy(cipheredText, 0, finalMsg, usernameB.length, cipheredText.length);
 		
 		return Crypto.encode(finalMsg);
 		
 	}
 	
 	public String processLoginFeedback(String cipheredSms) throws Exception{
-		byte[] iv, msg;
+		byte[] msg;
 		String decipheredSms;
 		
 		byte[] decodedCipheredSms =  Crypto.decode(cipheredSms);
 		
-		iv = Arrays.copyOfRange(decodedCipheredSms, 0, 16);
-		msg = Arrays.copyOfRange(decodedCipheredSms, 16, decodedCipheredSms.length);
+		msg = Arrays.copyOfRange(decodedCipheredSms, 0, decodedCipheredSms.length);
 		
-		decipheredSms = Crypto.decipherSMS(msg, this.sharedKey, new IvParameterSpec(iv));
+		decipheredSms = Crypto.decipherSMS(msg, this.sharedKey);
 		
 		return decipheredSms;
 	}

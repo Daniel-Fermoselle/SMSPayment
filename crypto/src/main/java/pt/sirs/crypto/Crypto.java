@@ -20,21 +20,21 @@ import pt.sirs.crypto.DeffieHellman;
 public class Crypto {
 	private static int bitLength=512;	
 	
-	public static byte[] cipherSMS(String sms, Key sharedKey, IvParameterSpec ivspec) throws Exception{
+	public static byte[] cipherSMS(String sms, Key sharedKey) throws Exception{
 		byte[] cipherText;
 		
-		Cipher encryptCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-		encryptCipher.init(Cipher.ENCRYPT_MODE, sharedKey, ivspec);
+		Cipher encryptCipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+		encryptCipher.init(Cipher.ENCRYPT_MODE, sharedKey);
 		cipherText = encryptCipher.doFinal(sms.getBytes());
 		
 		return cipherText;
 	}
 	
-	public static String decipherSMS(byte[] msg, Key sharedKey, IvParameterSpec ivspec) throws Exception{
+	public static String decipherSMS(byte[] msg, Key sharedKey) throws Exception{
 		byte[] decipherText;
 		
-		Cipher decryptCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-		decryptCipher.init(Cipher.DECRYPT_MODE, sharedKey, ivspec);
+		Cipher decryptCipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+		decryptCipher.init(Cipher.DECRYPT_MODE, sharedKey);
 		decipherText = decryptCipher.doFinal(msg);
 		
 		return new String(decipherText);

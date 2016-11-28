@@ -32,7 +32,7 @@ public class Server {
     }    
     
     public String processLoginSms(String cipheredSms) throws Exception{
-		byte[] iv, msg;
+		byte[] msg;
 		String decipheredSms;
 		Account a;
 		
@@ -40,18 +40,17 @@ public class Server {
 		
 		a = getAccountByUsername(new String(decodedCipheredSms));
 		
-		iv = Arrays.copyOfRange(decodedCipheredSms, 0, 16);
 		//Possible problem if encoding used more than 1 byte in 1 character
-		msg = Arrays.copyOfRange(decodedCipheredSms, 16 + 2 + a.getUsername().length(), decodedCipheredSms.length);
+		msg = Arrays.copyOfRange(decodedCipheredSms, 2 + a.getUsername().length(), decodedCipheredSms.length);
 		
-		decipheredSms = Crypto.decipherSMS(msg, this.sharedKey, new IvParameterSpec(iv));
+		decipheredSms = Crypto.decipherSMS(msg, this.sharedKey);
 		System.out.println("Password is:" + decipheredSms + "   len " + decipheredSms.length());
 		
 		return generateLoginFeedback(a, decipheredSms);
     }
     
     public String processTransactionSms(String cipheredSms) throws Exception{
-		byte[] iv, msg;
+		byte[] msg;
 		String decipheredSms;
 		Account sender, receiver;
 		SecretKeySpec sharedKey;
@@ -61,11 +60,10 @@ public class Server {
 		sender = getAccountByUsername(new String(decodedCipheredSms));
 		sharedKey = sender.getSharedKey();
 		
-		iv = Arrays.copyOfRange(decodedCipheredSms, 0, 16);
 		//Possible problem if encoding used more than 1 byte in 1 character
-		msg = Arrays.copyOfRange(decodedCipheredSms, 16 + 2 + sender.getUsername().length(), decodedCipheredSms.length);
+		msg = Arrays.copyOfRange(decodedCipheredSms, 2 + sender.getUsername().length(), decodedCipheredSms.length);
 		
-		decipheredSms = Crypto.decipherSMS(msg, sharedKey, new IvParameterSpec(iv));
+		decipheredSms = Crypto.decipherSMS(msg, sharedKey);
 
 		receiver = getAccountByIban(decipheredSms);
 		String[] parts = decipheredSms.split("-");
@@ -83,12 +81,10 @@ public class Server {
 			a.setSharedKey(sharedKey);
 		}
 		
-		IvParameterSpec ivspec = Crypto.generateIV();
-		byte[] cipheredText = Crypto.cipherSMS(feedback, a.getSharedKey(), ivspec);
+		byte[] cipheredText = Crypto.cipherSMS(feedback, a.getSharedKey());
 		
-		byte[] finalMsg = new byte[ivspec.getIV().length + cipheredText.length];
-		System.arraycopy(ivspec.getIV(), 0, finalMsg, 0, ivspec.getIV().length);
-		System.arraycopy(cipheredText, 0, finalMsg, ivspec.getIV().length, cipheredText.length);
+		byte[] finalMsg = new byte[cipheredText.length];
+		System.arraycopy(cipheredText, 0, finalMsg, 0, cipheredText.length);
 		
 		System.out.println(feedback);
 		
