@@ -13,9 +13,10 @@ public class Account{
 	private String username;
 	private String password;
 	private SecretKeySpec sharedKey;
+	private int counter;
 
 	public Account(String iban, int balance, String username, String password){
-		if(password.length()<4 && password.length()>15)
+		if(password.length()<4 || password.length()>15)
 		{ throw new InvalidPasswordException(password); }
 		if(username.length()>10)
 		{ throw new InvalidUsernameException(username); }
@@ -23,6 +24,7 @@ public class Account{
 		this.balance = balance;
 		this.username = username;
 		this.password = password;
+		this.counter = 0;
 	}
 	
 	public void debit(int amount){
@@ -75,6 +77,14 @@ public class Account{
 
 	public void setSharedKey(SecretKeySpec sharedKey) {
 		this.sharedKey = sharedKey;
+	}
+
+	public int getCounter() {
+		return counter;
+	}
+
+	public void setCounter(int counter) {
+		this.counter = counter;
 	}
 
 }
