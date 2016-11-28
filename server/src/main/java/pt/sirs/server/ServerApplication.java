@@ -2,6 +2,7 @@ package pt.sirs.server;
 
 import java.io.*;
 import java.net.*;
+
 import pt.sirs.server.Server;
 
 public class ServerApplication {
@@ -35,32 +36,12 @@ public class ServerApplication {
             
             Server server = new Server();
             
-            //Receive p and g values for DH
-            server.setP((String) in.readObject());
-            server.setG((String) in.readObject());
-            //Generate secret value
-            server.generateSecretValue();
-            //Generate server public value
-            server.generatePublicValue();
+            server = DiffieHellman(server, out, in);
             
-            //Receive public value from client and generate sharedKey
-            server.generateSharedKey((String) in.readObject());
-            
-            //Send public value to client
-            out.writeObject(server.getPublicValue());
-            out.flush();
-            
-            String sms = (String) in.readObject();
-	    	System.out.println(sms + " TAMANHO: " + sms.length());
-            String feedback = server.processLoginSms(sms);
-            System.out.println(feedback + " TAMANHO: " + feedback.length());
-    		out.writeObject(feedback);
-            out.flush();
+            server = Login(server, out, in);
             
             while(true){
-                String transaction = (String) in.readObject();
-    	    	System.out.println(transaction + " TAMANHO: " + transaction.length());
-    	    	System.out.println(server.processTransactionSms(transaction));
+            	server = Transaction(server, out, in);
             }
         }
         catch(Exception e){
@@ -78,5 +59,46 @@ public class ServerApplication {
             }
         }
     }
-
+    
+	public static Server DiffieHellman(Server server, ObjectOutputStream out, ObjectInputStream in) throws Exception{
+		
+		//Receive p and g values for DH
+        server.setP((String) in.readObject());
+        server.setG((String) in.readObject());
+        //Generate secret value
+        server.generateSecretValue();
+        //Generate server public value
+        server.generatePublicValue();
+        
+        //Receive public value from client and generate sharedKey
+        server.generateSharedKey((String) in.readObject());
+        
+        //Send public value to client
+        out.writeObject(server.getPublicValue());
+        out.flush();
+		
+		return server;
+	}
+	
+	public static Server Login(Server server, ObjectOutputStream out, ObjectInputStream in) throws Exception{
+		
+        String sms = (String) in.readObject();
+    	System.out.println(sms + " TAMANHO: " + sms.length());
+        String feedback = server.processLoginSms(sms);
+        System.out.println(feedback + " TAMANHO: " + feedback.length());
+		out.writeObject(feedback);
+        out.flush();
+		
+		return server;
+	}
+	
+	public static Server Transaction(Server server, ObjectOutputStream out, ObjectInputStream in) throws Exception{
+		
+        String transaction = (String) in.readObject();
+    	System.out.println(transaction + " TAMANHO: " + transaction.length());
+    	System.out.println(server.processTransactionSms(transaction));
+		
+		return server;
+	}
+    
 }
