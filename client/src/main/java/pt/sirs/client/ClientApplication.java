@@ -14,7 +14,7 @@ public class ClientApplication {
 		ObjectOutputStream out = null;//CUIDADO
 		ObjectInputStream in = null;
 		Client client = null;
-		String feedback = "ChamPog";
+		String feedback = Client.FAILED_FEEDBACK;
 		try{
 			
 			//1. Criar o socket para falar com o server
@@ -33,7 +33,8 @@ public class ClientApplication {
 	        }
 	        System.out.println("Started...");//Just debugging prints	
 	        
-	        while(!feedback.equals("PogChamp")){
+	        //TODO Make Diffie Hellman happen once
+	        while(!feedback.equals(Client.SUCCESS_FEEDBACK)){
 		    	console.printf("Please enter your username: ");
 		    	String username = console.readLine();	    	
 		    	console.printf("Please enter your password: ");
@@ -43,8 +44,8 @@ public class ClientApplication {
 		    	client = new Client(username, passwordString);
 		    	
 		    	client = DiffieHellman(client, out, in);	
-		    	feedback = Login(client, out, in);
-		    	System.out.println(feedback);
+		    	client = Login(client, out, in);
+		    	feedback = client.getStatus();
 	        }
 	    	
 	    	while(true){
@@ -91,7 +92,7 @@ public class ClientApplication {
 		return client;
 	}
 	
-	public static String Login(Client client, ObjectOutputStream out, ObjectInputStream in) throws Exception{
+	public static Client Login(Client client, ObjectOutputStream out, ObjectInputStream in) throws Exception{
 		
     	String login = client.generateLoginSms();
     	System.out.println(login + " TAMANHO: " + login.length());
@@ -102,7 +103,7 @@ public class ClientApplication {
         System.out.println(feedback + " TAMANHO: " + feedback.length());
         System.out.println(client.processLoginFeedback(feedback));
 		
-		return client.processLoginFeedback(feedback);
+		return client;
 	}
 	
 	public static Client Transaction(Client client, ObjectOutputStream out, ObjectInputStream in, Console console) throws Exception{

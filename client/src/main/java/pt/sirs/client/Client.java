@@ -8,6 +8,8 @@ import javax.crypto.spec.SecretKeySpec;
 import pt.sirs.crypto.Crypto;
 
 public class Client {
+	public static final String SUCCESS_FEEDBACK = "PogChamp";
+	public static final String FAILED_FEEDBACK = "ChamPog";
 	
 	private int myMoney; 
 	private String myUsername;
@@ -17,6 +19,7 @@ public class Client {
 	private BigInteger secretValue;
 	private BigInteger publicValue;
 	private SecretKeySpec sharedKey;
+	private String status;
 	
 	
 	public Client(String myUsername, String myPassword) {
@@ -25,7 +28,8 @@ public class Client {
 		BigInteger[] pair = Crypto.GeneratePandG();
 		p = pair[0];
 		g = pair[1];
-		secretValue = Crypto.generateSecretValue();
+		this.secretValue = Crypto.generateSecretValue();
+		this.status = "Initialized";
 	}
 	
 	public String generateLoginSms() throws Exception{
@@ -71,6 +75,8 @@ public class Client {
 		msg = Arrays.copyOfRange(decodedCipheredSms, 0, decodedCipheredSms.length);
 		
 		decipheredSms = Crypto.decipherSMS(msg, this.sharedKey);
+		
+		this.status = decipheredSms;
 		
 		return decipheredSms;
 	}
@@ -129,6 +135,14 @@ public class Client {
 
 	public void setMyPassword(String myPassword) {
 		this.myPassword = myPassword;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
 	}
 }
 	
