@@ -4,7 +4,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 
@@ -20,6 +19,7 @@ public class Server {
 	private BigInteger secretValue;
 	private BigInteger publicValue;
 	private SecretKeySpec sharedKey;
+	private String status;
 	
     public Server() throws ServerException {
     	
@@ -28,7 +28,7 @@ public class Server {
     	addAccount(new Account("PT12345678901234567890124", 100, "sigmaJEM", "12"));
     	addAccount(new Account("PT12345678901234567890125", 100, "Alpha", "123"));
     	addAccount(new Account("PT12345678901234567890126", 100, "jse", "1234"));
-    	
+    	this.status = "Nope";
     }    
     
     public String processLoginSms(String cipheredSms) throws Exception{
@@ -75,9 +75,11 @@ public class Server {
 	
 	public String generateLoginFeedback(Account a, String smsPassword) throws Exception{
 		String feedback = "ChamPog";
+		this.status = "NopeLogin";
 		
 		if(smsPassword.contains(a.getPassword())){
 			feedback = "PogChamp";
+			this.status = "OkLogin";
 			a.setSharedKey(sharedKey);
 		}
 		
@@ -149,6 +151,14 @@ public class Server {
 	public void setG(String g) {
 		byte[] byteG = Crypto.decode(g);
 		this.g = new BigInteger(byteG);		
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
 	}
 
 	

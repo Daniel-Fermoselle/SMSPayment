@@ -36,9 +36,10 @@ public class ServerApplication {
             
             Server server = new Server();
             
-            server = DiffieHellman(server, out, in);
-            
-            server = Login(server, out, in);
+            while(!server.getStatus().equals("OkLogin")){
+            	server = DiffieHellman(server, out, in);            
+            	server = Login(server, out, in);
+            }
             
             while(true){
             	server = Transaction(server, out, in);
