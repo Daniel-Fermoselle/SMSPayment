@@ -36,12 +36,12 @@ public class ServerApplication {
             
             Server server = new Server();
             while(true){
-	            while(!server.getStatus().equals(Server.SUCCESS_FEEDBACK)){
+	            while(!server.getStatus().equals(Server.SERVER_SUCCESSFUL_LOGIN_MSG)){
 	            	server = DiffieHellman(server, out, in);            
 	            	server = Login(server, out, in);
 	            }
 	            
-	            while(server.getStatus().equals(Server.SUCCESS_FEEDBACK)){
+	            while(server.getStatus().equals(Server.SERVER_SUCCESSFUL_LOGIN_MSG)){
 	            	server = Transaction(server, out, in);
 	            }
             }

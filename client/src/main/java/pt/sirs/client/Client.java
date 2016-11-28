@@ -1,6 +1,7 @@
 package pt.sirs.client;
 
 import java.math.BigInteger;
+import java.sql.Timestamp;
 import java.util.Arrays;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -20,6 +21,8 @@ public class Client {
 	private BigInteger publicValue;
 	private SecretKeySpec sharedKey;
 	private String status;
+	//TODO this is only 32bit can be changed to long
+	private int counter;
 	
 	
 	public Client(String myUsername, String myPassword) {
@@ -34,29 +37,31 @@ public class Client {
 	
 	public String generateLoginSms() throws Exception{
 		byte[] cipheredText;
-		String usernameS = "-" + this.myUsername + "-";
-		
-		cipheredText = Crypto.cipherSMS(this.myPassword, this.sharedKey);	
-		
+		String usernameS = this.myUsername + "-";
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
-		//Concatenate IV with username with cipheredText --> IV-username-cipheredText
+		String toCipher  = timestamp.toString() + "-" + this.myPassword;
+		
+		cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);	
+		
+		//Concatenate username with cipheredText --> username-cipheredText
+		//cipheredText = {pass-TS}Ks
 		byte[] usernameB = usernameS.getBytes();
 		byte[] finalMsg = new byte[cipheredText.length + usernameB.length];
 		System.arraycopy(usernameB, 0, finalMsg, 0, usernameB.length);
 		System.arraycopy(cipheredText, 0, finalMsg, usernameB.length, cipheredText.length);
 		
 		return Crypto.encode(finalMsg);
-		
 	}
 	
 	public String generateLogoutSms() throws Exception{
 		byte[] cipheredText;
-		String usernameS = "-" + this.myUsername + "-";
-		
-		cipheredText = Crypto.cipherSMS("logout", this.sharedKey);	
-		
+		String usernameS = this.myUsername + "-";
+		String msgToCipher = "logout" + "-" + this.counter;
 
-		//Concatenate IV with username with cipheredText --> IV-username-cipheredText
+		cipheredText = Crypto.cipherSMS(msgToCipher, this.sharedKey);			
+
+		//Concatenate username with cipheredText --> username-cipheredText
 		byte[] usernameB = usernameS.getBytes();
 		byte[] finalMsg = new byte[cipheredText.length + usernameB.length];
 		System.arraycopy(usernameB, 0, finalMsg, 0, usernameB.length);
@@ -68,21 +73,21 @@ public class Client {
 	
 	public String generateTransactionSms(String iban, String amount) throws Exception{
 		byte[] cipheredText;
-		String usernameS = "-" + this.myUsername + "-";
-		String msgToCipher = iban + "-" + amount;
+		String usernameS = this.myUsername + "-";
+		String msgToCipher = iban + "-" + amount + "-" + this.counter;
 		
 		cipheredText = Crypto.cipherSMS(msgToCipher, this.sharedKey);		
 
-		//Concatenate IV with username with cipheredText --> IV-username-cipheredText
+		//Concatenate username with cipheredText --> username-cipheredText
 		byte[] usernameB = usernameS.getBytes();
 		byte[] finalMsg = new byte[cipheredText.length + usernameB.length];
 		System.arraycopy(usernameB, 0, finalMsg, 0, usernameB.length);
 		System.arraycopy(cipheredText, 0, finalMsg, usernameB.length, cipheredText.length);
 		
 		return Crypto.encode(finalMsg);
-		
 	}
 	
+	//TODO In future make this return bool/void
 	public String processLoginFeedback(String cipheredSms) throws Exception{
 		byte[] msg;
 		String decipheredSms;
@@ -93,9 +98,10 @@ public class Client {
 		
 		decipheredSms = Crypto.decipherSMS(msg, this.sharedKey);
 		
-		this.status = decipheredSms;
-		
-		return decipheredSms;
+		String[] splitedSMS = decipheredSms.split("-");
+		this.counter = Integer.parseInt(splitedSMS[1]);
+		this.status = splitedSMS[0];
+		return splitedSMS[0];
 	}
 	
 	public String processLogoutFeedback(String cipheredSms) throws Exception{
@@ -123,9 +129,11 @@ public class Client {
 		
 		decipheredSms = Crypto.decipherSMS(msg, this.sharedKey);
 		
-		this.status = decipheredSms;
-		
-		return decipheredSms;
+		String[] splitedSMS = decipheredSms.split("-");
+		this.counter = Integer.parseInt(splitedSMS[1]);
+		this.status = splitedSMS[0];
+		return splitedSMS[0];
+
 	}
 	
 	public String generateValueSharingSMS(String value){
