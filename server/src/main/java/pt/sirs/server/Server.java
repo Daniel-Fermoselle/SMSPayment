@@ -81,7 +81,7 @@ public class Server {
 			a.setSharedKey(sharedKey);
 		}
 		
-		byte[] cipheredText = Crypto.cipherSMS(feedback, a.getSharedKey());
+		byte[] cipheredText = Crypto.cipherSMS(feedback, this.sharedKey);
 		
 		byte[] finalMsg = new byte[cipheredText.length];
 		System.arraycopy(cipheredText, 0, finalMsg, 0, cipheredText.length);

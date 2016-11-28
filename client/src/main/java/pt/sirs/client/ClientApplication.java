@@ -13,6 +13,8 @@ public class ClientApplication {
 		Socket requestSocket = null;//CUIDADO
 		ObjectOutputStream out = null;//CUIDADO
 		ObjectInputStream in = null;
+		Client client = null;
+		String feedback = "ChamPog";
 		try{
 			
 			//1. Criar o socket para falar com o server
@@ -29,17 +31,21 @@ public class ClientApplication {
 	            System.out.println("Couldn't get Console instance");
 	            System.exit(0);
 	        }
-	        System.out.println("Started...");//Just debugging prints	    	
-	    	console.printf("Please enter your username: ");
-	    	String username = console.readLine();	    	
-	    	console.printf("Please enter your password: ");
-	    	char[] passwordChars = console.readPassword();
-	    	String passwordString = new String(passwordChars);
-	    	
-	    	Client client = new Client(username, passwordString);
-	    	
-	    	client = DiffieHellman(client, out, in);	
-	    	client = Login(client, out, in);
+	        System.out.println("Started...");//Just debugging prints	
+	        
+	        while(!feedback.equals("PogChamp")){
+		    	console.printf("Please enter your username: ");
+		    	String username = console.readLine();	    	
+		    	console.printf("Please enter your password: ");
+		    	char[] passwordChars = console.readPassword();
+		    	String passwordString = new String(passwordChars);
+		    	
+		    	client = new Client(username, passwordString);
+		    	
+		    	client = DiffieHellman(client, out, in);	
+		    	feedback = Login(client, out, in);
+		    	System.out.println(feedback);
+	        }
 	    	
 	    	while(true){
 	    		client = Transaction(client, out, in, console);
@@ -85,7 +91,7 @@ public class ClientApplication {
 		return client;
 	}
 	
-	public static Client Login(Client client, ObjectOutputStream out, ObjectInputStream in) throws Exception{
+	public static String Login(Client client, ObjectOutputStream out, ObjectInputStream in) throws Exception{
 		
     	String login = client.generateLoginSms();
     	System.out.println(login + " TAMANHO: " + login.length());
@@ -96,7 +102,7 @@ public class ClientApplication {
         System.out.println(feedback + " TAMANHO: " + feedback.length());
         System.out.println(client.processLoginFeedback(feedback));
 		
-		return client;
+		return client.processLoginFeedback(feedback);
 	}
 	
 	public static Client Transaction(Client client, ObjectOutputStream out, ObjectInputStream in, Console console) throws Exception{
