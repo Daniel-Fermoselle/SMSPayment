@@ -29,42 +29,20 @@ public class ClientApplication {
 	            System.out.println("Couldn't get Console instance");
 	            System.exit(0);
 	        }
-	    	System.out.println("Started...");//Just debugging prints
-	    	
+	        System.out.println("Started...");//Just debugging prints	    	
 	    	console.printf("Please enter your username: ");
-	    	String username = console.readLine();
-	    	
+	    	String username = console.readLine();	    	
 	    	console.printf("Please enter your password: ");
 	    	char[] passwordChars = console.readPassword();
 	    	String passwordString = new String(passwordChars);
 	    	
 	    	Client client = new Client(username, passwordString);
 	    	
-	    	client = DiffieHellman(client, out, in);
-	    	
-	    	String login = client.generateLoginSms();
-	    	System.out.println(login + " TAMANHO: " + login.length());
-    		out.writeObject(login);
-            out.flush();
-            
-            String feedback = (String) in.readObject();
-            System.out.println(feedback + " TAMANHO: " + feedback.length());
-            System.out.println(client.processLoginFeedback(feedback));
-            
+	    	client = DiffieHellman(client, out, in);	
+	    	client = Login(client, out, in);
 	    	
 	    	while(true){
-	    		String iban, amount;
-	    		
-		    	console.printf("Please enter the IBAN to transfer: ");
-		    	iban = console.readLine();
-		    	
-		    	console.printf("Please enter an amount to transfer: ");
-		    	amount = console.readLine();
-		    	
-		    	String transaction = client.generateTransactionSms(iban, amount);
-		    	System.out.println(transaction + " TAMANHO: " + transaction.length());
-	    		out.writeObject(transaction);
-	            out.flush();
+	    		client = Transaction(client, out, in, console);
 	    	}
 		}
 		
@@ -103,6 +81,38 @@ public class ClientApplication {
 
         //Generate sharedKey
         client.generateSharedKey((String) in.readObject());
+		
+		return client;
+	}
+	
+	public static Client Login(Client client, ObjectOutputStream out, ObjectInputStream in) throws Exception{
+		
+    	String login = client.generateLoginSms();
+    	System.out.println(login + " TAMANHO: " + login.length());
+		out.writeObject(login);
+        out.flush();
+        
+        String feedback = (String) in.readObject();
+        System.out.println(feedback + " TAMANHO: " + feedback.length());
+        System.out.println(client.processLoginFeedback(feedback));
+		
+		return client;
+	}
+	
+	public static Client Transaction(Client client, ObjectOutputStream out, ObjectInputStream in, Console console) throws Exception{
+		
+		String iban, amount;
+		
+    	console.printf("Please enter the IBAN to transfer: ");
+    	iban = console.readLine();
+    	
+    	console.printf("Please enter an amount to transfer: ");
+    	amount = console.readLine();
+    	
+    	String transaction = client.generateTransactionSms(iban, amount);
+    	System.out.println(transaction + " TAMANHO: " + transaction.length());
+		out.writeObject(transaction);
+        out.flush();
 		
 		return client;
 	}
