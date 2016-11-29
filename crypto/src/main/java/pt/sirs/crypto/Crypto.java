@@ -5,16 +5,19 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.security.Signature;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECPublicKeySpec;
@@ -29,6 +32,11 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.pdfbox.io.ASCII85InputStream;
 import org.apache.pdfbox.io.ASCII85OutputStream;
+import org.bouncycastle.jcajce.provider.config.ConfigurableProvider;
+import org.bouncycastle.jce.ECNamedCurveTable;
+import org.bouncycastle.jce.spec.ECParameterSpec;
+import org.bouncycastle.math.ec.ECCurve;
+import org.bouncycastle.util.encoders.Hex;
 
 import pt.sirs.crypto.DeffieHellman;
 
@@ -137,54 +145,28 @@ public class Crypto {
 		}
 		
 		public static void Run() throws Exception{
-			 KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
-		        SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
-
-		        keyGen.initialize(256, random);
-
-		        KeyPair pair = keyGen.generateKeyPair();
-		        PrivateKey priv = pair.getPrivate();
-		        PublicKey pub = pair.getPublic();
-
-		        /*
-		         * Create a Signature object and initialize it with the private key
-		         */
-
-		        Signature dsa = Signature.getInstance("SHA1withECDSA");
-
-		        dsa.initSign(priv);
-
-		        String str = "This is string to sign";
-		        byte[] strByte = str.getBytes();
-		        dsa.update(strByte);
-
-		        /*
-		         * Now that all the data to be signed has been read in, generate a
-		         * signature for it
-		         */
-
-		        byte[] realSig = dsa.sign();
-		        System.out.println("LENGTH ::::" + encode(realSig).length());
-		        System.out.println("LENGTH BYTES::::" + realSig.length);
-		        
-		        
-		        DerInputStream derInputStream = new DerInputStream(sign);
-		        DerValue[] values = derInputStream.getSequence(2);
-		        byte[] random = values[0].getPositiveBigInteger().toByteArray();
-		        byte[] signature = values[1].getPositiveBigInteger().toByteArray();
-
-
-		        // r and s each occupy half the array
-		        // Remove padding bytes
-		        byte[] tokenSignature = new byte[64];
-		        System.arraycopy(random, random.length > 32 ? 1 : 0, tokenSignature, random.length < 32 ? 1 : 0,
-		                random.length > 32 ? 32 : random.length);
-		        System.arraycopy(signature, signature.length > 32 ? 1 : 0, tokenSignature, signature.length < 32 ? 33 : 32,
-		                signature.length > 32 ? 32 : signature.length);
-
-		        System.out.println("Full Signature length: "+tokenSignature.length+" r length: "+random.length+" s length"+signature.length);
+			KeyPair pair = GenerateKeys();
+			Signature ecdsaSign = Signature.getInstance("SHA256withECDSA", "BC");
+			ecdsaSign.initSign(pair.getPrivate());
+			ecdsaSign.update("ola".getBytes());
+			byte[] signature = ecdsaSign.sign();
+			System.out.println(signature.length + "inaidjasdnasdansdiasndiasndiasidnsaisa");
 
 		}
 		
-	
+		public static KeyPair GenerateKeys()throws Exception{
+			Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+			ECCurve curve = new ECCurve.Fp
+					(new BigInteger(ECParams.P_192_R1, 16),			// p 
+							new BigInteger(ECParams.A_192_R1,16), 			// a
+							new BigInteger(ECParams.B_192_R1,16));			// b
+			ECParameterSpec ecSpec = new ECParameterSpec(
+					curve,
+					curve.decodePoint(Hex.decode(ECParams.G_192_R1_NCOMP)), // G
+					new BigInteger(ECParams.N_192_R1,16)); // n
+			KeyPairGenerator g = KeyPairGenerator.getInstance("ECDSA", "BC");
+			g.initialize(ecSpec, new SecureRandom());
+			KeyPair pair = g.generateKeyPair();
+			return pair;
+		}
  }
