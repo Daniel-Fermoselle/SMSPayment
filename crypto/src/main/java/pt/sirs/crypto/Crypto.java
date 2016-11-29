@@ -6,10 +6,19 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.Key;
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-
+import java.security.PrivateKey;
+import java.security.Provider;
+import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.Signature;
+import java.security.spec.ECGenParameterSpec;
+import java.security.spec.ECPublicKeySpec;
+import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
@@ -125,6 +134,56 @@ public class Crypto {
 		        e.printStackTrace();
 		    }
 		    return res;
+		}
+		
+		public static void Run() throws Exception{
+			 KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
+		        SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+
+		        keyGen.initialize(256, random);
+
+		        KeyPair pair = keyGen.generateKeyPair();
+		        PrivateKey priv = pair.getPrivate();
+		        PublicKey pub = pair.getPublic();
+
+		        /*
+		         * Create a Signature object and initialize it with the private key
+		         */
+
+		        Signature dsa = Signature.getInstance("SHA1withECDSA");
+
+		        dsa.initSign(priv);
+
+		        String str = "This is string to sign";
+		        byte[] strByte = str.getBytes();
+		        dsa.update(strByte);
+
+		        /*
+		         * Now that all the data to be signed has been read in, generate a
+		         * signature for it
+		         */
+
+		        byte[] realSig = dsa.sign();
+		        System.out.println("LENGTH ::::" + encode(realSig).length());
+		        System.out.println("LENGTH BYTES::::" + realSig.length);
+		        
+		        
+		        DerInputStream derInputStream = new DerInputStream(sign);
+		        DerValue[] values = derInputStream.getSequence(2);
+		        byte[] random = values[0].getPositiveBigInteger().toByteArray();
+		        byte[] signature = values[1].getPositiveBigInteger().toByteArray();
+
+
+		        // r and s each occupy half the array
+		        // Remove padding bytes
+		        byte[] tokenSignature = new byte[64];
+		        System.arraycopy(random, random.length > 32 ? 1 : 0, tokenSignature, random.length < 32 ? 1 : 0,
+		                random.length > 32 ? 32 : random.length);
+		        System.arraycopy(signature, signature.length > 32 ? 1 : 0, tokenSignature, signature.length < 32 ? 33 : 32,
+		                signature.length > 32 ? 32 : signature.length);
+
+		        System.out.println("Full Signature length: "+tokenSignature.length+" r length: "+random.length+" s length"+signature.length);
+
 		}
 		
 	
