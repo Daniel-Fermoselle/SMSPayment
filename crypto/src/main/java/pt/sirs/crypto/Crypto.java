@@ -1,11 +1,16 @@
 package pt.sirs.crypto;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.Key;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -13,7 +18,8 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.apache.commons.codec.binary.Base64;
+import org.apache.pdfbox.io.ASCII85InputStream;
+import org.apache.pdfbox.io.ASCII85OutputStream;
 
 import pt.sirs.crypto.DeffieHellman;
 
@@ -38,18 +44,6 @@ public class Crypto {
 		decipherText = decryptCipher.doFinal(msg);
 		
 		return new String(decipherText);
-	}
-	
-	public static String encode(byte[] msg){
-		String encodedMsg = new String(Base64.encodeBase64(msg));
-		
-		return encodedMsg;
-	}
-	
-	public static byte[] decode(String msg){
-		byte[] decodedCipheredSms =  Base64.decodeBase64(msg.getBytes());
-		
-		return decodedCipheredSms;
 	}
 
 	public static IvParameterSpec generateIV() throws NoSuchAlgorithmException{
@@ -88,5 +82,50 @@ public class Crypto {
 	    key = Arrays.copyOf(key, 16);
 	    return  new SecretKeySpec(key,"AES");
 	}
+	
+	 public static byte[] decode(String ascii85) {
+		    ArrayList<Byte> list = new ArrayList<Byte>();
+		    ByteArrayInputStream in_byte = null;
+		    try {
+		        in_byte = new ByteArrayInputStream(ascii85.getBytes("ascii"));
+		    } catch (UnsupportedEncodingException e) {
+		        e.printStackTrace();
+		    }
+		    ASCII85InputStream in_ascii = new ASCII85InputStream(in_byte);
+		    try {
+		        int r ;
+		        while ((r = in_ascii.read()) != -1) {
+		            list.add((byte) r);
+		        }
+		    } catch (IOException e) {
+		        e.printStackTrace();
+		    }
+		    byte[] bytes = new byte[list.size()];
+		    for (int i = 0; i < bytes.length; i++) {
+		        bytes[i] = list.get(i);
+		    }
+		    return bytes;
+		}
+
+
+		public static String encode(byte[] bytes) {
+		    ByteArrayOutputStream out_byte = new ByteArrayOutputStream();
+		    ASCII85OutputStream  out_ascii = new ASCII85OutputStream(out_byte);
+
+		    try {
+		        out_ascii.write(bytes);
+		        out_ascii.flush();
+		    } catch (IOException e) {
+		        e.printStackTrace();
+		    }
+		    String res = "";
+		    try {
+		        res = out_byte.toString("ascii");
+		    } catch (UnsupportedEncodingException e) {
+		        e.printStackTrace();
+		    }
+		    return res;
+		}
+		
 	
  }
