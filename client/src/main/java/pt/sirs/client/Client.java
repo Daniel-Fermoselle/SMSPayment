@@ -71,10 +71,10 @@ public class Client {
 		
 	}
 	
-	public String generateTransactionSms(String iban, String amount) throws Exception{
+	public String generateTransactionSms(String receiver, String amount) throws Exception{
 		byte[] cipheredText;
 		String usernameS = this.myUsername + "-";
-		String msgToCipher = iban + "-" + amount + "-" + this.counter;
+		String msgToCipher = receiver + "-" + amount + "-" + this.counter;
 		
 		cipheredText = Crypto.cipherSMS(msgToCipher, this.sharedKey);		
 

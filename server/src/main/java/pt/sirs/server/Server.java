@@ -77,7 +77,7 @@ public class Server {
 		sender = getAccountByUsername(new String(decodedCipheredSms));
 		sharedKey = sender.getSharedKey();
 		
-		//Possible problem if encoding used more than 1 byte in 1 character
+		//TODO ADD SIGNATURE SIZE HERE
 		msg = Arrays.copyOfRange(decodedCipheredSms, 1 + sender.getUsername().length(), decodedCipheredSms.length);
 		
 		decipheredSms = Crypto.decipherSMS(msg, sharedKey);
@@ -105,12 +105,17 @@ public class Server {
 		Account receiver;
 		this.status = SERVER_FAILED_LOGIN_MSG;
 		
-		receiver = getAccountByIban(decipheredSms);
+		String[] splittedSMS = decipheredSms.split("-");
+		
+		receiver = getAccountByUsername(splittedSMS[0]);
 		if(receiver != null){
 			String[] parts = decipheredSms.split("-");
 			sender.debit(Integer.parseInt(parts[1]));
 			receiver.credit(Integer.parseInt(parts[1]));
 			this.status = SERVER_SUCCESSFUL_LOGIN_MSG;
+		}
+		else{
+			//TODO GENERATE MESSAGE WITH NEGATIVE FEEDBACK
 		}
 		
 		String msgToCipher = this.status + "-" + sender.getCounter();

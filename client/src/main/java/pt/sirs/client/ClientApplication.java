@@ -121,7 +121,7 @@ public class ClientApplication {
 		
 		String iban, amount;
 		
-    	console.printf("Please enter the IBAN to transfer: ");
+    	console.printf("Please enter the username to transfer: ");
     	iban = console.readLine();
     	
     	console.printf("Please enter an amount to transfer: ");
