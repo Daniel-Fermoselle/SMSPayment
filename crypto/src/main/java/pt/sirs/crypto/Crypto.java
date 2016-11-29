@@ -22,6 +22,7 @@ import java.security.Signature;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECPublicKeySpec;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
@@ -148,7 +149,7 @@ public class Crypto {
 		    }
 		    return res;
 		}
-		
+
 		public static void Run() throws Exception{
 			KeyPair pair = GenerateKeys();
 			Signature ecdsaSign = Signature.getInstance("SHA256withECDSA", "BC");
@@ -156,15 +157,23 @@ public class Crypto {
 			ecdsaSign.update("olaolaolaolaolaolaolaolaolaolaolaolaolaolaolaolaola".getBytes());
 			byte[] signature = ecdsaSign.sign();
 			System.out.println(signature.length + "inaidjasdnasdansdiasndiasndiasidnsaisa");
-			
-			
+
+
 			Signature mySign = Signature.getInstance("SHA256withECDSA", "BC");
 			mySign.initVerify(pair.getPublic());
 			mySign.update("olaolaolaolaolaolaolaolaolaolaolaolaolaolaolaolaola".getBytes());
 			if(mySign.verify(signature)){
-				System.out.println("PUTA REKT GANHEI ");
+				System.out.println(encode(pair.getPublic().getEncoded()) + "O MARCAL E MUITA CHATO" + encode(pair.getPublic().getEncoded()).length());
+				PublicKey publicKey = KeyFactory.getInstance("ECDSA", "BC").generatePublic(new X509EncodedKeySpec(decode(encode(pair.getPublic().getEncoded()))));
+				Signature s = Signature.getInstance("SHA256withECDSA", "BC");
+				s.initVerify(publicKey);
+				s.update("olaolaolaolaolaolaolaolaolaolaolaolaolaolaolaolaola".getBytes());
+				if(s.verify(signature)){
+					System.out.println("O MARÇAL É MEU AMIGO!");
+				}
 			}
 		}
+		
 		
 		public static KeyPair GenerateKeys() throws Exception{
 			Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
