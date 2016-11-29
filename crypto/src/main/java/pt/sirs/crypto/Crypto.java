@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -149,36 +150,29 @@ public class Crypto {
 		    }
 		    return res;
 		}
-
-		public static void Run() throws Exception{
-			KeyPair pair = GenerateKeys();
+		
+		public static byte[] sign(String msg, PrivateKey privKey) throws Exception{
 			Signature ecdsaSign = Signature.getInstance("SHA256withECDSA", "BC");
-			ecdsaSign.initSign(pair.getPrivate());
-			ecdsaSign.update("olaolaolaolaolaolaolaolaolaolaolaolaolaolaolaolaola".getBytes());
-			byte[] signature = ecdsaSign.sign();
-			System.out.println(signature.length + "inaidjasdnasdansdiasndiasndiasidnsaisa");
-
-
-			Signature mySign = Signature.getInstance("SHA256withECDSA", "BC");
-			mySign.initVerify(pair.getPublic());
-			mySign.update("olaolaolaolaolaolaolaolaolaolaolaolaolaolaolaolaola".getBytes());
-			if(mySign.verify(signature)){
-				System.out.println(encode(pair.getPublic().getEncoded()) + "O MARCAL E MUITA CHATO" + encode(pair.getPublic().getEncoded()).length());
-				PublicKey publicKey = KeyFactory.getInstance("ECDSA", "BC").generatePublic(new X509EncodedKeySpec(decode(encode(pair.getPublic().getEncoded()))));
-				Signature s = Signature.getInstance("SHA256withECDSA", "BC");
-				s.initVerify(publicKey);
-				s.update("olaolaolaolaolaolaolaolaolaolaolaolaolaolaolaolaola".getBytes());
-				if(s.verify(signature)){
-					System.out.println("O MARÇAL É MEU AMIGO!");
-				}
-			}
+			ecdsaSign.initSign(privKey);
+			ecdsaSign.update(msg.getBytes());
+			return ecdsaSign.sign();
 		}
 		
+		public static boolean verifySign(String msg, byte[] signature, PublicKey pubKey) throws Exception {
+			Signature s = Signature.getInstance("SHA256withECDSA", "BC");
+			s.initVerify(pubKey);
+			s.update(msg.getBytes());
+			return s.verify(signature);
+		}
+		
+		public static PublicKey getPubKeyFromByte(byte[] bytePubKey) throws Exception{
+			return KeyFactory.getInstance("ECDSA", "BC").generatePublic(new X509EncodedKeySpec(bytePubKey));
+		}
 		
 		public static KeyPair GenerateKeys() throws Exception{
 			Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-			ECGenParameterSpec     ecGenSpec = new ECGenParameterSpec("brainpoolp160t1");
-			KeyPairGenerator    g = KeyPairGenerator.getInstance("ECDSA", "BC");
+			ECGenParameterSpec ecGenSpec = new ECGenParameterSpec("brainpoolp160t1");
+			KeyPairGenerator g = KeyPairGenerator.getInstance("ECDSA", "BC");
 			g.initialize(ecGenSpec, new SecureRandom());
 			KeyPair pair = g.generateKeyPair();
 			return pair;

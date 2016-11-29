@@ -26,7 +26,6 @@ public class ClientApplication {
 	        out = new ObjectOutputStream(requestSocket.getOutputStream());
 	        out.flush();
             in = new ObjectInputStream(requestSocket.getInputStream());
-            Crypto.Run();
 	   
 	        Console console = System.console();
 	        if (console == null) {
