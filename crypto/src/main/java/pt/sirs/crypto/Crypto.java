@@ -32,6 +32,11 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.pdfbox.io.ASCII85InputStream;
 import org.apache.pdfbox.io.ASCII85OutputStream;
+import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+import org.bouncycastle.crypto.AsymmetricCipherKeyPairGenerator;
+import org.bouncycastle.crypto.generators.ECKeyPairGenerator;
+import org.bouncycastle.crypto.params.ECDomainParameters;
+import org.bouncycastle.crypto.params.ECKeyGenerationParameters;
 import org.bouncycastle.jcajce.provider.config.ConfigurableProvider;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.spec.ECParameterSpec;
@@ -148,24 +153,24 @@ public class Crypto {
 			KeyPair pair = GenerateKeys();
 			Signature ecdsaSign = Signature.getInstance("SHA256withECDSA", "BC");
 			ecdsaSign.initSign(pair.getPrivate());
-			ecdsaSign.update("ola".getBytes());
+			ecdsaSign.update("olaolaolaolaolaolaolaolaolaolaolaolaolaolaolaolaola".getBytes());
 			byte[] signature = ecdsaSign.sign();
 			System.out.println(signature.length + "inaidjasdnasdansdiasndiasndiasidnsaisa");
-
+			
+			
+			Signature mySign = Signature.getInstance("SHA256withECDSA", "BC");
+			mySign.initVerify(pair.getPublic());
+			mySign.update("olaolaolaolaolaolaolaolaolaolaolaolaolaolaolaolaola".getBytes());
+			if(mySign.verify(signature)){
+				System.out.println("PUTA REKT GANHEI ");
+			}
 		}
 		
-		public static KeyPair GenerateKeys()throws Exception{
+		public static KeyPair GenerateKeys() throws Exception{
 			Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-			ECCurve curve = new ECCurve.Fp
-					(new BigInteger(ECParams.P_192_R1, 16),			// p 
-							new BigInteger(ECParams.A_192_R1,16), 			// a
-							new BigInteger(ECParams.B_192_R1,16));			// b
-			ECParameterSpec ecSpec = new ECParameterSpec(
-					curve,
-					curve.decodePoint(Hex.decode(ECParams.G_192_R1_NCOMP)), // G
-					new BigInteger(ECParams.N_192_R1,16)); // n
-			KeyPairGenerator g = KeyPairGenerator.getInstance("ECDSA", "BC");
-			g.initialize(ecSpec, new SecureRandom());
+			ECGenParameterSpec     ecGenSpec = new ECGenParameterSpec("brainpoolp160t1");
+			KeyPairGenerator    g = KeyPairGenerator.getInstance("ECDSA", "BC");
+			g.initialize(ecGenSpec, new SecureRandom());
 			KeyPair pair = g.generateKeyPair();
 			return pair;
 		}
