@@ -159,7 +159,6 @@ public class Client {
 	private boolean verifyCounter(String state, int counter) {
 		if(state.equals("login") || state.equals("logout")){
 			if(counter != 0){
-				System.out.println("Freshness of log operation feedback compromised");
 				return false;
 			}
 			else{
@@ -168,7 +167,6 @@ public class Client {
 		}
 		else if(state.equals("transaction")){
 			if(this.counter >= counter){
-				System.out.println("Freshness of transaction feedback compromised");
 				return false;
 			}
 			else{
