@@ -2,6 +2,10 @@ package pt.sirs.crypto;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
@@ -23,6 +27,7 @@ import java.security.Signature;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECPublicKeySpec;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -166,7 +171,13 @@ public class Crypto {
 		}
 		
 		public static PublicKey getPubKeyFromByte(byte[] bytePubKey) throws Exception{
+			Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 			return KeyFactory.getInstance("ECDSA", "BC").generatePublic(new X509EncodedKeySpec(bytePubKey));
+		}
+		
+		public static PrivateKey getPrivKeyFromByte(byte[] bytePrivKey) throws Exception{
+			Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+			return KeyFactory.getInstance("ECDSA", "BC").generatePrivate(new PKCS8EncodedKeySpec(bytePrivKey));
 		}
 		
 		public static KeyPair GenerateKeys() throws Exception{
@@ -176,5 +187,35 @@ public class Crypto {
 			g.initialize(ecGenSpec, new SecureRandom());
 			KeyPair pair = g.generateKeyPair();
 			return pair;
+		}
+		
+		public static void saveKeyInFile(Key Key, String filename) throws Exception{
+			/* save the public key in a file */
+			byte[] key = Key.getEncoded();
+			FileOutputStream keyfos = new FileOutputStream(filename);
+			keyfos.write(key);
+			keyfos.close();
+		}
+		
+		public static PublicKey readPubKeyFromFile(String filename) throws Exception{
+			File f = new File(filename);
+		    FileInputStream fis = new FileInputStream(f);
+		    DataInputStream dis = new DataInputStream(fis);
+		    byte[] keyBytes = new byte[(int) f.length()];
+		    dis.readFully(keyBytes);
+		    dis.close();
+		    
+		    return getPubKeyFromByte(keyBytes);
+		}
+		
+		public static PrivateKey readPrivKeyFromFile(String filename) throws Exception{
+			File f = new File(filename);
+		    FileInputStream fis = new FileInputStream(f);
+		    DataInputStream dis = new DataInputStream(fis);
+		    byte[] keyBytes = new byte[(int) f.length()];
+		    dis.readFully(keyBytes);
+		    dis.close();
+		    
+		    return getPrivKeyFromByte(keyBytes);
 		}
  }

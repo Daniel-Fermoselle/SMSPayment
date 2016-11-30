@@ -2,7 +2,9 @@ package pt.sirs.server;
 
 import java.io.*;
 import java.net.*;
+import java.security.KeyPair;
 
+import pt.sirs.crypto.Crypto;
 import pt.sirs.server.Server;
 
 public class ServerApplication {
@@ -21,6 +23,7 @@ public class ServerApplication {
     	ObjectOutputStream out = null;
     	ObjectInputStream in = null;
         try{
+        	
             //1. creating a server socket
             providerSocket = new ServerSocket(SERVER_PORT, QUEUE_SIZE);
             
@@ -90,7 +93,7 @@ public class ServerApplication {
         System.out.println(feedback + " TAMANHO: " + feedback.length());
 		out.writeObject(feedback);
         out.flush();
-		
+        
 		return server;
 	}
 	

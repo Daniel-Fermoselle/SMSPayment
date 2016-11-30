@@ -1,5 +1,7 @@
 package pt.sirs.server;
 
+import java.security.PublicKey;
+
 import javax.crypto.spec.SecretKeySpec;
 
 import pt.sirs.server.Exceptions.AmountToHighException;
@@ -14,6 +16,7 @@ public class Account{
 	private String password;
 	private SecretKeySpec sharedKey;
 	private int counter;
+	private PublicKey pubKey;
 
 	public Account(String iban, int balance, String username, String password){
 		if(password.length()<4 || password.length()>15)
@@ -85,6 +88,14 @@ public class Account{
 
 	public void setCounter(int counter) {
 		this.counter = counter;
+	}
+
+	public PublicKey getPubKey() {
+		return pubKey;
+	}
+
+	public void setPubKey(PublicKey pubKey) {
+		this.pubKey = pubKey;
 	}
 
 }

@@ -1,6 +1,7 @@
 package pt.sirs.client;
 
 import java.math.BigInteger;
+import java.security.KeyPair;
 import java.sql.Timestamp;
 import java.util.Arrays;
 
@@ -11,6 +12,8 @@ import pt.sirs.crypto.Crypto;
 public class Client {
 	public static final String SUCCESS_FEEDBACK = "PogChamp";
 	public static final String FAILED_FEEDBACK = "ChamPog";
+	private static final String SERVER_PUBLIC_KEY_PATH = "keys/PubKeyServer";
+
 	
 	private int myMoney; 
 	private String myUsername;
@@ -23,9 +26,10 @@ public class Client {
 	private String status;
 	//TODO this is only 32bit can be changed to long
 	private int counter;
+	private KeyPair keys;
 	
 	
-	public Client(String myUsername, String myPassword) {
+	public Client(String myUsername, String myPassword) throws Exception {
 		this.myUsername = myUsername;
 		this.myPassword = myPassword;
 		BigInteger[] pair = Crypto.GeneratePandG();
@@ -33,6 +37,7 @@ public class Client {
 		g = pair[1];
 		this.secretValue = Crypto.generateSecretValue();
 		this.status = "Initialized";
+		keys = Crypto.GenerateKeys();
 	}
 	
 	public String generateLoginSms() throws Exception{
@@ -199,5 +204,6 @@ public class Client {
 	public void setStatus(String status) {
 		this.status = status;
 	}
+
 }
 	

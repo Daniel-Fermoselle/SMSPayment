@@ -1,6 +1,7 @@
 package pt.sirs.server;
 
 import java.math.BigInteger;
+import java.security.KeyPair;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -23,6 +24,9 @@ public class Server {
 	public static final String SERVER_FAILED_LOGIN_MSG = "ChamPog";
 	public static final String SERVER_SUCCESSFUL_LOGIN_MSG = "PogChamp";
 	private static final String FAILED_TRANSACTION_MSG = "Transaction Failed";
+	private static final String PRIVATE_KEY_PATH = "keys/PrivKeyServer";
+	private static final String PUBLIC_KEY_PATH = "keys/PubKeyServer";
+
 	
 	private ArrayList<Account> accounts;
 	private BigInteger p;
@@ -31,8 +35,9 @@ public class Server {
 	private BigInteger publicValue;
 	private SecretKeySpec sharedKey;
 	private String status;
+	private KeyPair keys;
 	
-    public Server() throws ServerException {
+    public Server() throws Exception {
     	
     	this.accounts = new ArrayList<Account>();
     	addAccount(new Account("PT12345678901234567890123", 100, "nasTyMSR", "12345"));
@@ -40,6 +45,7 @@ public class Server {
     	addAccount(new Account("PT12345678901234567890125", 100, "Alpha", "12345"));
     	addAccount(new Account("PT12345678901234567890126", 100, "jse", "12345"));
     	this.status = "Initialized";
+    	keys = new KeyPair(Crypto.readPubKeyFromFile(PUBLIC_KEY_PATH), Crypto.readPrivKeyFromFile(PRIVATE_KEY_PATH));
 
     }    
     
@@ -159,6 +165,17 @@ public class Server {
 		System.out.println(this.status);
 		
 		return Crypto.encode(finalMsg);
+	}
+	
+	public String generatePubKeyFeedback(Account a) throws Exception{
+		this.status = SERVER_SUCCESSFUL_LOGIN_MSG;
+		
+		//Add user conter should be at 0
+		String feedback = this.status + "-" + a.getCounter();
+		byte[] cipheredText = Crypto.cipherSMS(feedback, sharedKey);
+		System.out.println(feedback);
+		
+		return Crypto.encode(cipheredText);
 	}
 	
     private boolean validTS(String stringTS) throws ParseException {
