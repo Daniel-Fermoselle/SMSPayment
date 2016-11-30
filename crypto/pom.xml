@@ -17,6 +17,8 @@
 
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
+		
+		<mainclass>pt.sirs.crypto.Crypto</mainclass>
 
 	</properties>
 	<dependencies>
@@ -39,4 +41,62 @@
 			<version>1.8.12</version>
 		</dependency>
 	</dependencies>
+
+	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+		<testResources>
+			<testResource>
+				<directory>src/test/resources</directory>
+				<filtering>true</filtering>
+			</testResource>
+		</testResources>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>1.4.0</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>java</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<!-- to prevent deprecation warning: -->
+					<killAfter>-1</killAfter>
+					<mainClass>${mainclass}</mainClass>
+					<arguments>
+					</arguments>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>appassembler-maven-plugin</artifactId>
+				<version>1.10</version>
+				<executions>
+					<execution>
+						<phase>install</phase>
+						<goals>
+							<goal>assemble</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<programs>
+						<program>
+							<mainClass>${mainclass}</mainClass>
+							<id>${project.artifactId}</id>
+						</program>
+					</programs>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	
 </project>

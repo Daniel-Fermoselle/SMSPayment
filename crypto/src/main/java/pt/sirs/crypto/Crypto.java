@@ -204,4 +204,13 @@ public class Crypto {
 		    
 		    return getPrivKeyFromByte(keyBytes);
 		}
+		
+		public static void main(String args[]) throws Exception{
+			KeyPair keyPair;
+			for(String entity : args){
+				keyPair = GenerateKeys();
+				saveKeyInFile(keyPair.getPrivate(), "PrivateKey" + entity);
+				saveKeyInFile(keyPair.getPublic(), "PublicKey" + entity);
+			}			
+		}
  }
