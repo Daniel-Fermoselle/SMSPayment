@@ -91,8 +91,7 @@ public class Server {
     }
     
     public String processTransactionSms(String sms) throws Exception{
-		byte[] msg;
-		String decipheredMsg;
+		String decipheredMsg, receiver, amount = "", counter;
 		Account sender;
 		SecretKeySpec sharedKey;
 		
@@ -114,9 +113,15 @@ public class Server {
 		
 		//Obtaining time stamp and password
 		String[] splitedMsg = decipheredMsg.split("\\|");
-		String receiver = splitedMsg[0];
-		String amount   = splitedMsg[1];
-		String counter  = splitedMsg[2];
+		if(splitedMsg.length == 2){
+			receiver = splitedMsg[0];
+			counter  = splitedMsg[1];
+		}
+		else{
+			receiver = splitedMsg[0];
+			amount   = splitedMsg[1];
+			counter  = splitedMsg[2];
+		}
 		
 		//Verify user counter
 		int smsCounter = Integer.parseInt(counter);
@@ -127,9 +132,15 @@ public class Server {
 			sender.setCounter(smsCounter + 1);
 		}
 		
+		String msgToVerify;
 		//Verify signature 
-		String msgToVerify = sender.getUsername() + receiver + amount + counter;
-		
+		if(splitedMsg.length != 2){
+			msgToVerify = sender.getUsername() + receiver + amount + counter;
+		}
+		else{
+			msgToVerify = sender.getUsername() + receiver + counter;
+		}
+    
 		if(Crypto.verifySign(msgToVerify, byteSignature, sender.getPubKey())){		
 		
 			//Check if it's a logout message
@@ -213,19 +224,29 @@ public class Server {
 
 		return toSend;
 	}
+	
 
-	public String generateLogoutFeedback(Account a) throws Exception{
+	public String generateLogoutFeedback(Account sender) throws Exception{
 		this.status = SERVER_FAILED_LOGIN_MSG;
-		a.setCounter(0);
+		sender.setCounter(0);
 		
-		byte[] cipheredText = Crypto.cipherSMS(this.status, this.sharedKey);
+		//Msg to cipher
+		String toCipher = this.status + "|" + sender.getCounter();
+		byte[] cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);
 		
-		byte[] finalMsg = new byte[cipheredText.length];
-		System.arraycopy(cipheredText, 0, finalMsg, 0, cipheredText.length);
+		//Generating signature
+		String dataToSign = this.status + sender.getCounter();
+		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
 		
-		System.out.println(this.status);
+		//Concatenate signature with cipheredText --> signature|cipheredText
+		//cipheredText = {status|counter}Ks
+		String stringSig = Crypto.encode(signature);
+		String stringCiphertext = Crypto.encode(cipheredText);
+		String toSend = stringSig + "|" + stringCiphertext;
 		
-		return Crypto.encode(finalMsg);
+		System.out.println("Size of logout feedback SMS message: " + toSend.length());
+
+		return toSend;		
 	}
 	
     private boolean validTS(String stringTS) throws ParseException {

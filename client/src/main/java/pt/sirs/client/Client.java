@@ -70,18 +70,25 @@ public class Client {
 	
 	public String generateLogoutSms() throws Exception{
 		byte[] cipheredText;
-		String usernameS = this.myUsername + "-";
-		String msgToCipher = "logout" + "-" + this.counter;
-
-		cipheredText = Crypto.cipherSMS(msgToCipher, this.sharedKey);			
-
-		//Concatenate username with cipheredText --> username-cipheredText
-		byte[] usernameB = usernameS.getBytes();
-		byte[] finalMsg = new byte[cipheredText.length + usernameB.length];
-		System.arraycopy(usernameB, 0, finalMsg, 0, usernameB.length);
-		System.arraycopy(cipheredText, 0, finalMsg, usernameB.length, cipheredText.length);
 		
-		return Crypto.encode(finalMsg);
+		//Generating signature
+		String dataToSign = this.myUsername +  "logout" + this.counter;
+		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
+		
+		//Ciphering text
+		String toCipher  = "logout" + "|" + this.counter;
+		cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);	
+		
+		//Concatenate username and signature with cipheredText --> (username|)signature|cipheredText
+		//cipheredText = {logout|counter}Ks
+		String user = Crypto.encode(this.myUsername.getBytes());
+		String stringSig = Crypto.encode(signature);
+		String stringCiphertext = Crypto.encode(cipheredText);
+		
+		String toSend = user + "|" + stringSig + "|" + stringCiphertext;
+		
+		System.out.println("Size of logout SMS message: " + (stringSig + "|" + stringCiphertext).length());
+		return toSend;
 		
 	}
 	
@@ -144,20 +151,6 @@ public class Client {
 		}
 	}
 	
-	public String processLogoutFeedback(String cipheredSms) throws Exception{
-		byte[] msg;
-		String decipheredSms;
-		
-		byte[] decodedCipheredSms =  Crypto.decode(cipheredSms);
-		
-		msg = Arrays.copyOfRange(decodedCipheredSms, 0, decodedCipheredSms.length);
-		
-		decipheredSms = Crypto.decipherSMS(msg, this.sharedKey);
-		
-		this.status = decipheredSms;
-		
-		return decipheredSms;
-	}
 	
 	private boolean verifyCounter(String state, int counter) {
 		if(state.equals("login") || state.equals("logout")){

@@ -149,7 +149,7 @@ public class ClientApplication {
         
         String feedback = (String) in.readObject();
         System.out.println(feedback + " TAMANHO: " + feedback.length());
-        System.out.println(client.processLogoutFeedback(feedback));
+        System.out.println(client.processFeedback(feedback, "logout"));
 		
 		return client;
 	}
