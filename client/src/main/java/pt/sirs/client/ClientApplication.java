@@ -3,7 +3,6 @@ package pt.sirs.client;
 import java.io.*;
 import java.net.*;
 import pt.sirs.client.Client;
-import pt.sirs.crypto.Crypto;
 
 public class ClientApplication {
 	
@@ -66,10 +65,10 @@ public class ClientApplication {
 		}
 		
 		catch(UnknownHostException e){
-            System.err.println("Tentativa de conexao com server desconhecido");
+            System.err.println("Attempto to connect an unknown server.");
         }
 		catch(FileNotFoundException e){
-			System.err.println("Username não registado no sistema. Volte a iniciar a aplicação.");
+			System.err.println("Username not registered. Run the application again.");
 		}
         catch(Exception e){
             e.printStackTrace();
