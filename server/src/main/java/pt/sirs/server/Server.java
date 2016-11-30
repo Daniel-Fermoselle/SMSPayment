@@ -22,9 +22,13 @@ public class Server {
 	private static final int SIZE_OF_TIMESTAMP = 23;
 	private static final int SIGNATURE_SIZE = 47;
 	private static final long MINUTE_IN_MILLIS = 60000;//one minute in millisecs
-	public static final String SERVER_FAILED_LOGIN_MSG = "ChamPog";
-	public static final String SERVER_SUCCESSFUL_LOGIN_MSG = "PogChamp";
-	private static final String FAILED_TRANSACTION_MSG = "Transaction Failed";
+	public static final String SERVER_FAILED_LOGIN_MSG = "LoginFail";
+	public static final String SERVER_SUCCESSFUL_LOGIN_MSG = "LoginOk";
+	private static final String FAILED_TRANSACTION_MSG = "TransFail";
+	private static final String SUCCESSFUL_TRANSACTION_MSG = "TransOk";
+	public static final String SERVER_FAILED_LOGOUT_MSG = "LogoutFail";
+	public static final String SERVER_SUCCESSFUL_LOGOUT_MSG = "LogoutOk";
+	
 	private static final String PRIVATE_KEY_PATH = "keys/PrivateKeyServer";
 	private static final String PUBLIC_KEY_PATH = "keys/PublicKeyServer";
 
