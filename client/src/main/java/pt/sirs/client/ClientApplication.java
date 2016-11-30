@@ -15,7 +15,7 @@ public class ClientApplication {
 		ObjectOutputStream out = null;//CUIDADO
 		ObjectInputStream in = null;
 		Client client = null;
-		String feedback = Client.FAILED_FEEDBACK;
+		String feedback = Client.ERROR_MSG;
 		try{
 			
 			//1. Criar o socket para falar com o server
@@ -49,7 +49,7 @@ public class ClientApplication {
 			    	feedback = client.getStatus();
 		        }
 		    	
-		    	while(client.getStatus().equals(Client.SERVER_SUCCESSFUL_LOGIN_MSG)){
+	            while(!client.getStatus().equals(Client.SERVER_SUCCESSFUL_LOGOUT_MSG)){
 		    		System.out.println("Choose one of the following options");
 		    		System.out.println("1 - Transaction");
 		    		System.out.println("2 - Logout");
@@ -59,7 +59,7 @@ public class ClientApplication {
 		    		}
 		    		else if(choice.equals("2")){
 		    			client = Logout(client, out, in);
-		    			feedback = Client.FAILED_FEEDBACK;
+		    			feedback = Client.SERVER_SUCCESSFUL_LOGOUT_MSG;
 		    		}
 		    	}
 	        }

@@ -44,7 +44,7 @@ public class ServerApplication {
 	            	server = Login(server, out, in);
 	            }
 	            
-	            while(server.getStatus().equals(Server.SERVER_SUCCESSFUL_LOGIN_MSG)){
+	            while(!server.getStatus().equals(Server.SERVER_SUCCESSFUL_LOGOUT_MSG)){
 	            	server = Transaction(server, out, in);
 	            }
             }

@@ -23,7 +23,7 @@ public class Server {
 	private static final int SIGNATURE_SIZE = 47;
 	private static final long MINUTE_IN_MILLIS = 60000;//one minute in millisecs
 	public static final String SERVER_SUCCESSFUL_LOGIN_MSG = "LoginOk";
-	private static final String SUCCESSFUL_TRANSACTION_MSG = "TransOk";
+	public static final String SUCCESSFUL_TRANSACTION_MSG = "TransOk";
 	public static final String SERVER_SUCCESSFUL_LOGOUT_MSG = "LogoutOk";
 	public static final String ERROR_MSG = "ChamPog";
 	
@@ -67,7 +67,7 @@ public class Server {
 		if(sender == null){
 			//TODO Generate error msg client not registered
 			this.status = ERROR_MSG;
-			System.out.println("User not registered");
+			System.out.println("User not registered.");
 			return generateUnsuccessfulFeedback();
 		}
 		
@@ -90,7 +90,7 @@ public class Server {
 		else{
 			//TODO Generate error msg for feedback signature compromised
 			this.status = ERROR_MSG;
-			System.out.println("Signature compromised on loggin SMS received");
+			System.out.println("Signature compromised on loggin SMS received.");
 			return generateUnsuccessfulFeedback();
 		}
     }
@@ -109,7 +109,10 @@ public class Server {
 		sender = getAccountByUsername(new String(byteUsername));
 		if(sender == null){
 			//TODO Generate error msg client not registered
-			System.out.println("User not registered");
+			this.status = ERROR_MSG;
+			System.out.println("User not registered.");
+			return generateUnsuccessfulFeedback();
+			
 		}
 		sharedKey = sender.getSharedKey();
 		
@@ -131,7 +134,9 @@ public class Server {
 		//Verify user counter
 		int smsCounter = Integer.parseInt(counter);
 		if(smsCounter < sender.getCounter()){
-			return ERROR_MSG;
+			this.status = ERROR_MSG;
+			System.out.println("Freshness compromised.");
+			return generateUnsuccessfulFeedback();
 		}
 		else{
 			sender.setCounter(smsCounter + 1);
@@ -158,7 +163,8 @@ public class Server {
 		else{
 			//TODO Generate error msg for feedback signature compromised
 			System.out.println("Signature compromised on loggin SMS received");
-			return generateLogoutFeedback(sender); 
+			this.status = ERROR_MSG;
+			return generateUnsuccessfulFeedback();
 		}
     }
 
@@ -170,11 +176,13 @@ public class Server {
 		if(receiverAcc != null){
 			sender.debit(Integer.parseInt(amount));
 			receiverAcc.credit(Integer.parseInt(amount));
-			this.status = SERVER_SUCCESSFUL_LOGIN_MSG;
+			this.status = SUCCESSFUL_TRANSACTION_MSG;
 		}
 		else{
 			//TODO Generate error msg receiver not registered
-			System.out.println("Receiver not registered");
+			System.out.println("Receiver not registered.");
+			this.status = ERROR_MSG;
+			return generateUnsuccessfulFeedback();
 		}
 		
 		//Msg to cipher
@@ -186,7 +194,7 @@ public class Server {
 		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
 				
 		System.out.println(this.status);
-		if(this.status.equals(SERVER_SUCCESSFUL_LOGIN_MSG)){
+		if(this.status.equals(SUCCESSFUL_TRANSACTION_MSG)){
 			System.out.println("Receiver: " + ((Integer) receiverAcc.getBalance()).toString() + " <------- " +
 				"Sender: " + ((Integer) sender.getBalance()).toString());
 		}
@@ -235,7 +243,7 @@ public class Server {
 	
 
 	public String generateLogoutFeedback(Account sender) throws Exception{
-		this.status = ERROR_MSG;
+		this.status = SERVER_SUCCESSFUL_LOGOUT_MSG;
 		sender.setCounter(0);
 		
 		//Msg to cipher
