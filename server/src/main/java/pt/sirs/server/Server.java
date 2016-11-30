@@ -2,6 +2,7 @@ package pt.sirs.server;
 
 import java.math.BigInteger;
 import java.security.KeyPair;
+import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -21,7 +22,6 @@ public class Server {
 
 	private static final int SIZE_OF_TIMESTAMP = 23;
 	private static final int SIGNATURE_SIZE = 47;
-	private static final long MINUTE_IN_MILLIS = 60000;//one minute in millisecs
 	public static final String SERVER_FAILED_LOGIN_MSG = "ChamPog";
 	public static final String SERVER_SUCCESSFUL_LOGIN_MSG = "PogChamp";
 	private static final String FAILED_TRANSACTION_MSG = "Transaction Failed";
@@ -37,6 +37,7 @@ public class Server {
 	private SecretKeySpec sharedKey;
 	private String status;
 	private KeyPair keys;
+	private String nonRepudiationString;
 	
     public Server() throws Exception {
     	
@@ -200,7 +201,7 @@ public class Server {
 	public String generateLoginFeedback(Account a, String password, String stringTS) throws Exception{
 		this.status = SERVER_FAILED_LOGIN_MSG;
 		
-		if(password.equals(a.getPassword()) && validTS(stringTS)){
+		if(password.equals(a.getPassword()) && Crypto.validTS(stringTS)){
 			this.status = SERVER_SUCCESSFUL_LOGIN_MSG;
 			a.setSharedKey(sharedKey);
 		}
@@ -248,23 +249,6 @@ public class Server {
 
 		return toSend;		
 	}
-	
-    private boolean validTS(String stringTS) throws ParseException {
-    	System.out.println(stringTS); //TODO Prints the time when sms received, remove if you please
-    	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-    	Date ts = sdf.parse(stringTS);
-    	
-    	//Generate current date plus and less one minute
-    	Calendar date = Calendar.getInstance();
-    	long t= date.getTimeInMillis();
-    	Date afterAddingOneMin = new Date(t + (MINUTE_IN_MILLIS));
-    	Date afterReducingOneMin = new Date(t - (MINUTE_IN_MILLIS));    	
-
-    	if(ts.before(afterAddingOneMin) && ts.after(afterReducingOneMin))
-    		return true;
-    	else 
-    		return false;
-	}
 
 	public void addAccount(Account account) throws ServerException{
     	for(Account a : this.accounts){
@@ -300,6 +284,21 @@ public class Server {
 		this.secretValue = Crypto.generateSecretValue();
 	}
 	
+	public String getNonRepudiationMsgForPublicValue() throws Exception {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+
+		//Generating signature
+		String dataToSign = publicValue + timestamp.toString();
+		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
+
+		String stringSig = Crypto.encode(signature);
+		String toSend =  stringSig + "|" + timestamp.toString();
+		
+		System.out.println("Size of non repudiation msg for public value used in DH SMS message: " + toSend.length());
+
+		return toSend;
+	}
+	
 	public void generatePublicValue(){
 	   publicValue = g.modPow(secretValue, p);
 	}
@@ -308,9 +307,35 @@ public class Server {
 		return Crypto.encode(publicValue.toByteArray());
 	}
 	
+	public void receiveNonRepudiationMsgForPublicValue(String readObject) {
+		this.nonRepudiationString = readObject;
+	}
+	
 	public void generateSharedKey(String stringPublicValue) throws Exception{
 		byte[] bytePublicValue = Crypto.decode(stringPublicValue);
 		BigInteger publicValue = new BigInteger(bytePublicValue);
+		
+		//Verify publicValue
+		String[] splitedSms = this.nonRepudiationString.split("\\|");
+		String stringSender = splitedSms[0];
+		byte[] byteSig = Crypto.decode(splitedSms[1]);
+		String stringTS  = splitedSms[2];
+		
+		Account sender = getAccountByUsername(stringSender);
+		
+		//Verify TimeStamp
+		if(!Crypto.validTS(stringTS)){
+			//TODO send proper error
+			System.out.println("Time stamp used in DH public value invalid, passed more than 1 minute");
+		}
+		
+		//Verify signature
+		String msgToVerify = stringSender + publicValue + stringTS;
+		if(!Crypto.verifySign(msgToVerify, byteSig, sender.getPubKey())){
+			//TODO send proper error
+			System.out.println("Signature compromised ins DH public value msg");
+		}
+		
 		BigInteger sharedKey = publicValue.modPow(secretValue, p);
 		System.out.println(Crypto.encode(sharedKey.toByteArray()) + "  LENG SharedKey: " + Crypto.encode(sharedKey.toByteArray()).length());
 		this.sharedKey = Crypto.generateKeyFromBigInt(sharedKey);

@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class DeffieHellman {
+public class DiffieHellman {
 	private static int bitLength=512;	
 	private static int certainty=20;
     private static final SecureRandom rnd = new SecureRandom();

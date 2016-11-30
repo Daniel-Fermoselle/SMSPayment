@@ -76,9 +76,12 @@ public class ServerApplication {
         server.generatePublicValue();
         
         //Receive public value from client and generate sharedKey
+        server.receiveNonRepudiationMsgForPublicValue((String) in.readObject());
         server.generateSharedKey((String) in.readObject());
         
         //Send public value to client
+        out.writeObject(server.getNonRepudiationMsgForPublicValue());
+        out.flush();
         out.writeObject(server.getPublicValue());
         out.flush();
 		

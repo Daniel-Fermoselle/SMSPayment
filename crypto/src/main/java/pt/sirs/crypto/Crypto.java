@@ -1,45 +1,38 @@
 package pt.sirs.crypto;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.Signature;
 import java.security.spec.ECGenParameterSpec;
-
 import java.security.spec.PKCS8EncodedKeySpec;
-
 import java.security.spec.X509EncodedKeySpec;
-import java.util.ArrayList;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Random;
-
 import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-
 import org.apache.commons.codec.binary.Base64;
-
-
-import pt.sirs.crypto.DeffieHellman;
+import pt.sirs.crypto.DiffieHellman;
 
 public class Crypto {
 	private static int bitLength=512;	
+	private static final long MINUTE_IN_MILLIS = 60000;//one minute in millisecs
+
 	
 	public static byte[] cipherSMS(String sms, Key sharedKey) throws Exception{
 		byte[] cipherText;
@@ -63,8 +56,8 @@ public class Crypto {
 
 	public static BigInteger[] GeneratePandG(){
 		BigInteger generatorValue,primeValue;
-		primeValue = DeffieHellman.findPrime();
-	    generatorValue	= DeffieHellman.findPrimeRoot(primeValue);
+		primeValue = DiffieHellman.findPrime();
+	    generatorValue	= DiffieHellman.findPrimeRoot(primeValue);
 	    BigInteger[] toReturn = new BigInteger[2];
 	    toReturn[0] = primeValue;
 	    toReturn[1] = generatorValue;
@@ -96,6 +89,23 @@ public class Crypto {
 		byte[] decodedCipheredSms =  Base64.decodeBase64(msg.getBytes());
 		
 		return decodedCipheredSms;
+	}
+	
+    public static boolean validTS(String stringTS) throws ParseException {
+    	System.out.println(stringTS); //TODO Prints the time when sms received, remove if you please
+    	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    	Date ts = sdf.parse(stringTS);
+    	
+    	//Generate current date plus and less one minute
+    	Calendar date = Calendar.getInstance();
+    	long t= date.getTimeInMillis();
+    	Date afterAddingOneMin = new Date(t + (MINUTE_IN_MILLIS));
+    	Date afterReducingOneMin = new Date(t - (MINUTE_IN_MILLIS));    	
+
+    	if(ts.before(afterAddingOneMin) && ts.after(afterReducingOneMin))
+    		return true;
+    	else 
+    		return false;
 	}
 		
 	public static byte[] sign(String msg, PrivateKey privKey) throws Exception{

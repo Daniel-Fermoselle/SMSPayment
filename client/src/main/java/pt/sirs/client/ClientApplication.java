@@ -95,10 +95,13 @@ public class ClientApplication {
         client.generateSecretValue();
         
         //Generate client public value
+        out.writeObject(client.getNonRepudiationMsgForPublicValue());
+        out.flush();
         out.writeObject(client.generatePublicValue());
         out.flush();
-
+ 
         //Generate sharedKey
+        client.receiveNonRepudiationMsgForPublicValue((String) in.readObject());
         client.generateSharedKey((String) in.readObject());
 		
 		return client;

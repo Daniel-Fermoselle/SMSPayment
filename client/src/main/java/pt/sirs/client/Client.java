@@ -5,7 +5,6 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.sql.Timestamp;
-import java.util.Arrays;
 
 import javax.crypto.spec.SecretKeySpec;
 
@@ -28,6 +27,7 @@ public class Client {
 	//TODO this is only 32bit can be changed to long
 	private int counter;
 	private KeyPair keys;
+	private String nonRepudiationString;
 	
 	
 	public Client(String myUsername, String myPassword) throws Exception {
@@ -176,11 +176,11 @@ public class Client {
 	
 	public String generateValueSharingSMS(String value){
 		if(value.equals("p")){
-			System.out.println(Crypto.encode(this.p.toByteArray()) + "  LENG P: " + Crypto.encode(this.p.toByteArray()).length());
+			System.out.println("Size of public value p (prime) used in DH SMS message: " + Crypto.encode(this.p.toByteArray()).length());
 			return Crypto.encode(this.p.toByteArray());
 		}
 		if(value.equals("g")){
-			System.out.println(Crypto.encode(this.g.toByteArray()) + "  LENG G: " + Crypto.encode(this.g.toByteArray()).length());
+			System.out.println("Size of public value g (module) used in DH SMS message: " + Crypto.encode(this.g.toByteArray()).length());
 			return Crypto.encode(this.g.toByteArray());
 		}
 		else
@@ -192,18 +192,56 @@ public class Client {
 		this.secretValue = Crypto.generateSecretValue();
 	}
 	
-	public String generatePublicValue(){
+	public String getNonRepudiationMsgForPublicValue() throws Exception {
 		publicValue = g.modPow(secretValue, p);
-		System.out.println(Crypto.encode(publicValue.toByteArray()) + "  LENG PublicValue: " + Crypto.encode(publicValue.toByteArray()).length());
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+
+		//Generating signature
+		String dataToSign = this.getMyUsername() + publicValue + timestamp.toString();
+		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
+
+		String stringSig = Crypto.encode(signature);
+		String toSend = this.getMyUsername() + "|" + stringSig + "|" + timestamp.toString();
+		
+		System.out.println("Size of non repudiation msg for public value used in DH SMS message: " + toSend.length());
+
+		return toSend;
+	}
+	
+	public String generatePublicValue(){
+		System.out.println("Size of Client public value used in DH SMS message: " + Crypto.encode(publicValue.toByteArray()).length());
 		return Crypto.encode(publicValue.toByteArray());
 	}
 	
 	public void generateSharedKey(String stringPublicValue) throws Exception{
 		byte[] bytePublicValue = Crypto.decode(stringPublicValue);
 		BigInteger publicValue = new BigInteger(bytePublicValue);
+		
+		//Verify publicValue
+		String[] splitedSms = this.nonRepudiationString.split("\\|");
+		byte[] byteSig = Crypto.decode(splitedSms[0]);
+		String stringTS  = splitedSms[1];
+				
+		//Verify TimeStamp
+		if(!Crypto.validTS(stringTS)){
+			//TODO send proper error
+			System.out.println("Time stamp used in DH public value invalid, passed more than 1 minute");
+		}
+		
+		//Verify signature
+		String msgToVerify = publicValue + stringTS;
+		if(!Crypto.verifySign(msgToVerify, byteSig, Crypto.readPubKeyFromFile(SERVER_PUBLIC_KEY_PATH))){
+			//TODO send proper error
+			System.out.println("Signature compromised ins DH public value msg");
+		}
+		
 		BigInteger sharedKey = publicValue.modPow(secretValue, p);
 		System.out.println(Crypto.encode(sharedKey.toByteArray()) + "  LENG SharedKey: " + Crypto.encode(sharedKey.toByteArray()).length());
 		this.sharedKey = Crypto.generateKeyFromBigInt(sharedKey);
+	}
+	
+	public void receiveNonRepudiationMsgForPublicValue(String readObject) {
+		this.nonRepudiationString = readObject;		
 	}
 	
 	public void setMyMoney(int myMoney){
@@ -237,6 +275,8 @@ public class Client {
 	public void setStatus(String status) {
 		this.status = status;
 	}
+
+	
 
 }
 	
