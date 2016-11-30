@@ -46,6 +46,7 @@ public class Server {
     	addAccount(new Account("PT12345678901234567890124", 100, "sigmaJEM", "12345"));
     	addAccount(new Account("PT12345678901234567890125", 100, "Alpha", "12345"));
     	addAccount(new Account("PT12345678901234567890126", 100, "jse", "12345"));
+    	addAccount(new Account("PT12345678901234567890127", 10000000, "aaaaaaaaaa", "1234567"));
     	this.status = "Initialized";
     	keys = new KeyPair(Crypto.readPubKeyFromFile(PUBLIC_KEY_PATH), Crypto.readPrivKeyFromFile(PRIVATE_KEY_PATH));
 

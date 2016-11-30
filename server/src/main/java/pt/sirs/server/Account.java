@@ -20,7 +20,7 @@ public class Account{
 	private PublicKey pubKey;
 
 	public Account(String iban, int balance, String username, String password) throws Exception{
-		if(password.length()<4 || password.length()>8)
+		if(password.length()<4 || password.length()>7)
 		{ throw new InvalidPasswordException(password); }
 		if(username.length()>10)
 		{ throw new InvalidUsernameException(username); }
