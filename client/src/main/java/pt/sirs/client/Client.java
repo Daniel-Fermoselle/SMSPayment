@@ -28,11 +28,13 @@ public class Client {
 	private int counter;
 	private KeyPair keys;
 	private String nonRepudiationString;
+	private String mobile;
 	
 	
-	public Client(String myUsername, String myPassword) throws Exception {
+	public Client(String myUsername, String myPassword, String mobile) throws Exception {
 		this.myUsername = myUsername;
 		this.myPassword = myPassword;
+		this.mobile = mobile;
 		BigInteger[] pair = Crypto.GeneratePandG();
 		p = pair[0];
 		g = pair[1];
@@ -49,20 +51,20 @@ public class Client {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 		
 		//Generating signature
-		String dataToSign = this.myUsername +  timestamp.toString() + this.myPassword;
+		String dataToSign = this.mobile +  timestamp.toString() + this.myPassword;
 		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
 		
 		//Ciphering text
 		String toCipher  = timestamp.toString() + "|" + this.myPassword;
 		cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);	
 		
-		//Concatenate username and signature with cipheredText --> (username|)signature|cipheredText
+		//Concatenate mobile and signature with cipheredText --> (mobile|)signature|cipheredText
 		//cipheredText = {TS|pass}Ks
-		String user = Crypto.encode(this.myUsername.getBytes());
+		String mobile = Crypto.encode(this.mobile.getBytes());
 		String stringSig = Crypto.encode(signature);
 		String stringCiphertext = Crypto.encode(cipheredText);
 		
-		String toSend = user + "|" + stringSig + "|" + stringCiphertext;
+		String toSend = mobile + "|" + stringSig + "|" + stringCiphertext;
 		
 		System.out.println("Size of login SMS message: " + (stringSig + "|" + stringCiphertext).length());
 		return toSend;
@@ -72,20 +74,20 @@ public class Client {
 		byte[] cipheredText;
 		
 		//Generating signature
-		String dataToSign = this.myUsername +  "logout" + this.counter;
+		String dataToSign = this.mobile +  "logout" + this.counter;
 		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
 		
 		//Ciphering text
 		String toCipher  = "logout" + "|" + this.counter;
 		cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);	
 		
-		//Concatenate username and signature with cipheredText --> (username|)signature|cipheredText
+		//Concatenate mobile and signature with cipheredText --> (mobile|)signature|cipheredText
 		//cipheredText = {logout|counter}Ks
-		String user = Crypto.encode(this.myUsername.getBytes());
+		String mobile = Crypto.encode(this.mobile.getBytes());
 		String stringSig = Crypto.encode(signature);
 		String stringCiphertext = Crypto.encode(cipheredText);
 		
-		String toSend = user + "|" + stringSig + "|" + stringCiphertext;
+		String toSend = mobile + "|" + stringSig + "|" + stringCiphertext;
 		
 		System.out.println("Size of logout SMS message: " + (stringSig + "|" + stringCiphertext).length());
 		return toSend;
@@ -100,16 +102,16 @@ public class Client {
 		cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);		
 
 		//Generating signature
-		String dataToSign = this.myUsername + receiver + amount + this.counter;
+		String dataToSign = this.mobile + receiver + amount + this.counter;
 		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
 	
-		//Concatenate username and signature with cipheredText --> (username|)signature|cipheredText
+		//Concatenate mobile and signature with cipheredText --> (mobile|)signature|cipheredText
 		//cipheredText = {receiver|amount|counter}Ks
-		String user = Crypto.encode(this.myUsername.getBytes());
+		String mobile = Crypto.encode(this.mobile.getBytes());
 		String stringSig = Crypto.encode(signature);
 		String stringCiphertext = Crypto.encode(cipheredText);
 		
-		String toSend = user + "|" + stringSig + "|" + stringCiphertext;
+		String toSend = mobile + "|" + stringSig + "|" + stringCiphertext;
 				
 		System.out.println("Size of transaction SMS message: " + (stringSig + "|" + stringCiphertext).length());
 		return toSend;
@@ -197,11 +199,11 @@ public class Client {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
 		//Generating signature
-		String dataToSign = this.getMyUsername() + publicValue + timestamp.toString();
+		String dataToSign = this.mobile + publicValue + timestamp.toString();
 		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
 
 		String stringSig = Crypto.encode(signature);
-		String toSend = this.getMyUsername() + "|" + stringSig + "|" + timestamp.toString();
+		String toSend = this.mobile + "|" + stringSig + "|" + timestamp.toString();
 		
 		System.out.println("Size of non repudiation msg for public value used in DH SMS message: " + toSend.length());
 

@@ -36,13 +36,15 @@ public class ClientApplication {
 	        while(true){
 		        //TODO Make Deffie Hellman happen once
 		        while(!feedback.equals(Client.SUCCESS_FEEDBACK)){
+		        	console.printf("Please enter your mobile: ");
+			    	String mobile = console.readLine();	    
 			    	console.printf("Please enter your username: ");
 			    	String username = console.readLine();	    	
 			    	console.printf("Please enter your password: ");
 			    	char[] passwordChars = console.readPassword();
 			    	String passwordString = new String(passwordChars);
 			    	
-			    	client = new Client(username, passwordString);
+			    	client = new Client(username, passwordString, mobile);
 			    	
 			    	client = DiffieHellman(client, out, in);	
 			    	client = Login(client, out, in);
