@@ -14,6 +14,9 @@ import pt.sirs.crypto.Crypto;
 public class Client {
 	public static final String SUCCESS_FEEDBACK = "PogChamp";
 	public static final String FAILED_FEEDBACK = "ChamPog";
+	public static final String SERVER_SUCCESSFUL_LOGIN_MSG = "LoginOk";	
+	private static final String SUCCESSFUL_TRANSACTION_MSG = "TransOk";
+	public static final String SERVER_SUCCESSFUL_LOGOUT_MSG = "LogoutOk";
 	private static final String SERVER_PUBLIC_KEY_PATH = "keys/PublicKeyServer";
 	
 	private int myMoney; 
@@ -131,7 +134,8 @@ public class Client {
 		//Verify Counter
 		if(!verifyCounter(state, Integer.parseInt(splitedMsg[1]))){
 			//TODO generate error msg
-			return "ChampPog";
+			System.out.println("Freshness compromised in " + state + " feed back!!");
+			return FAILED_FEEDBACK;
 		}
 		
 		this.counter = Integer.parseInt(splitedMsg[1]);
@@ -146,8 +150,8 @@ public class Client {
 		}
 		else{
 			//TODO Generate error signature compromised
-			System.out.println("Signature compromised in login feed back!!");
-			return "ChampPog";
+			System.out.println("Signature compromised in " + state + " feed back!!");
+			return FAILED_FEEDBACK;
 		}
 	}
 	

@@ -22,12 +22,10 @@ public class Server {
 	private static final int SIZE_OF_TIMESTAMP = 23;
 	private static final int SIGNATURE_SIZE = 47;
 	private static final long MINUTE_IN_MILLIS = 60000;//one minute in millisecs
-	public static final String SERVER_FAILED_LOGIN_MSG = "LoginFail";
 	public static final String SERVER_SUCCESSFUL_LOGIN_MSG = "LoginOk";
-	private static final String FAILED_TRANSACTION_MSG = "TransFail";
 	private static final String SUCCESSFUL_TRANSACTION_MSG = "TransOk";
-	public static final String SERVER_FAILED_LOGOUT_MSG = "LogoutFail";
 	public static final String SERVER_SUCCESSFUL_LOGOUT_MSG = "LogoutOk";
+	public static final String ERROR_MSG = "ChamPog";
 	
 	private static final String PRIVATE_KEY_PATH = "keys/PrivateKeyServer";
 	private static final String PUBLIC_KEY_PATH = "keys/PublicKeyServer";
@@ -68,7 +66,9 @@ public class Server {
 		sender = getAccountByUsername(new String(byteUsername));
 		if(sender == null){
 			//TODO Generate error msg client not registered
+			this.status = ERROR_MSG;
 			System.out.println("User not registered");
+			return generateUnsuccessfulFeedback();
 		}
 		
 		//Deciphering msg
@@ -89,8 +89,9 @@ public class Server {
 		}
 		else{
 			//TODO Generate error msg for feedback signature compromised
+			this.status = ERROR_MSG;
 			System.out.println("Signature compromised on loggin SMS received");
-			return generateLoginFeedback(sender, "sdadjan", stringTimestamp);
+			return generateUnsuccessfulFeedback();
 		}
     }
     
@@ -130,7 +131,7 @@ public class Server {
 		//Verify user counter
 		int smsCounter = Integer.parseInt(counter);
 		if(smsCounter < sender.getCounter()){
-			return FAILED_TRANSACTION_MSG;
+			return ERROR_MSG;
 		}
 		else{
 			sender.setCounter(smsCounter + 1);
@@ -163,7 +164,7 @@ public class Server {
 
 	public String generateTransactionFeedback(Account sender, String receiver, String amount) throws Exception{
 		Account receiverAcc;
-		this.status = SERVER_FAILED_LOGIN_MSG;
+		this.status = ERROR_MSG;
 		
 		receiverAcc = getAccountByUsername(receiver);
 		if(receiverAcc != null){
@@ -201,12 +202,15 @@ public class Server {
 		return toSend;		
 	}
 
-	public String generateLoginFeedback(Account a, String password, String stringTS) throws Exception{
-		this.status = SERVER_FAILED_LOGIN_MSG;
-		
+	public String generateLoginFeedback(Account a, String password, String stringTS) throws Exception{		
 		if(password.equals(a.getPassword()) && validTS(stringTS)){
 			this.status = SERVER_SUCCESSFUL_LOGIN_MSG;
 			a.setSharedKey(sharedKey);
+		}
+		else{
+			this.status = ERROR_MSG;
+			System.out.println("Wrong password!");
+			return generateUnsuccessfulFeedback();
 		}
 		
 		//Add user counter to msg
@@ -231,7 +235,7 @@ public class Server {
 	
 
 	public String generateLogoutFeedback(Account sender) throws Exception{
-		this.status = SERVER_FAILED_LOGIN_MSG;
+		this.status = ERROR_MSG;
 		sender.setCounter(0);
 		
 		//Msg to cipher
@@ -251,6 +255,26 @@ public class Server {
 		System.out.println("Size of logout feedback SMS message: " + toSend.length());
 
 		return toSend;		
+	}
+	
+	public String generateUnsuccessfulFeedback() throws Exception{
+		//Msg to cipher
+		String toCipher = this.status + "|" + "0";
+		byte[] cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);
+		
+		//Generating signature
+		String dataToSign = this.status + "0";
+		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
+		
+		//Concatenate signature with cipheredText --> signature|cipheredText
+		//cipheredText = {status|counter}Ks
+		String stringSig = Crypto.encode(signature);
+		String stringCiphertext = Crypto.encode(cipheredText);
+		String toSend = stringSig + "|" + stringCiphertext;
+		
+		System.out.println("Size of logout feedback SMS message: " + toSend.length());
+
+		return toSend;
 	}
 	
     private boolean validTS(String stringTS) throws ParseException {

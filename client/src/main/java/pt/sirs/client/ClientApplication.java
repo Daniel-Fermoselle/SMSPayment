@@ -35,7 +35,7 @@ public class ClientApplication {
 	        System.out.println("Started...");//Just debugging prints	
 	        while(true){
 		        //TODO Make Deffie Hellman happen once
-		        while(!feedback.equals(Client.SUCCESS_FEEDBACK)){
+		        while(!feedback.equals(Client.SERVER_SUCCESSFUL_LOGIN_MSG)){
 			    	console.printf("Please enter your username: ");
 			    	String username = console.readLine();	    	
 			    	console.printf("Please enter your password: ");
@@ -49,7 +49,7 @@ public class ClientApplication {
 			    	feedback = client.getStatus();
 		        }
 		    	
-		    	while(client.getStatus().equals(Client.SUCCESS_FEEDBACK)){
+		    	while(client.getStatus().equals(Client.SERVER_SUCCESSFUL_LOGIN_MSG)){
 		    		System.out.println("Choose one of the following options");
 		    		System.out.println("1 - Transaction");
 		    		System.out.println("2 - Logout");
@@ -65,11 +65,14 @@ public class ClientApplication {
 	        }
 		}
 		
-		catch(UnknownHostException unknownHost){
+		catch(UnknownHostException e){
             System.err.println("Tentativa de conexao com server desconhecido");
         }
-        catch(Exception Exception){
-            Exception.printStackTrace();
+		catch(FileNotFoundException e){
+			System.err.println("Username não registado no sistema. Volte a iniciar a aplicação.");
+		}
+        catch(Exception e){
+            e.printStackTrace();
         }
 		
     	finally{
