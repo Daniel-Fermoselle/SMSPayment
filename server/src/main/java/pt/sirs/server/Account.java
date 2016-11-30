@@ -4,6 +4,7 @@ import java.security.PublicKey;
 
 import javax.crypto.spec.SecretKeySpec;
 
+import pt.sirs.crypto.Crypto;
 import pt.sirs.server.Exceptions.AmountToHighException;
 import pt.sirs.server.Exceptions.InvalidPasswordException;
 import pt.sirs.server.Exceptions.InvalidUsernameException;
@@ -18,8 +19,8 @@ public class Account{
 	private int counter;
 	private PublicKey pubKey;
 
-	public Account(String iban, int balance, String username, String password){
-		if(password.length()<4 || password.length()>15)
+	public Account(String iban, int balance, String username, String password) throws Exception{
+		if(password.length()<4 || password.length()>8)
 		{ throw new InvalidPasswordException(password); }
 		if(username.length()>10)
 		{ throw new InvalidUsernameException(username); }
@@ -28,6 +29,7 @@ public class Account{
 		this.username = username;
 		this.password = password;
 		this.counter = 0;
+		this.pubKey = Crypto.readPubKeyFromFile("keys/" + "PublicKey" + username);
 	}
 	
 	public void debit(int amount){

@@ -20,12 +20,13 @@ import pt.sirs.server.Exceptions.UserAlreadyExistsException;
 public class Server {
 
 	private static final int SIZE_OF_TIMESTAMP = 23;
+	private static final int SIGNATURE_SIZE = 47;
 	private static final long MINUTE_IN_MILLIS = 60000;//one minute in millisecs
 	public static final String SERVER_FAILED_LOGIN_MSG = "ChamPog";
 	public static final String SERVER_SUCCESSFUL_LOGIN_MSG = "PogChamp";
 	private static final String FAILED_TRANSACTION_MSG = "Transaction Failed";
-	private static final String PRIVATE_KEY_PATH = "keys/PrivKeyServer";
-	private static final String PUBLIC_KEY_PATH = "keys/PubKeyServer";
+	private static final String PRIVATE_KEY_PATH = "keys/PrivateKeyServer";
+	private static final String PUBLIC_KEY_PATH = "keys/PublicKeyServer";
 
 	
 	private ArrayList<Account> accounts;
@@ -50,7 +51,7 @@ public class Server {
     }    
     
     public String processLoginSms(String cipheredSms) throws Exception{
-		byte[] msg;
+		byte[] msg, sig, cipheredMsg;
 		String decipheredSms;
 		Account a;
 		String stringTimestamp, password;
@@ -61,15 +62,25 @@ public class Server {
 		
 		//Possible problem if encoding used more than 1 byte in 1 character
 		msg = Arrays.copyOfRange(decodedCipheredSms, 1 + a.getUsername().length(), decodedCipheredSms.length);
+		sig = Arrays.copyOfRange(msg, 0, SIGNATURE_SIZE);
+		cipheredMsg = Arrays.copyOfRange(msg, SIGNATURE_SIZE, msg.length);
 		
-		decipheredSms = Crypto.decipherSMS(msg, this.sharedKey);
+		decipheredSms = Crypto.decipherSMS(cipheredMsg, this.sharedKey);
 		//Verify TS
 		stringTimestamp = String.copyValueOf(decipheredSms.toCharArray(), 0, SIZE_OF_TIMESTAMP);
 		password = String.copyValueOf(decipheredSms.toCharArray(), SIZE_OF_TIMESTAMP + 1, 
 									  decipheredSms.toCharArray().length - SIZE_OF_TIMESTAMP - 1);
 		System.out.println("Password is:" + password + "   len " + password.length());
 		
-		return generateLoginFeedback(a, password, stringTimestamp);
+		String msgToVerify = a.getUsername() + stringTimestamp + password;
+		
+		if(Crypto.verifySign(msgToVerify, sig, a.getPubKey())){		
+			return generateLoginFeedback(a, password, stringTimestamp);
+		}
+		else{
+			//TODO Generate error msg for feedback
+			return generateLoginFeedback(a, "sdadjansjdanjds", stringTimestamp);
+		}
     }
     
     public String processTransactionSms(String cipheredSms) throws Exception{

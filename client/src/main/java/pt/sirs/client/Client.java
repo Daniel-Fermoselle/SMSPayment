@@ -2,6 +2,8 @@ package pt.sirs.client;
 
 import java.math.BigInteger;
 import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.sql.Timestamp;
 import java.util.Arrays;
 
@@ -12,7 +14,7 @@ import pt.sirs.crypto.Crypto;
 public class Client {
 	public static final String SUCCESS_FEEDBACK = "PogChamp";
 	public static final String FAILED_FEEDBACK = "ChamPog";
-	private static final String SERVER_PUBLIC_KEY_PATH = "keys/PubKeyServer";
+	private static final String SERVER_PUBLIC_KEY_PATH = "keys/PublicKeyServer";
 
 	
 	private int myMoney; 
@@ -37,7 +39,10 @@ public class Client {
 		g = pair[1];
 		this.secretValue = Crypto.generateSecretValue();
 		this.status = "Initialized";
-		keys = Crypto.GenerateKeys();
+		
+		PublicKey pubKey = Crypto.readPubKeyFromFile("keys/" + "PublicKey" + this.myUsername);
+		PrivateKey privKey = Crypto.readPrivKeyFromFile("keys/" + "PrivateKey" + this.myUsername);
+		this.keys = new KeyPair(pubKey, privKey);
 	}
 	
 	public String generateLoginSms() throws Exception{
@@ -47,14 +52,18 @@ public class Client {
 
 		String toCipher  = timestamp.toString() + "-" + this.myPassword;
 		
+		String dataToSign = this.myUsername +  timestamp.toString() + this.myPassword;
+		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
+		
 		cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);	
 		
-		//Concatenate username with cipheredText --> username-cipheredText
-		//cipheredText = {pass-TS}Ks
+		//Concatenate username and signature with cipheredText --> (username-)signature||cipheredText
+		//cipheredText = {TS-pass}Ks
 		byte[] usernameB = usernameS.getBytes();
-		byte[] finalMsg = new byte[cipheredText.length + usernameB.length];
+		byte[] finalMsg = new byte[cipheredText.length + usernameB.length + signature.length];
 		System.arraycopy(usernameB, 0, finalMsg, 0, usernameB.length);
-		System.arraycopy(cipheredText, 0, finalMsg, usernameB.length, cipheredText.length);
+		System.arraycopy(signature, 0, finalMsg, usernameB.length, signature.length);
+		System.arraycopy(cipheredText, 0, finalMsg, usernameB.length + signature.length, cipheredText.length);
 		
 		return Crypto.encode(finalMsg);
 	}
