@@ -9,25 +9,21 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
-import java.security.Provider;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.Signature;
 import java.security.spec.ECGenParameterSpec;
-import java.security.spec.ECPublicKeySpec;
-import java.security.spec.InvalidKeySpecException;
+
 import java.security.spec.PKCS8EncodedKeySpec;
+
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,16 +35,6 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.pdfbox.io.ASCII85InputStream;
 import org.apache.pdfbox.io.ASCII85OutputStream;
-import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
-import org.bouncycastle.crypto.AsymmetricCipherKeyPairGenerator;
-import org.bouncycastle.crypto.generators.ECKeyPairGenerator;
-import org.bouncycastle.crypto.params.ECDomainParameters;
-import org.bouncycastle.crypto.params.ECKeyGenerationParameters;
-import org.bouncycastle.jcajce.provider.config.ConfigurableProvider;
-import org.bouncycastle.jce.ECNamedCurveTable;
-import org.bouncycastle.jce.spec.ECParameterSpec;
-import org.bouncycastle.math.ec.ECCurve;
-import org.bouncycastle.util.encoders.Hex;
 
 import pt.sirs.crypto.DeffieHellman;
 
