@@ -50,59 +50,76 @@ public class Server {
 
     }    
     
-    public String processLoginSms(String cipheredSms) throws Exception{
-		byte[] msg, sig, cipheredMsg;
-		String decipheredSms;
-		Account a;
+    public String processLoginSms(String sms) throws Exception{
+		String decipheredMsg;
+		Account sender;
 		String stringTimestamp, password;
 
-		byte[] decodedCipheredSms =  Crypto.decode(cipheredSms);
+		String[] splitedSms = sms.split("\\|");
+		byte[] byteUsername = Crypto.decode(splitedSms[0]);
+		byte[] byteSignature = Crypto.decode(splitedSms[1]);
+		byte[] byteCipheredMsg = Crypto.decode(splitedSms[2]);
+
+		//Getting user in msg
+		sender = getAccountByUsername(new String(byteUsername));
+		if(sender == null){
+			//TODO Generate error msg client not registered
+			System.out.println("User not registered");
+		}
 		
-		a = getAccountByUsername(new String(decodedCipheredSms));
+		//Deciphering msg
+		decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, this.sharedKey);
+
+		//Obtaining time stamp and password
+		String[] splitedMsg = decipheredMsg.split("\\|");
+		stringTimestamp = splitedMsg[0];
+		password = splitedMsg[1];
 		
-		//Possible problem if encoding used more than 1 byte in 1 character
-		msg = Arrays.copyOfRange(decodedCipheredSms, 1 + a.getUsername().length(), decodedCipheredSms.length);
-		sig = Arrays.copyOfRange(msg, 0, SIGNATURE_SIZE);
-		cipheredMsg = Arrays.copyOfRange(msg, SIGNATURE_SIZE, msg.length);
-		
-		decipheredSms = Crypto.decipherSMS(cipheredMsg, this.sharedKey);
-		//Verify TS
-		stringTimestamp = String.copyValueOf(decipheredSms.toCharArray(), 0, SIZE_OF_TIMESTAMP);
-		password = String.copyValueOf(decipheredSms.toCharArray(), SIZE_OF_TIMESTAMP + 1, 
-									  decipheredSms.toCharArray().length - SIZE_OF_TIMESTAMP - 1);
 		System.out.println("Password is:" + password + "   len " + password.length());
 		
-		String msgToVerify = a.getUsername() + stringTimestamp + password;
+		//Verify signature 
+		String msgToVerify = sender.getUsername() + stringTimestamp + password;
 		
-		if(Crypto.verifySign(msgToVerify, sig, a.getPubKey())){		
-			return generateLoginFeedback(a, password, stringTimestamp);
+		if(Crypto.verifySign(msgToVerify, byteSignature, sender.getPubKey())){		
+			return generateLoginFeedback(sender, password, stringTimestamp);
 		}
 		else{
-			//TODO Generate error msg for feedback
-			return generateLoginFeedback(a, "sdadjansjdanjds", stringTimestamp);
+			//TODO Generate error msg for feedback signature compromised
+			System.out.println("Signature compromised on loggin SMS received");
+			return generateLoginFeedback(sender, "sdadjan", stringTimestamp);
 		}
     }
     
-    public String processTransactionSms(String cipheredSms) throws Exception{
+    public String processTransactionSms(String sms) throws Exception{
 		byte[] msg;
-		String decipheredSms;
+		String decipheredMsg;
 		Account sender;
 		SecretKeySpec sharedKey;
 		
-		byte[] decodedCipheredSms =  Crypto.decode(cipheredSms);
+		String[] splitedSms = sms.split("\\|");
+		byte[] byteUsername = Crypto.decode(splitedSms[0]);
+		byte[] byteSignature = Crypto.decode(splitedSms[1]);
+		byte[] byteCipheredMsg = Crypto.decode(splitedSms[2]);
 		
-		sender = getAccountByUsername(new String(decodedCipheredSms));
+		//Getting user in msg
+		sender = getAccountByUsername(new String(byteUsername));
+		if(sender == null){
+			//TODO Generate error msg client not registered
+			System.out.println("User not registered");
+		}
 		sharedKey = sender.getSharedKey();
 		
-		//TODO ADD SIGNATURE SIZE HERE
-		msg = Arrays.copyOfRange(decodedCipheredSms, 1 + sender.getUsername().length(), decodedCipheredSms.length);
+		//Deciphering msg
+		decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, sharedKey);
 		
-		decipheredSms = Crypto.decipherSMS(msg, sharedKey);
-
-		String[] parts = decipheredSms.split("-");
+		//Obtaining time stamp and password
+		String[] splitedMsg = decipheredMsg.split("\\|");
+		String receiver = splitedMsg[0];
+		String amount   = splitedMsg[1];
+		String counter  = splitedMsg[2];
 		
 		//Verify user counter
-		int smsCounter = Integer.parseInt(parts[parts.length-1]);
+		int smsCounter = Integer.parseInt(counter);
 		if(smsCounter < sender.getCounter()){
 			return FAILED_TRANSACTION_MSG;
 		}
@@ -110,42 +127,63 @@ public class Server {
 			sender.setCounter(smsCounter + 1);
 		}
 		
-		//Check if it's a logout message
-		if(parts[0].equals("logout")){
+		//Verify signature 
+		String msgToVerify = sender.getUsername() + receiver + amount + counter;
+		
+		if(Crypto.verifySign(msgToVerify, byteSignature, sender.getPubKey())){		
+		
+			//Check if it's a logout message
+			if(receiver.equals("logout")){
+				return generateLogoutFeedback(sender); 
+			}
+			
+			return generateTransactionFeedback(sender, receiver, amount);
+		}
+		else{
+			//TODO Generate error msg for feedback signature compromised
+			System.out.println("Signature compromised on loggin SMS received");
 			return generateLogoutFeedback(sender); 
 		}
-		
-		return generateTransactionFeedback(sender, decipheredSms);
     }
 
-	public String generateTransactionFeedback(Account sender, String decipheredSms) throws Exception{
-		Account receiver;
+	public String generateTransactionFeedback(Account sender, String receiver, String amount) throws Exception{
+		Account receiverAcc;
 		this.status = SERVER_FAILED_LOGIN_MSG;
 		
-		String[] splittedSMS = decipheredSms.split("-");
-		
-		receiver = getAccountByUsername(splittedSMS[0]);
-		if(receiver != null){
-			String[] parts = decipheredSms.split("-");
-			sender.debit(Integer.parseInt(parts[1]));
-			receiver.credit(Integer.parseInt(parts[1]));
+		receiverAcc = getAccountByUsername(receiver);
+		if(receiverAcc != null){
+			sender.debit(Integer.parseInt(amount));
+			receiverAcc.credit(Integer.parseInt(amount));
 			this.status = SERVER_SUCCESSFUL_LOGIN_MSG;
 		}
 		else{
-			//TODO GENERATE MESSAGE WITH NEGATIVE FEEDBACK
+			//TODO Generate error msg receiver not registered
+			System.out.println("Receiver not registered");
 		}
 		
-		String msgToCipher = this.status + "-" + sender.getCounter();
+		//Msg to cipher
+		String toCipher = this.status + "|" + sender.getCounter();
+		byte[] cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);
 		
-		byte[] cipheredText = Crypto.cipherSMS(msgToCipher, this.sharedKey);
-		
+		//Generating signature
+		String dataToSign = this.status + sender.getCounter();
+		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
+				
 		System.out.println(this.status);
 		if(this.status.equals(SERVER_SUCCESSFUL_LOGIN_MSG)){
-			System.out.println("Receiver: " + ((Integer) receiver.getBalance()).toString() + " <------- " +
+			System.out.println("Receiver: " + ((Integer) receiverAcc.getBalance()).toString() + " <------- " +
 				"Sender: " + ((Integer) sender.getBalance()).toString());
 		}
 		
-		return Crypto.encode(cipheredText);
+		//Concatenate signature with cipheredText --> signature|cipheredText
+		//cipheredText = {status|counter}Ks
+		String stringSig = Crypto.encode(signature);
+		String stringCiphertext = Crypto.encode(cipheredText);
+		String toSend = stringSig + "|" + stringCiphertext;
+		
+		System.out.println("Size of transaction feedback SMS message: " + toSend.length());
+
+		return toSend;		
 	}
 
 	public String generateLoginFeedback(Account a, String password, String stringTS) throws Exception{
@@ -156,12 +194,24 @@ public class Server {
 			a.setSharedKey(sharedKey);
 		}
 		
-		//Add user conter should be at 0
-		String feedback = this.status + "-" + a.getCounter();
+		//Add user counter to msg
+		String feedback = this.status + "|" + a.getCounter();
 		byte[] cipheredText = Crypto.cipherSMS(feedback, sharedKey);
 		System.out.println(feedback);
 		
-		return Crypto.encode(cipheredText);
+		//Generating signature
+		String dataToSign = this.status + a.getCounter();
+		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
+		
+		//Concatenate signature with cipheredText --> signature|cipheredText
+		//cipheredText = {status|counter}Ks
+		String stringSig = Crypto.encode(signature);
+		String stringCiphertext = Crypto.encode(cipheredText);
+		String toSend = stringSig + "|" + stringCiphertext;
+		
+		System.out.println("Size of login feedback SMS message: " + toSend.length());
+
+		return toSend;
 	}
 
 	public String generateLogoutFeedback(Account a) throws Exception{
@@ -176,17 +226,6 @@ public class Server {
 		System.out.println(this.status);
 		
 		return Crypto.encode(finalMsg);
-	}
-	
-	public String generatePubKeyFeedback(Account a) throws Exception{
-		this.status = SERVER_SUCCESSFUL_LOGIN_MSG;
-		
-		//Add user conter should be at 0
-		String feedback = this.status + "-" + a.getCounter();
-		byte[] cipheredText = Crypto.cipherSMS(feedback, sharedKey);
-		System.out.println(feedback);
-		
-		return Crypto.encode(cipheredText);
 	}
 	
     private boolean validTS(String stringTS) throws ParseException {
@@ -220,7 +259,7 @@ public class Server {
 	
 	public Account getAccountByUsername(String msg){
 		for(Account user : this.accounts){
-			if(msg.contains(user.getUsername())){
+			if(msg.equals(user.getUsername())){
 				return user;
 			}
 		}

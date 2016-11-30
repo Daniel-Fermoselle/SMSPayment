@@ -113,7 +113,7 @@ public class ClientApplication {
         
         String feedback = (String) in.readObject();
         System.out.println(feedback + " TAMANHO: " + feedback.length());
-        System.out.println(client.processLoginFeedback(feedback));
+        System.out.println(client.processFeedback(feedback, "login"));
         
 		return client;
 	}
@@ -135,7 +135,7 @@ public class ClientApplication {
         
         String feedback = (String) in.readObject();
         System.out.println(feedback + " TAMANHO: " + feedback.length());
-        System.out.println(client.processTransactionFeedback(feedback));
+        System.out.println(client.processFeedback(feedback, "transaction"));
 		
 		return client;
 	}

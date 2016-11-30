@@ -33,8 +33,8 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.apache.pdfbox.io.ASCII85InputStream;
-import org.apache.pdfbox.io.ASCII85OutputStream;
+import org.apache.commons.codec.binary.Base64;
+
 
 import pt.sirs.crypto.DeffieHellman;
 
@@ -61,18 +61,6 @@ public class Crypto {
 		return new String(decipherText);
 	}
 
-	public static IvParameterSpec generateIV() throws NoSuchAlgorithmException{
-		SecureRandom randomSecureRandom;
-		IvParameterSpec ivParams;
-		
-		randomSecureRandom = SecureRandom.getInstance("SHA1PRNG");
-		byte[] iv = new byte[16];
-		randomSecureRandom.nextBytes(iv);
-		ivParams = new IvParameterSpec(iv);
-		
-		return ivParams;
-	}	
-	
 	public static BigInteger[] GeneratePandG(){
 		BigInteger generatorValue,primeValue;
 		primeValue = DeffieHellman.findPrime();
@@ -98,119 +86,87 @@ public class Crypto {
 	    return  new SecretKeySpec(key,"AES");
 	}
 	
-	 public static byte[] decode(String ascii85) {
-		    ArrayList<Byte> list = new ArrayList<Byte>();
-		    ByteArrayInputStream in_byte = null;
-		    try {
-		        in_byte = new ByteArrayInputStream(ascii85.getBytes("ascii"));
-		    } catch (UnsupportedEncodingException e) {
-		        e.printStackTrace();
-		    }
-		    ASCII85InputStream in_ascii = new ASCII85InputStream(in_byte);
-		    try {
-		        int r ;
-		        while ((r = in_ascii.read()) != -1) {
-		            list.add((byte) r);
-		        }
-		    } catch (IOException e) {
-		        e.printStackTrace();
-		    }
-		    byte[] bytes = new byte[list.size()];
-		    for (int i = 0; i < bytes.length; i++) {
-		        bytes[i] = list.get(i);
-		    }
-		    return bytes;
-		}
-
-
-		public static String encode(byte[] bytes) {
-		    ByteArrayOutputStream out_byte = new ByteArrayOutputStream();
-		    ASCII85OutputStream  out_ascii = new ASCII85OutputStream(out_byte);
-
-		    try {
-		        out_ascii.write(bytes);
-		        out_ascii.flush();
-		    } catch (IOException e) {
-		        e.printStackTrace();
-		    }
-		    String res = "";
-		    try {
-		        res = out_byte.toString("ascii");
-		    } catch (UnsupportedEncodingException e) {
-		        e.printStackTrace();
-		    }
-		    return res;
-		}
+	public static String encode(byte[] msg){
+		String encodedMsg = new String(Base64.encodeBase64(msg));
 		
-		public static byte[] sign(String msg, PrivateKey privKey) throws Exception{
-			Signature ecdsaSign = Signature.getInstance("SHA256withECDSA", "BC");
-			ecdsaSign.initSign(privKey);
-			ecdsaSign.update(msg.getBytes());
-			return ecdsaSign.sign();
-		}
+		return encodedMsg;
+	}
+	
+	public static byte[] decode(String msg){
+		byte[] decodedCipheredSms =  Base64.decodeBase64(msg.getBytes());
 		
-		public static boolean verifySign(String msg, byte[] signature, PublicKey pubKey) throws Exception {
-			Signature s = Signature.getInstance("SHA256withECDSA", "BC");
-			s.initVerify(pubKey);
-			s.update(msg.getBytes());
-			return s.verify(signature);
-		}
+		return decodedCipheredSms;
+	}
 		
-		public static PublicKey getPubKeyFromByte(byte[] bytePubKey) throws Exception{
-			Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-			return KeyFactory.getInstance("ECDSA", "BC").generatePublic(new X509EncodedKeySpec(bytePubKey));
-		}
-		
-		public static PrivateKey getPrivKeyFromByte(byte[] bytePrivKey) throws Exception{
-			Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-			return KeyFactory.getInstance("ECDSA", "BC").generatePrivate(new PKCS8EncodedKeySpec(bytePrivKey));
-		}
-		
-		public static KeyPair GenerateKeys() throws Exception{
-			Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-			ECGenParameterSpec ecGenSpec = new ECGenParameterSpec("brainpoolp160t1");
-			KeyPairGenerator g = KeyPairGenerator.getInstance("ECDSA", "BC");
-			g.initialize(ecGenSpec, new SecureRandom());
-			KeyPair pair = g.generateKeyPair();
-			return pair;
-		}
-		
-		public static void saveKeyInFile(Key Key, String filename) throws Exception{
-			/* save the public key in a file */
-			byte[] key = Key.getEncoded();
-			FileOutputStream keyfos = new FileOutputStream(filename);
-			keyfos.write(key);
-			keyfos.close();
-		}
-		
-		public static PublicKey readPubKeyFromFile(String filename) throws Exception{
-			File f = new File(filename);
-		    FileInputStream fis = new FileInputStream(f);
-		    DataInputStream dis = new DataInputStream(fis);
-		    byte[] keyBytes = new byte[(int) f.length()];
-		    dis.readFully(keyBytes);
-		    dis.close();
-		    
-		    return getPubKeyFromByte(keyBytes);
-		}
-		
-		public static PrivateKey readPrivKeyFromFile(String filename) throws Exception{
-			File f = new File(filename);
-		    FileInputStream fis = new FileInputStream(f);
-		    DataInputStream dis = new DataInputStream(fis);
-		    byte[] keyBytes = new byte[(int) f.length()];
-		    dis.readFully(keyBytes);
-		    dis.close();
-		    
-		    return getPrivKeyFromByte(keyBytes);
-		}
-		
-		public static void main(String args[]) throws Exception{
-			KeyPair keyPair;
-			for(String entity : args){
-				keyPair = GenerateKeys();
-				saveKeyInFile(keyPair.getPrivate(), "PrivateKey" + entity);
-				saveKeyInFile(keyPair.getPublic(), "PublicKey" + entity);
-			}			
-		}
+	public static byte[] sign(String msg, PrivateKey privKey) throws Exception{
+		Signature ecdsaSign = Signature.getInstance("SHA256withECDSA", "BC");
+		ecdsaSign.initSign(privKey);
+		ecdsaSign.update(msg.getBytes());
+		return ecdsaSign.sign();
+	}
+	
+	public static boolean verifySign(String msg, byte[] signature, PublicKey pubKey) throws Exception {
+		Signature s = Signature.getInstance("SHA256withECDSA", "BC");
+		s.initVerify(pubKey);
+		s.update(msg.getBytes());
+		return s.verify(signature);
+	}
+	
+	public static PublicKey getPubKeyFromByte(byte[] bytePubKey) throws Exception{
+		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+		return KeyFactory.getInstance("ECDSA", "BC").generatePublic(new X509EncodedKeySpec(bytePubKey));
+	}
+	
+	public static PrivateKey getPrivKeyFromByte(byte[] bytePrivKey) throws Exception{
+		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+		return KeyFactory.getInstance("ECDSA", "BC").generatePrivate(new PKCS8EncodedKeySpec(bytePrivKey));
+	}
+	
+	public static KeyPair GenerateKeys() throws Exception{
+		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+		ECGenParameterSpec ecGenSpec = new ECGenParameterSpec("brainpoolp160t1");
+		KeyPairGenerator g = KeyPairGenerator.getInstance("ECDSA", "BC");
+		g.initialize(ecGenSpec, new SecureRandom());
+		KeyPair pair = g.generateKeyPair();
+		return pair;
+	}
+	
+	public static void saveKeyInFile(Key Key, String filename) throws Exception{
+		/* save the public key in a file */
+		byte[] key = Key.getEncoded();
+		FileOutputStream keyfos = new FileOutputStream(filename);
+		keyfos.write(key);
+		keyfos.close();
+	}
+	
+	public static PublicKey readPubKeyFromFile(String filename) throws Exception{
+		File f = new File(filename);
+	    FileInputStream fis = new FileInputStream(f);
+	    DataInputStream dis = new DataInputStream(fis);
+	    byte[] keyBytes = new byte[(int) f.length()];
+	    dis.readFully(keyBytes);
+	    dis.close();
+	    
+	    return getPubKeyFromByte(keyBytes);
+	}
+	
+	public static PrivateKey readPrivKeyFromFile(String filename) throws Exception{
+		File f = new File(filename);
+	    FileInputStream fis = new FileInputStream(f);
+	    DataInputStream dis = new DataInputStream(fis);
+	    byte[] keyBytes = new byte[(int) f.length()];
+	    dis.readFully(keyBytes);
+	    dis.close();
+	    
+	    return getPrivKeyFromByte(keyBytes);
+	}
+	
+	public static void main(String args[]) throws Exception{
+		KeyPair keyPair;
+		for(String entity : args){
+			keyPair = GenerateKeys();
+			saveKeyInFile(keyPair.getPrivate(), "PrivateKey" + entity);
+			saveKeyInFile(keyPair.getPublic(), "PublicKey" + entity);
+		}			
+	}
  }

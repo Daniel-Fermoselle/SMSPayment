@@ -15,7 +15,6 @@ public class Client {
 	public static final String SUCCESS_FEEDBACK = "PogChamp";
 	public static final String FAILED_FEEDBACK = "ChamPog";
 	private static final String SERVER_PUBLIC_KEY_PATH = "keys/PublicKeyServer";
-
 	
 	private int myMoney; 
 	private String myUsername;
@@ -47,25 +46,26 @@ public class Client {
 	
 	public String generateLoginSms() throws Exception{
 		byte[] cipheredText;
-		String usernameS = this.myUsername + "-";
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-
-		String toCipher  = timestamp.toString() + "-" + this.myPassword;
 		
+		//Generating signature
 		String dataToSign = this.myUsername +  timestamp.toString() + this.myPassword;
 		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
 		
+		//Ciphering text
+		String toCipher  = timestamp.toString() + "|" + this.myPassword;
 		cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);	
 		
-		//Concatenate username and signature with cipheredText --> (username-)signature||cipheredText
-		//cipheredText = {TS-pass}Ks
-		byte[] usernameB = usernameS.getBytes();
-		byte[] finalMsg = new byte[cipheredText.length + usernameB.length + signature.length];
-		System.arraycopy(usernameB, 0, finalMsg, 0, usernameB.length);
-		System.arraycopy(signature, 0, finalMsg, usernameB.length, signature.length);
-		System.arraycopy(cipheredText, 0, finalMsg, usernameB.length + signature.length, cipheredText.length);
+		//Concatenate username and signature with cipheredText --> (username|)signature|cipheredText
+		//cipheredText = {TS|pass}Ks
+		String user = Crypto.encode(this.myUsername.getBytes());
+		String stringSig = Crypto.encode(signature);
+		String stringCiphertext = Crypto.encode(cipheredText);
 		
-		return Crypto.encode(finalMsg);
+		String toSend = user + "|" + stringSig + "|" + stringCiphertext;
+		
+		System.out.println("Size of login SMS message: " + (stringSig + "|" + stringCiphertext).length());
+		return toSend;
 	}
 	
 	public String generateLogoutSms() throws Exception{
@@ -87,35 +87,61 @@ public class Client {
 	
 	public String generateTransactionSms(String receiver, String amount) throws Exception{
 		byte[] cipheredText;
-		String usernameS = this.myUsername + "-";
-		String msgToCipher = receiver + "-" + amount + "-" + this.counter;
+		String toCipher = receiver + "|" + amount + "|" + this.counter;
 		
-		cipheredText = Crypto.cipherSMS(msgToCipher, this.sharedKey);		
+		//Ciphering Msg
+		cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);		
 
-		//Concatenate username with cipheredText --> username-cipheredText
-		byte[] usernameB = usernameS.getBytes();
-		byte[] finalMsg = new byte[cipheredText.length + usernameB.length];
-		System.arraycopy(usernameB, 0, finalMsg, 0, usernameB.length);
-		System.arraycopy(cipheredText, 0, finalMsg, usernameB.length, cipheredText.length);
+		//Generating signature
+		String dataToSign = this.myUsername + receiver + amount + this.counter;
+		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
+	
+		//Concatenate username and signature with cipheredText --> (username|)signature|cipheredText
+		//cipheredText = {receiver|amount|counter}Ks
+		String user = Crypto.encode(this.myUsername.getBytes());
+		String stringSig = Crypto.encode(signature);
+		String stringCiphertext = Crypto.encode(cipheredText);
 		
-		return Crypto.encode(finalMsg);
+		String toSend = user + "|" + stringSig + "|" + stringCiphertext;
+				
+		System.out.println("Size of transaction SMS message: " + (stringSig + "|" + stringCiphertext).length());
+		return toSend;
 	}
 	
 	//TODO In future make this return bool/void
-	public String processLoginFeedback(String cipheredSms) throws Exception{
-		byte[] msg;
-		String decipheredSms;
+	public String processFeedback(String sms, String state) throws Exception{
+		String decipheredMsg;
 		
-		byte[] decodedCipheredSms =  Crypto.decode(cipheredSms);
+		String[] splitedSms = sms.split("\\|");
+		byte[] byteSignature = Crypto.decode(splitedSms[0]);
+		byte[] byteCipheredMsg = Crypto.decode(splitedSms[1]);
 		
-		msg = Arrays.copyOfRange(decodedCipheredSms, 0, decodedCipheredSms.length);
+		//Deciphering Msg
+		decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, this.sharedKey);
 		
-		decipheredSms = Crypto.decipherSMS(msg, this.sharedKey);
+		String[] splitedMsg = decipheredMsg.split("\\|");
 		
-		String[] splitedSMS = decipheredSms.split("-");
-		this.counter = Integer.parseInt(splitedSMS[1]);
-		this.status = splitedSMS[0];
-		return splitedSMS[0];
+		//Verify Counter
+		if(!verifyCounter(state, Integer.parseInt(splitedMsg[1]))){
+			//TODO generate error msg
+			return "ChampPog";
+		}
+		
+		this.counter = Integer.parseInt(splitedMsg[1]);
+		this.status = splitedMsg[0];
+		
+		//Verifying signature
+		String msgToVerify = splitedMsg[0] + splitedMsg[1];
+
+		if(Crypto.verifySign(msgToVerify, byteSignature, Crypto.readPubKeyFromFile(SERVER_PUBLIC_KEY_PATH))){		
+			return splitedMsg[0];
+
+		}
+		else{
+			//TODO Generate error signature compromised
+			System.out.println("Signature compromised in login feed back!!");
+			return "ChampPog";
+		}
 	}
 	
 	public String processLogoutFeedback(String cipheredSms) throws Exception{
@@ -133,21 +159,26 @@ public class Client {
 		return decipheredSms;
 	}
 	
-	public String processTransactionFeedback(String cipheredSms) throws Exception{
-		byte[] msg;
-		String decipheredSms;
-		
-		byte[] decodedCipheredSms =  Crypto.decode(cipheredSms);
-		
-		msg = Arrays.copyOfRange(decodedCipheredSms, 0, decodedCipheredSms.length);
-		
-		decipheredSms = Crypto.decipherSMS(msg, this.sharedKey);
-		
-		String[] splitedSMS = decipheredSms.split("-");
-		this.counter = Integer.parseInt(splitedSMS[1]);
-		this.status = splitedSMS[0];
-		return splitedSMS[0];
-
+	private boolean verifyCounter(String state, int counter) {
+		if(state.equals("login") || state.equals("logout")){
+			if(counter != 0){
+				System.out.println("Freshness of log operation feedback compromised");
+				return false;
+			}
+			else{
+				return true;
+			}
+		}
+		else if(state.equals("transaction")){
+			if(this.counter >= counter){
+				System.out.println("Freshness of transaction feedback compromised");
+				return false;
+			}
+			else{
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public String generateValueSharingSMS(String value){
