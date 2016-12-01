@@ -135,7 +135,7 @@ public class Client {
 		//Verify Counter
 		if(!verifyCounter(state, Integer.parseInt(splitedMsg[1]))){
 			//TODO generate error msg
-			System.out.println("Freshness compromised in " + state + " feed back!!");
+			System.out.println("Freshness compromised in " + state + " feedback!!");
 			return FRESHENESS_ERROR_MSG;
 		}
 		
@@ -151,7 +151,7 @@ public class Client {
 		}
 		else{
 			//TODO Generate error signature compromised
-			System.out.println("Signature compromised in " + state + " feed back!!");
+			System.out.println("Signature compromised in " + state + " feedback!!");
 			return ERROR_MSG;
 		}
 	}
