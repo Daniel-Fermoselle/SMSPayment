@@ -2,6 +2,9 @@ package pt.sirs.client;
 
 import java.io.*;
 import java.net.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import pt.sirs.client.Client;
 
 public class ClientApplication {
@@ -144,7 +147,7 @@ public class ClientApplication {
         String feedbackProcessed = client.processFeedback(feedback, "transaction");
         System.out.println(feedbackProcessed);
         
-        if(feedbackProcessed.equals(Client.FRESHENESS_ERROR_MSG)){
+        if(feedbackProcessed.equals(Client.FRESHNESS_ERROR_MSG)){
         	client.setStatus(Client.SERVER_SUCCESSFUL_LOGOUT_MSG);
         }
 		
@@ -167,22 +170,32 @@ public class ClientApplication {
 	
 	public static String readMobile(Console console, String msg) throws Exception{
 		console.printf(msg);
-		String username = console.readLine();
-		while(username.length() != 9){
-			System.out.println("The inserted mobilenumber has to be 9 digits long. Try again!");
+		String mobile = console.readLine();
+		Pattern p = Pattern.compile("[^a-z0-9 ]", Pattern.CASE_INSENSITIVE);
+    	Matcher m = p.matcher(mobile);
+    	boolean b = m.find();
+		while(mobile.length() != 9 || b){
+			System.out.println("The inserted mobilenumber has to be 9 digits long or has special char. Try again!");
 			console.printf(msg);
-			username = console.readLine();
+			mobile = console.readLine();
+			m = p.matcher(mobile);
+	    	b = m.find();
 		}
-		return username;
+		return mobile;
 	}
 	
 	public static String readUsername(Console console, String msg) throws Exception{
 		console.printf(msg);
 		String username = console.readLine();
-		while(username.length() > 10){
-			System.out.println("The inserted username is too big, usernames only have at most 10 characters. Try again!");
+		Pattern p = Pattern.compile("[^a-z0-9 ]", Pattern.CASE_INSENSITIVE);
+    	Matcher m = p.matcher(username);
+    	boolean b = m.find();
+		while(username.length() > 10 || b){
+			System.out.println("The inserted username is too big, usernames only have at most 10 characters or has special char. Try again!");
 			console.printf(msg);
 			username = console.readLine();
+			m = p.matcher(username);
+	    	b = m.find();
 		}
 		return username;
 	}
@@ -191,11 +204,16 @@ public class ClientApplication {
 		console.printf(msg);
     	char[] passwordChars = console.readPassword();
     	String passwordString = new String(passwordChars);
-		while(passwordString.length() > 8 || passwordString.length() < 4){
-			System.out.println("The inserted password is incorrect, passwords only have at most 8 and at least 4 characters. Try again!");
+    	Pattern p = Pattern.compile("[^a-z0-9 ]", Pattern.CASE_INSENSITIVE);
+    	Matcher m = p.matcher(passwordString);
+    	boolean b = m.find();
+		while(passwordString.length() > 8 || passwordString.length() < 4 || b){
+			System.out.println("The inserted password is incorrect, passwords only have at most 8 and at least 4 characters or has special char. Try again!");
 			console.printf(msg);
 			passwordChars = console.readPassword();
 	    	passwordString = new String(passwordChars);
+	    	m = p.matcher(passwordString);
+	    	b = m.find();
 		}
 		return passwordString;
 	}
@@ -203,10 +221,15 @@ public class ClientApplication {
 	public static String readAmount(Console console, String msg) throws Exception{
 		console.printf(msg);
 		String amount = console.readLine();
-		while(amount.length() > 10){
-			System.out.println("The inserted amount is too big, you can oly transfer up to 99.999.999. Try again!");
+		Pattern p = Pattern.compile("[^0-9 ]", Pattern.CASE_INSENSITIVE);
+    	Matcher m = p.matcher(amount);
+    	boolean b = m.find();
+		while(amount.length() > 10 || b){
+			System.out.println("The inserted amount is too big, you can oly transfer up to 99.999.999 or has letters / special char. Try again!");
 			console.printf(msg);
 			amount = console.readLine();
+			m = p.matcher(amount);
+	    	b = m.find();
 		}
 		return amount;
 	}

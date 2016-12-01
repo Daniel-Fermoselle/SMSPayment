@@ -17,7 +17,7 @@ public class Client {
 	public static final String SUCCESSFUL_TRANSACTION_MSG = "TransOk";
 	public static final String SERVER_SUCCESSFUL_LOGOUT_MSG = "LogoutOk";
 	private static final String SERVER_PUBLIC_KEY_PATH = "keys/PublicKeyServer";
-	public static final String FRESHENESS_ERROR_MSG = "FreshKo";
+	public static final String FRESHNESS_ERROR_MSG = "FreshKo";
 	
 	private int myMoney; 
 	private String myUsername;
@@ -138,7 +138,7 @@ public class Client {
 		if(!verifyCounter(state, Integer.parseInt(splitedMsg[1]))){
 			//TODO generate error msg
 			System.out.println("Freshness compromised in " + state + " feedback!!");
-			return FRESHENESS_ERROR_MSG;
+			return FRESHNESS_ERROR_MSG;
 		}
 		
 		this.counter = Integer.parseInt(splitedMsg[1]);
