@@ -50,15 +50,16 @@ mvn install exec:java
 
 [4] Clientes já disponiveis
 
-Mobile: 913534674 username: nasTyMSR   password: 12345
-Mobile: 915667357 username: sigmaJEM   password: 12345
-Mobile: 912436744 username: Alpha      password: 12345
-Mobile: 912456434 username: jse        password: 12345
-Mobile: 912456423 username: aaaaaaaaaa password: 1234567
+Mobile: 913534674 username: nasTyMSR   password: 12345  
+Mobile: 915667357 username: sigmaJEM   password: 12345  
+Mobile: 912436744 username: Alpha      password: 12345  
+Mobile: 912456434 username: jse        password: 12345  
+Mobile: 912456423 username: aaaaaaaaaa password: 1234567  
+  
+[5] Caso queria utilizar outros utilizadores
 
-Caso queria utilizar outros utilizadores:
-Adicionar utilizador ao construtor da classe Server.java
-Gerar as chaves para esse utilizador correndo a aplicação crypto da seguinte maneira:
+Adicionar utilizador ao construtor da classe Server.java  
+Gerar as chaves para esse utilizador correndo a aplicação crypto da seguinte maneira:  
  
 ```
 cd crypto
