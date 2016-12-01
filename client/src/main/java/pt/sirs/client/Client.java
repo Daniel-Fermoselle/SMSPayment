@@ -12,8 +12,12 @@ import pt.sirs.crypto.Crypto;
 
 public class Client {
 	public static final String SUCCESS_FEEDBACK = "PogChamp";
-	public static final String FAILED_FEEDBACK = "ChamPog";
+	public static final String ERROR_MSG = "ChamPog";
+	public static final String SERVER_SUCCESSFUL_LOGIN_MSG = "LoginOk";	
+	public static final String SUCCESSFUL_TRANSACTION_MSG = "TransOk";
+	public static final String SERVER_SUCCESSFUL_LOGOUT_MSG = "LogoutOk";
 	private static final String SERVER_PUBLIC_KEY_PATH = "keys/PublicKeyServer";
+	public static final String FRESHENESS_ERROR_MSG = "FreshKo";
 	
 	private int myMoney; 
 	private String myUsername;
@@ -131,7 +135,8 @@ public class Client {
 		//Verify Counter
 		if(!verifyCounter(state, Integer.parseInt(splitedMsg[1]))){
 			//TODO generate error msg
-			return "ChampPog";
+			System.out.println("Freshness compromised in " + state + " feedback!!");
+			return FRESHENESS_ERROR_MSG;
 		}
 		
 		this.counter = Integer.parseInt(splitedMsg[1]);
@@ -146,8 +151,8 @@ public class Client {
 		}
 		else{
 			//TODO Generate error signature compromised
-			System.out.println("Signature compromised in login feed back!!");
-			return "ChampPog";
+			System.out.println("Signature compromised in " + state + " feedback!!");
+			return ERROR_MSG;
 		}
 	}
 	
@@ -155,7 +160,6 @@ public class Client {
 	private boolean verifyCounter(String state, int counter) {
 		if(state.equals("login") || state.equals("logout")){
 			if(counter != 0){
-				System.out.println("Freshness of log operation feedback compromised");
 				return false;
 			}
 			else{
@@ -164,7 +168,6 @@ public class Client {
 		}
 		else if(state.equals("transaction")){
 			if(this.counter >= counter){
-				System.out.println("Freshness of transaction feedback compromised");
 				return false;
 			}
 			else{

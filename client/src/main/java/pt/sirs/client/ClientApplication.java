@@ -3,7 +3,6 @@ package pt.sirs.client;
 import java.io.*;
 import java.net.*;
 import pt.sirs.client.Client;
-import pt.sirs.crypto.Crypto;
 
 public class ClientApplication {
 	
@@ -15,8 +14,14 @@ public class ClientApplication {
 		ObjectOutputStream out = null;//CUIDADO
 		ObjectInputStream in = null;
 		Client client = null;
-		String feedback = Client.FAILED_FEEDBACK;
+		String feedback = Client.ERROR_MSG;
 		try{
+			Console console = System.console();
+			if (console == null) {
+				System.out.println("Couldn't get Console instance");
+				System.exit(0);
+			}
+						
 			
 			//1. Criar o socket para falar com o server
 			requestSocket = new Socket("localhost", 10000);
@@ -27,29 +32,20 @@ public class ClientApplication {
 	        out.flush();
             in = new ObjectInputStream(requestSocket.getInputStream());
 	   
-	        Console console = System.console();
-	        if (console == null) {
-	            System.out.println("Couldn't get Console instance");
-	            System.exit(0);
-	        }
 	        System.out.println("Started...");//Just debugging prints	
 	        while(true){
 		        //TODO Make Deffie Hellman happen once
-		        while(!feedback.equals(Client.SUCCESS_FEEDBACK)){
-			    	console.printf("Please enter your username: ");
-			    	String username = console.readLine();	    	
-			    	console.printf("Please enter your password: ");
-			    	char[] passwordChars = console.readPassword();
-			    	String passwordString = new String(passwordChars);
-			    	
-			    	client = new Client(username, passwordString);
-			    	
+		        while(!feedback.equals(Client.SERVER_SUCCESSFUL_LOGIN_MSG)){
+		        	String username = readUsername(console, "Please enter your username: ");	
+					String passwordString = readPassword(console, "Please enter your password: ");
+					
+					client = new Client(username, passwordString);
 			    	client = DiffieHellman(client, out, in);	
 			    	client = Login(client, out, in);
 			    	feedback = client.getStatus();
 		        }
 		    	
-		    	while(client.getStatus().equals(Client.SUCCESS_FEEDBACK)){
+	            while(!client.getStatus().equals(Client.SERVER_SUCCESSFUL_LOGOUT_MSG)){
 		    		System.out.println("Choose one of the following options");
 		    		System.out.println("1 - Transaction");
 		    		System.out.println("2 - Logout");
@@ -59,24 +55,34 @@ public class ClientApplication {
 		    		}
 		    		else if(choice.equals("2")){
 		    			client = Logout(client, out, in);
-		    			feedback = Client.FAILED_FEEDBACK;
+		    			feedback = Client.SERVER_SUCCESSFUL_LOGOUT_MSG;
+		    			return;
+		    		}
+		    		if(client.getStatus().equals(Client.SERVER_SUCCESSFUL_LOGOUT_MSG)){
+		    			return;
 		    		}
 		    	}
 	        }
 		}
 		
-		catch(UnknownHostException unknownHost){
-            System.err.println("Tentativa de conexao com server desconhecido");
+		catch(UnknownHostException e){
+            System.err.println("Attempt to connect an unknown server.");
         }
-        catch(Exception Exception){
-            Exception.printStackTrace();
+		catch(FileNotFoundException e){
+			System.err.println("Username not registered in this phone. Run the application again.");
+		}
+        catch(Exception e){
+            e.printStackTrace();
         }
 		
     	finally{
             //4: Closing connection
             try{
-                out.close();
-                requestSocket.close();
+            	if(in != null && out != null && requestSocket != null){
+	            	in.close();
+	                out.close();
+	                requestSocket.close();
+            	}
             }
             catch(IOException ioException){
                 ioException.printStackTrace();
@@ -125,11 +131,9 @@ public class ClientApplication {
 		
 		String iban, amount;
 		
-    	console.printf("Please enter the username to transfer: ");
-    	iban = console.readLine();
+    	iban = readUsername(console, "Please enter the username to transfer: ");
     	
-    	console.printf("Please enter an amount to transfer: ");
-    	amount = console.readLine();
+    	amount = readAmount(console, "Please enter an amount to transfer: ");
     	
     	String transaction = client.generateTransactionSms(iban, amount);
     	System.out.println(transaction + " TAMANHO: " + transaction.length());
@@ -138,7 +142,12 @@ public class ClientApplication {
         
         String feedback = (String) in.readObject();
         System.out.println(feedback + " TAMANHO: " + feedback.length());
-        System.out.println(client.processFeedback(feedback, "transaction"));
+        String feedbackProcessed = client.processFeedback(feedback, "transaction");
+        System.out.println(feedbackProcessed);
+        
+        if(feedbackProcessed.equals(Client.FRESHENESS_ERROR_MSG)){
+        	client.setStatus(Client.SERVER_SUCCESSFUL_LOGOUT_MSG);
+        }
 		
 		return client;
 	}
@@ -155,6 +164,41 @@ public class ClientApplication {
         System.out.println(client.processFeedback(feedback, "logout"));
 		
 		return client;
+	}
+	
+	public static String readUsername(Console console, String msg) throws Exception{
+		console.printf(msg);
+		String username = console.readLine();
+		while(username.length() > 10){
+			System.out.println("The inserted username is too big, usernames only have at most 10 characters. Try again!");
+			console.printf(msg);
+			username = console.readLine();
+		}
+		return username;
+	}
+	
+	public static String readPassword(Console console, String msg) throws Exception{
+		console.printf(msg);
+    	char[] passwordChars = console.readPassword();
+    	String passwordString = new String(passwordChars);
+		while(passwordString.length() > 8 || passwordString.length() < 4){
+			System.out.println("The inserted password is incorrect, passwords only have at most 8 and at least 4 characters. Try again!");
+			console.printf(msg);
+			passwordChars = console.readPassword();
+	    	passwordString = new String(passwordChars);
+		}
+		return passwordString;
+	}
+	
+	public static String readAmount(Console console, String msg) throws Exception{
+		console.printf(msg);
+		String amount = console.readLine();
+		while(amount.length() > 10){
+			System.out.println("The inserted amount is too big, you can oly transfer up to 99.999.999. Try again!");
+			console.printf(msg);
+			amount = console.readLine();
+		}
+		return amount;
 	}
     
 }
