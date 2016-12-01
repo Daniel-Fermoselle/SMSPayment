@@ -11,13 +11,14 @@ import javax.crypto.spec.SecretKeySpec;
 import pt.sirs.crypto.Crypto;
 
 public class Client {
+	public static final String SERVER_SUCCESSFUL_LOGIN_MSG = "LoginOk";	
+	public static final String SERVER_SUCCESSFUL_LOGOUT_MSG = "LogoutOk";
+	public static final String SUCCESSFUL_TRANSACTION_MSG = "TransOk";
 	public static final String SUCCESS_FEEDBACK = "PogChamp";
 	public static final String ERROR_MSG = "ChamPog";
-	public static final String SERVER_SUCCESSFUL_LOGIN_MSG = "LoginOk";	
-	public static final String SUCCESSFUL_TRANSACTION_MSG = "TransOk";
-	public static final String SERVER_SUCCESSFUL_LOGOUT_MSG = "LogoutOk";
-	private static final String SERVER_PUBLIC_KEY_PATH = "keys/ServerPublicKey";
 	public static final String FRESHNESS_ERROR_MSG = "FreshKo";
+	private static final String SERVER_PUBLIC_KEY_PATH = "keys/ServerPublicKey";
+
 	
 	private int myMoney; 
 	private String myUsername;
@@ -28,13 +29,21 @@ public class Client {
 	private BigInteger publicValue;
 	private SecretKeySpec sharedKey;
 	private String status;
-	//TODO this is only 32bit can be changed to long
 	private int counter;
 	private KeyPair keys;
 	private String nonRepudiationString;
 	private String mobile;
 	
-	
+	/***
+	 * This is the constructor for the Client this constructor can only 
+	 * be called when we have generated a private and a public key for 
+	 * the myUsername parameter. User main in crypto to preform this 
+	 * action 
+	 * @param myUsername
+	 * @param myPassword
+	 * @param mobile
+	 * @throws Exception
+	 */
 	public Client(String myUsername, String myPassword, String mobile) throws Exception {
 		this.myUsername = myUsername;
 		this.myPassword = myPassword;
@@ -50,6 +59,19 @@ public class Client {
 		this.keys = new KeyPair(pubKey, privKey);
 	}
 	
+	/***
+	 * This function generates a login message, this message is composed by
+	 * (mobile|)signature|cipheredText where 
+	 * signature = {mobile + TS + password}Kcs and cipheredText = {TS|pass}Ks
+	 * this function should only be called after establishing a shared key
+	 * with the server.
+	 * This function can be used to login one user into the server.
+	 * Kcs = client private key
+	 * Ks = shared key
+	 * 
+	 * @return String
+	 * @throws Exception
+	 */
 	public String generateLoginSms() throws Exception{
 		byte[] cipheredText;
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
@@ -68,12 +90,26 @@ public class Client {
 		String stringSig = Crypto.encode(signature);
 		String stringCiphertext = Crypto.encode(cipheredText);
 		
+		//Final message to be sent
 		String toSend = mobile + "|" + stringSig + "|" + stringCiphertext;
 		
 		System.out.println("Size of login SMS message: " + (stringSig + "|" + stringCiphertext).length());
 		return toSend;
 	}
 	
+	/***
+	 * This function is called when we want to generate a message of logout
+	 * this message is composed by (mobile|)signature|cipheredText where
+	 * signature = {mobile + logout + counter}Kcs
+	 * cipheredText = {logout|counter}Ks this function should only be called
+	 * when we are logged in to the server and have a shared key.
+	 * This function can be used to logout one user from the server.
+	 * Kcs = client private key
+	 * Ks = shared key
+	 * 
+	 * @return String
+	 * @throws Exception
+	 */
 	public String generateLogoutSms() throws Exception{
 		byte[] cipheredText;
 		
@@ -91,6 +127,7 @@ public class Client {
 		String stringSig = Crypto.encode(signature);
 		String stringCiphertext = Crypto.encode(cipheredText);
 		
+		//Final message to be sent
 		String toSend = mobile + "|" + stringSig + "|" + stringCiphertext;
 		
 		System.out.println("Size of logout SMS message: " + (stringSig + "|" + stringCiphertext).length());
@@ -98,6 +135,19 @@ public class Client {
 		
 	}
 	
+	/***
+	 * This function is called when we want to generate a transaction message
+	 * this message is composed by (mobile|)signature|cipheredText where
+	 * signature = {mobile + receiver + amount + counter}Kcs
+	 * cipheredText = {receiver|amount|counter}Ks this function should only be called
+	 * when we are logged in to the server and have a shared key. 
+	 * This function can be used to transfer money from one user to other.
+	 * Kcs = client private key
+	 * Ks = shared key
+	 * 
+	 * @return String
+	 * @throws Exception
+	 */
 	public String generateTransactionSms(String receiver, String amount) throws Exception{
 		byte[] cipheredText;
 		String toCipher = receiver + "|" + amount + "|" + this.counter;
@@ -121,7 +171,17 @@ public class Client {
 		return toSend;
 	}
 	
-	//TODO In future make this return bool/void
+	/***
+	 * This function is used to process any feedback received from the server
+	 * once we have established a shared key.
+	 * This function changes the state where the client finds himself
+	 * and to update his counter that is used to assure message freshness.
+	 * 
+	 * @param sms
+	 * @param state
+	 * @return String
+	 * @throws Exception
+	 */
 	public String processFeedback(String sms, String state) throws Exception{
 		String decipheredMsg;
 		
@@ -131,12 +191,10 @@ public class Client {
 		
 		//Deciphering Msg
 		decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, this.sharedKey);
-		
 		String[] splitedMsg = decipheredMsg.split("\\|");
 		
 		//Verify Counter
 		if(!verifyCounter(state, Integer.parseInt(splitedMsg[1]))){
-			//TODO generate error msg
 			System.out.println("Freshness compromised in " + state + " feedback!!");
 			return FRESHNESS_ERROR_MSG;
 		}
@@ -152,13 +210,22 @@ public class Client {
 
 		}
 		else{
-			//TODO Generate error signature compromised
 			System.out.println("Signature compromised in " + state + " feedback!!");
 			return ERROR_MSG;
 		}
 	}
 	
-	
+	/***
+	 * This function is used to verify if the counter received by the client is
+	 * valid.
+	 * In login and logout counter should be 0.
+	 * In transaction the counter should always be bigger than the one the client
+	 * currently has.
+	 * 
+	 * @param state
+	 * @param counter
+	 * @return
+	 */
 	private boolean verifyCounter(String state, int counter) {
 		if(state.equals("login") || state.equals("logout")){
 			if(counter != 0){
@@ -179,6 +246,16 @@ public class Client {
 		return false;
 	}
 	
+	/***
+	 * This function when called with "p" generates a prime value for DH that is used a module
+	 * if this function is called with "g" generates a prime value with "p" that is used as a 
+	 * base in DH in the following manner g^x mod p.
+	 * The generation of this values is achieved using a lib in crypto project check it out
+	 * for more info.
+	 * 
+	 * @param value
+	 * @return
+	 */
 	public String generateValueSharingSMS(String value){
 		if(value.equals("p")){
 			System.out.println("Size of public value p (prime) used in DH SMS message: " + Crypto.encode(this.p.toByteArray()).length());
@@ -188,15 +265,31 @@ public class Client {
 			System.out.println("Size of public value g (module) used in DH SMS message: " + Crypto.encode(this.g.toByteArray()).length());
 			return Crypto.encode(this.g.toByteArray());
 		}
-		else
-			//TODO throw invalid char exception
+		else{
+			System.out.println("Function not used properly pass as argument p or g");
 			return null;
+		}
 	}
 	
+	/***
+	 * This function makes a call to a method in crypto to generate a secret value for the
+	 * DH algorithm and then stores that value in a private variable of the client.
+	 * 
+	 */
 	public void generateSecretValue() {
 		this.secretValue = Crypto.generateSecretValue();
 	}
 	
+	/***
+	 * This function generates a message that grants authenticity in the DH algorithm
+	 * this message is sent to the server before sending the public value of the client
+	 * the message is compossed by (mobile|)signature|TS where signature = {mobile + publicValue
+	 * + TS}Kcs
+	 * Kcs = client private key
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
 	public String getNonRepudiationMsgForPublicValue() throws Exception {
 		publicValue = g.modPow(secretValue, p);
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
@@ -213,11 +306,23 @@ public class Client {
 		return toSend;
 	}
 	
+	/***
+	 * This function is only used to get the public value of the client.
+	 * 
+	 * @return
+	 */
 	public String generatePublicValue(){
 		System.out.println("Size of Client public value used in DH SMS message: " + Crypto.encode(publicValue.toByteArray()).length());
 		return Crypto.encode(publicValue.toByteArray());
 	}
 	
+	/***
+	 * This function is used to generate a shared key when we receive a 
+	 * public value from the server 
+	 * 
+	 * @param stringPublicValue
+	 * @throws Exception
+	 */
 	public void generateSharedKey(String stringPublicValue) throws Exception{
 		byte[] bytePublicValue = Crypto.decode(stringPublicValue);
 		BigInteger publicValue = new BigInteger(bytePublicValue);
@@ -230,12 +335,13 @@ public class Client {
 		try{
 			//Verify TimeStamp
 			if(!Crypto.validTS(stringTS)){
-				//TODO send proper error
 				System.out.println("Time stamp used in DH public value invalid, passed more than 1 minute");
+				this.status = SERVER_SUCCESSFUL_LOGOUT_MSG;
+				return;
 			}
 		}
 		catch (java.text.ParseException e){
-			System.out.println("This user was blocked");
+			System.out.println("There was a problem establishing shared. Sender could be blocked or message integrity send violated");
 			this.status = SERVER_SUCCESSFUL_LOGOUT_MSG;
 			return;
 		}
@@ -243,12 +349,12 @@ public class Client {
 		//Verify signature
 		String msgToVerify = publicValue + stringTS;
 		if(!Crypto.verifySign(msgToVerify, byteSig, Crypto.readPubKeyFromFile(SERVER_PUBLIC_KEY_PATH))){
-			//TODO send proper error
 			System.out.println("Signature compromised in DH public value msg");
+			this.status = SERVER_SUCCESSFUL_LOGOUT_MSG;
+			return;
 		}
 		
 		BigInteger sharedKey = publicValue.modPow(secretValue, p);
-		System.out.println(Crypto.encode(sharedKey.toByteArray()) + "  LENG SharedKey: " + Crypto.encode(sharedKey.toByteArray()).length());
 		this.sharedKey = Crypto.generateKeyFromBigInt(sharedKey);
 	}
 	
@@ -287,8 +393,6 @@ public class Client {
 	public void setStatus(String status) {
 		this.status = status;
 	}
-
-	
 
 }
 	

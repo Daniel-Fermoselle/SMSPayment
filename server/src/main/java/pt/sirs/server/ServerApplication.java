@@ -105,9 +105,7 @@ public class ServerApplication {
     public static Server Login(Server server, ObjectOutputStream out, ObjectInputStream in) throws Exception{
     	try{
     		String sms = (String) in.readObject();
-    		System.out.println(sms + " TAMANHO: " + sms.length());
     		String feedback = server.processLoginSms(sms);
-    		System.out.println(feedback + " TAMANHO: " + feedback.length());
     		out.writeObject(feedback);
     		out.flush();
     	}catch (Exception e){
@@ -118,9 +116,7 @@ public class ServerApplication {
 	public static Server Transaction(Server server, ObjectOutputStream out, ObjectInputStream in) {
 		try{
 	        String transaction = (String) in.readObject();
-	    	System.out.println(transaction + " TAMANHO: " + transaction.length());
 	        String feedback = server.processTransactionSms(transaction);
-	        System.out.println(feedback + " TAMANHO: " + feedback.length());
 			out.writeObject(feedback);
 	        out.flush();
 			

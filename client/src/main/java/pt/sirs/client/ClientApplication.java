@@ -121,12 +121,10 @@ public class ClientApplication {
 	public static Client Login(Client client, ObjectOutputStream out, ObjectInputStream in) throws Exception{
 		
     	String login = client.generateLoginSms();
-    	System.out.println(login + " TAMANHO: " + login.length());
 		out.writeObject(login);
         out.flush();
         
         String feedback = (String) in.readObject();
-        System.out.println(feedback + " TAMANHO: " + feedback.length());
         System.out.println(client.processFeedback(feedback, "login"));
         
 		return client;
@@ -141,12 +139,10 @@ public class ClientApplication {
     	amount = readAmount(console, "Please enter an amount to transfer: ");
     	
     	String transaction = client.generateTransactionSms(iban, amount);
-    	System.out.println(transaction + " TAMANHO: " + transaction.length());
 		out.writeObject(transaction);
         out.flush();
         
         String feedback = (String) in.readObject();
-        System.out.println(feedback + " TAMANHO: " + feedback.length());
         String feedbackProcessed = client.processFeedback(feedback, "transaction");
         System.out.println(feedbackProcessed);
         
@@ -160,12 +156,10 @@ public class ClientApplication {
 	public static Client Logout(Client client, ObjectOutputStream out, ObjectInputStream in) throws Exception{
 		
     	String logout = client.generateLogoutSms();
-    	System.out.println(logout + " TAMANHO: " + logout.length());
 		out.writeObject(logout);
         out.flush();
         
         String feedback = (String) in.readObject();
-        System.out.println(feedback + " TAMANHO: " + feedback.length());
         System.out.println(client.processFeedback(feedback, "logout"));
 		
 		return client;
@@ -178,7 +172,7 @@ public class ClientApplication {
     	Matcher m = p.matcher(mobile);
     	boolean b = m.find();
 		while(mobile.length() != 9 || b){
-			System.out.println("The inserted mobilenumber has to be 9 digits long or has special char. Try again!");
+			System.out.println("The inserted mobilenumber has to be 9 digits long, no letters or special char alowed. Try again!");
 			console.printf(msg);
 			mobile = console.readLine();
 			m = p.matcher(mobile);
@@ -194,7 +188,7 @@ public class ClientApplication {
     	Matcher m = p.matcher(username);
     	boolean b = m.find();
 		while(username.length() > 10 || b){
-			System.out.println("The inserted username is too big, usernames only have at most 10 characters or has special char. Try again!");
+			System.out.println("The inserted username is too big, usernames only have at most 10 characters, no special char alowed. Try again!");
 			console.printf(msg);
 			username = console.readLine();
 			m = p.matcher(username);
@@ -207,11 +201,11 @@ public class ClientApplication {
 		console.printf(msg);
     	char[] passwordChars = console.readPassword();
     	String passwordString = new String(passwordChars);
-    	Pattern p = Pattern.compile("[^a-z0-9 ]", Pattern.CASE_INSENSITIVE);
+    	Pattern p = Pattern.compile("[^0-9 ]", Pattern.CASE_INSENSITIVE);
     	Matcher m = p.matcher(passwordString);
     	boolean b = m.find();
 		while(passwordString.length() > 8 || passwordString.length() < 4 || b){
-			System.out.println("The inserted password is incorrect, passwords only have at most 8 and at least 4 characters or has special char. Try again!");
+			System.out.println("The inserted password is incorrect, passwords only have at most 8 and at least 4 digits, no letters or special char alowed. Try again!");
 			console.printf(msg);
 			passwordChars = console.readPassword();
 	    	passwordString = new String(passwordChars);
@@ -228,7 +222,7 @@ public class ClientApplication {
     	Matcher m = p.matcher(amount);
     	boolean b = m.find();
 		while(amount.length() > 10 || b){
-			System.out.println("The inserted amount is too big, you can oly transfer up to 99.999.999 or has letters / special char. Try again!");
+			System.out.println("The inserted amount is too big, you can oly transfer up to 99.999.999, no letters or special char alowed. Try again!");
 			console.printf(msg);
 			amount = console.readLine();
 			m = p.matcher(amount);

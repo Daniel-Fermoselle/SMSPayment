@@ -30,7 +30,7 @@ import org.apache.commons.codec.binary.Base64;
 import pt.sirs.crypto.DiffieHellman;
 
 public class Crypto {
-	private static int bitLength=512;	
+	private static final int  bitLength = 512;	
 	private static final long MINUTE_IN_MILLIS = 60000;//one minute in millisecs
 
 	
@@ -92,7 +92,6 @@ public class Crypto {
 	}
 	
     public static boolean validTS(String stringTS) throws ParseException {
-    	System.out.println(stringTS); //TODO Prints the time when sms received, remove if you please
     	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
     	Date ts = sdf.parse(stringTS);
     	

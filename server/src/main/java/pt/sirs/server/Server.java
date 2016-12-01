@@ -7,7 +7,6 @@ import java.util.ArrayList;
 
 import javax.crypto.spec.SecretKeySpec;
 
-
 import pt.sirs.crypto.Crypto;
 import pt.sirs.server.Exceptions.AmountToHighException;
 import pt.sirs.server.Exceptions.IBANAlreadyExistsException;
@@ -15,15 +14,16 @@ import pt.sirs.server.Exceptions.ServerException;
 import pt.sirs.server.Exceptions.UserAlreadyExistsException;
 
 public class Server {
-	public static final String SERVER_SUCCESSFUL_LOGIN_MSG = "LoginOk";
-	public static final String SUCCESSFUL_TRANSACTION_MSG = "TransOk";
-	public static final String SERVER_SUCCESSFUL_LOGOUT_MSG = "LogoutOk";
-	public static final String SERVER_BEGGINING = "Initialized";
-	public static final String ERROR_MSG = "ChamPog";
-	public static final String SERVER_LOST_CONNECTION_MSG = "ConnectionKO";
+	public  static final String SERVER_BEGGINING = "Initialized";
+	public  static final String SERVER_SUCCESSFUL_LOGIN_MSG = "LoginOk";
+	public  static final String SERVER_SUCCESSFUL_LOGOUT_MSG = "LogoutOk";
+	public  static final String SUCCESSFUL_TRANSACTION_MSG = "TransOk";
+	public  static final String ERROR_MSG = "ChamPog";
+	public  static final String ERROR_MSG_DH = "ErrorDH";
+	public  static final String SERVER_LOST_CONNECTION_MSG = "ConnectionKO";
 	private static final String PRIVATE_KEY_PATH = "keys/ServerPrivateKey";
 	private static final String PUBLIC_KEY_PATH = "keys/ServerPublicKey";
-	public static final String ERROR_MSG_DH = "Blocked";
+	private static final int    NUMBER_OF_UNSUCCESSFULL_LOGIN_TRYS = 3;
 
 	
 	private ArrayList<Account> accounts;
@@ -56,7 +56,6 @@ public class Server {
 
 		String[] splitedSms = sms.split("\\|");
 		if(splitedSms.length != 3){
-			//TODO Generate error msg client not registered
 			return generateUnsuccessfulFeedback("Wrong message format.", 0);
 		}
 		byte[] byteMobile = Crypto.decode(splitedSms[0]);
@@ -71,7 +70,7 @@ public class Server {
 		sender.setCounter(0);
 		sender.setTrys(sender.getTrys() + 1);
 		
-		if(sender.getTrys() == 2){
+		if(sender.getTrys() == NUMBER_OF_UNSUCCESSFULL_LOGIN_TRYS){
 			accounts.remove(sender);
 			return generateUnsuccessfulFeedback("Sender tried to many time to login going to block account.", 0);
 		}
@@ -82,7 +81,6 @@ public class Server {
 		//Obtaining time stamp and password
 		String[] splitedMsg = decipheredMsg.split("\\|");
 		if(splitedMsg.length != 2){
-			//TODO Generate error msg client not registered
 			return generateUnsuccessfulFeedback("Deciphered content not expected.", 0);
 		}
 		stringTimestamp = splitedMsg[0];
@@ -97,7 +95,6 @@ public class Server {
 			return generateLoginFeedback(sender, password, stringTimestamp);
 		}
 		else{
-			//TODO Generate error msg for feedback signature compromised
 			return generateUnsuccessfulFeedback("Signature compromised on loggin SMS received.", 0);
 		}
     }
@@ -109,7 +106,6 @@ public class Server {
 		
 		String[] splitedSms = sms.split("\\|");
 		if(splitedSms.length != 3){
-			//TODO Generate error msg client not registered
 			return generateUnsuccessfulFeedback("Wrong message format.", 0);
 		}
 		byte[] byteMobile = Crypto.decode(splitedSms[0]);
@@ -119,7 +115,6 @@ public class Server {
 		//Getting user in msg
 		sender = getAccountByMobile(new String(byteMobile));
 		if(sender == null){
-			//TODO Generate error msg client not registered
 			return generateUnsuccessfulFeedback("User not registered.", 0);			
 		}
 		sharedKey = sender.getSharedKey();
@@ -144,10 +139,13 @@ public class Server {
 		
 		//Verify user counter
 		int smsCounter = Integer.parseInt(counter);
-		if(smsCounter < sender.getCounter()) { return generateUnsuccessfulFeedback("Freshness compromised.", 0); }
+		if(smsCounter < sender.getCounter()) { 
+			return generateUnsuccessfulFeedback("Freshness compromised.", 0); 
+		}
 		else { 
-			if(sender.getCounter() < Integer.MAX_VALUE)
+			if(sender.getCounter() < Integer.MAX_VALUE){
 				sender.setCounter(smsCounter + 1);
+			}
 			else{
 				sender.setCounter(0);
 				System.out.println("User sent too many messages. Going to force logout");
@@ -171,7 +169,6 @@ public class Server {
 			return generateTransactionFeedback(sender, receiver, amount);
 		}
 		else{
-			//TODO Generate error msg for feedback signature compromised
 			return generateUnsuccessfulFeedback("Signature compromised on loggin SMS received", sender.getCounter());
 		}
     }
@@ -187,7 +184,6 @@ public class Server {
 				this.status = SUCCESSFUL_TRANSACTION_MSG;
 			}
 			else{
-				//TODO Generate error msg receiver not registered
 				return generateUnsuccessfulFeedback("Receiver not registered.", sender.getCounter());
 			}
 		} catch (AmountToHighException e){
@@ -195,7 +191,6 @@ public class Server {
 
 		}
 
-		sender.setCounter(Integer.MAX_VALUE);
 		//Msg to cipher
 		String toCipher = this.status + "|" + sender.getCounter();
 		byte[] cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);
@@ -221,9 +216,7 @@ public class Server {
 		return toSend;		
 	}
 
-
 	public String generateLoginFeedback(Account a, String password, String stringTS) throws Exception{		
-	//		this.status = SERVER_FAILED_LOGIN_MSG;
 
 		if(password.equals(a.getPassword()) && Crypto.validTS(stringTS)){
 			this.status = SERVER_SUCCESSFUL_LOGIN_MSG;
@@ -254,7 +247,6 @@ public class Server {
 		return toSend;
 	}
 	
-
 	public String generateLogoutFeedback(Account sender) throws Exception{
 		this.status = SERVER_SUCCESSFUL_LOGOUT_MSG;
 		sender.setCounter(0);
@@ -368,6 +360,7 @@ public class Server {
 	}
 	
 	public String getPublicValue(){
+		System.out.println("Size of Server public value used in DH SMS message: " + Crypto.encode(publicValue.toByteArray()).length());
 		return Crypto.encode(publicValue.toByteArray());
 	}
 	
@@ -387,26 +380,27 @@ public class Server {
 		
 		Account sender = getAccountByMobile(stringSender);
 		if(sender == null){
-			//TODO Generate error msg client not registered
+			System.out.println("This sender was blocked");
 			this.status = ERROR_MSG_DH;
 			return;			
 		}
 		
 		//Verify TimeStamp
 		if(!Crypto.validTS(stringTS)){
-			//TODO send proper error
 			System.out.println("Time stamp used in DH public value invalid, passed more than 1 minute");
+			this.status = ERROR_MSG_DH;
+			return;	
 		}
 		
 		//Verify signature
 		String msgToVerify = stringSender + publicValue + stringTS;
 		if(!Crypto.verifySign(msgToVerify, byteSig, sender.getPubKey())){
-			//TODO send proper error
 			System.out.println("Signature compromised ins DH public value msg");
+			this.status = ERROR_MSG_DH;
+			return;	
 		}
 		
 		BigInteger sharedKey = publicValue.modPow(secretValue, p);
-		System.out.println(Crypto.encode(sharedKey.toByteArray()) + "  LENG SharedKey: " + Crypto.encode(sharedKey.toByteArray()).length());
 		this.sharedKey = Crypto.generateKeyFromBigInt(sharedKey);
 	}
     
@@ -426,7 +420,5 @@ public class Server {
 
 	public void setStatus(String status) {
 		this.status = status;
-	}
-
-	
+	}	
 }
