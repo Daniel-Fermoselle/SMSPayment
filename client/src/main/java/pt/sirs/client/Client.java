@@ -92,7 +92,8 @@ public class Client {
 		
 		//Final message to be sent
 		String toSend = mobile + "|" + stringSig + "|" + stringCiphertext;
-		
+		System.out.println("Shared key: " + Crypto.encode(this.sharedKey.getEncoded()));
+		System.out.println("Well formed login sms " + toSend);
 		System.out.println("Size of login SMS message: " + (stringSig + "|" + stringCiphertext).length());
 		return toSend;
 	}
@@ -130,6 +131,9 @@ public class Client {
 		//Final message to be sent
 		String toSend = mobile + "|" + stringSig + "|" + stringCiphertext;
 		
+		System.out.println("Counter for logout: " + this.counter);
+		System.out.println("Well formed logout sms " + toSend);
+
 		System.out.println("Size of logout SMS message: " + (stringSig + "|" + stringCiphertext).length());
 		return toSend;
 		
@@ -166,7 +170,12 @@ public class Client {
 		String stringCiphertext = Crypto.encode(cipheredText);
 		
 		String toSend = mobile + "|" + stringSig + "|" + stringCiphertext;
-				
+		
+		System.out.println("amount for transaction: " + amount);
+		System.out.println("receiver for transaction: " + receiver);
+		System.out.println("Counter for transaction: " + this.counter);
+		System.out.println("Well formed transaction sms " + toSend);
+		
 		System.out.println("Size of transaction SMS message: " + (stringSig + "|" + stringCiphertext).length());
 		return toSend;
 	}
@@ -185,12 +194,20 @@ public class Client {
 	public String processFeedback(String sms, String state) throws Exception{
 		String decipheredMsg;
 		
+		System.out.println("sms for feedback: " + sms);
+		System.out.println("state for feedback: " + state);	
+		
 		String[] splitedSms = sms.split("\\|");
 		byte[] byteSignature = Crypto.decode(splitedSms[0]);
 		byte[] byteCipheredMsg = Crypto.decode(splitedSms[1]);
 		
-		//Deciphering Msg
-		decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, this.sharedKey);
+		try{
+			//Deciphering Msg
+			decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, this.sharedKey);
+		} catch (Exception e){
+			return ERROR_MSG;
+		}
+		
 		String[] splitedMsg = decipheredMsg.split("\\|");
 		
 		//Verify Counter
@@ -199,6 +216,8 @@ public class Client {
 			return FRESHNESS_ERROR_MSG;
 		}
 		
+		System.out.println("return form feedback: " + splitedMsg[0]);	
+		
 		this.counter = Integer.parseInt(splitedMsg[1]);
 		this.status = splitedMsg[0];
 		
@@ -206,6 +225,7 @@ public class Client {
 		String msgToVerify = splitedMsg[0] + splitedMsg[1];
 
 		if(Crypto.verifySign(msgToVerify, byteSignature, Crypto.readPubKeyFromFile(SERVER_PUBLIC_KEY_PATH))){		
+			
 			return splitedMsg[0];
 
 		}
@@ -392,6 +412,30 @@ public class Client {
 
 	public void setStatus(String status) {
 		this.status = status;
+	}
+	
+	public SecretKeySpec getSharedKey() {
+		return sharedKey;
+	}
+
+	public void setSharedKey(SecretKeySpec sharedKey) {
+		this.sharedKey = sharedKey;
+	}
+
+	public int getCounter() {
+		return counter;
+	}
+
+	public void setCounter(int counter) {
+		this.counter = counter;
+	}
+
+	public String getMobile() {
+		return mobile;
+	}
+
+	public void setMobile(String mobile) {
+		this.mobile = mobile;
 	}
 
 }
