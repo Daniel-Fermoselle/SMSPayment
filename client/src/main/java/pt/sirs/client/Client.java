@@ -16,7 +16,7 @@ public class Client {
 	public static final String SERVER_SUCCESSFUL_LOGIN_MSG = "LoginOk";	
 	public static final String SUCCESSFUL_TRANSACTION_MSG = "TransOk";
 	public static final String SERVER_SUCCESSFUL_LOGOUT_MSG = "LogoutOk";
-	private static final String SERVER_PUBLIC_KEY_PATH = "keys/PublicKeyServer";
+	private static final String SERVER_PUBLIC_KEY_PATH = "keys/ServerPublicKey";
 	public static final String FRESHNESS_ERROR_MSG = "FreshKo";
 	
 	private int myMoney; 
@@ -45,8 +45,8 @@ public class Client {
 		this.secretValue = Crypto.generateSecretValue();
 		this.status = "Initialized";
 		
-		PublicKey pubKey = Crypto.readPubKeyFromFile("keys/" + "PublicKey" + this.myUsername);
-		PrivateKey privKey = Crypto.readPrivKeyFromFile("keys/" + "PrivateKey" + this.myUsername);
+		PublicKey pubKey = Crypto.readPubKeyFromFile("keys/" + this.myUsername +"PublicKey" );
+		PrivateKey privKey = Crypto.readPrivKeyFromFile("keys/" + this.myUsername + "PrivateKey" );
 		this.keys = new KeyPair(pubKey, privKey);
 	}
 	

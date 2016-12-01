@@ -175,8 +175,16 @@ public class Crypto {
 		KeyPair keyPair;
 		for(String entity : args){
 			keyPair = GenerateKeys();
-			saveKeyInFile(keyPair.getPrivate(), "PrivateKey" + entity);
-			saveKeyInFile(keyPair.getPublic(), "PublicKey" + entity);
+			if(!entity.equalsIgnoreCase("server")){
+				saveKeyInFile(keyPair.getPrivate(), "../client/keys/" + entity + "PrivateKey");
+				saveKeyInFile(keyPair.getPublic(), "../client/keys/"  + entity + "PublicKey");
+				saveKeyInFile(keyPair.getPublic(), "../server/keys/"  + entity + "PublicKey");
+			}
+			else{
+				saveKeyInFile(keyPair.getPrivate(), "../server/keys/ServerPrivateKey");
+				saveKeyInFile(keyPair.getPublic(), "../server/keys/ServerPublicKey");
+				saveKeyInFile(keyPair.getPublic(), "../client/keys/ServerPublicKey");
+			}
 		}			
 	}
  }

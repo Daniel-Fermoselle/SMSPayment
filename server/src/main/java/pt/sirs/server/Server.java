@@ -21,8 +21,8 @@ public class Server {
 	public static final String SERVER_BEGGINING = "Initialized";
 	public static final String ERROR_MSG = "ChamPog";
 	public static final String SERVER_LOST_CONNECTION_MSG = "ConnectionKO";
-	private static final String PRIVATE_KEY_PATH = "keys/PrivateKeyServer";
-	private static final String PUBLIC_KEY_PATH = "keys/PublicKeyServer";
+	private static final String PRIVATE_KEY_PATH = "keys/ServerPrivateKey";
+	private static final String PUBLIC_KEY_PATH = "keys/ServerPublicKey";
 
 	
 	private ArrayList<Account> accounts;
