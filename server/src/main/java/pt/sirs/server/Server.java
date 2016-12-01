@@ -13,6 +13,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 
 import pt.sirs.crypto.Crypto;
+import pt.sirs.server.Exceptions.AmountToHighException;
 import pt.sirs.server.Exceptions.IBANAlreadyExistsException;
 import pt.sirs.server.Exceptions.ServerException;
 import pt.sirs.server.Exceptions.UserAlreadyExistsException;
@@ -170,15 +171,20 @@ public class Server {
 		Account receiverAcc;
 		
 		receiverAcc = getAccountByUsername(receiver);
-		if(receiverAcc != null){
-			sender.debit(Integer.parseInt(amount));
-			receiverAcc.credit(Integer.parseInt(amount));
-			this.status = SUCCESSFUL_TRANSACTION_MSG;
-		}
-		else{
-			//TODO Generate error msg receiver not registered
-			return generateUnsuccessfulFeedback("Receiver not registered.", sender.getCounter());
-		}
+		try{
+				if(receiverAcc != null){
+					sender.debit(Integer.parseInt(amount));
+					receiverAcc.credit(Integer.parseInt(amount));
+					this.status = SUCCESSFUL_TRANSACTION_MSG;
+				}
+				else{
+					//TODO Generate error msg receiver not registered
+					return generateUnsuccessfulFeedback("Receiver not registered.", sender.getCounter());
+				}
+			} catch (AmountToHighException e){
+				return generateUnsuccessfulFeedback("Amount to dam high.", sender.getCounter());
+
+			}
 		
 		//Msg to cipher
 		String toCipher = this.status + "|" + sender.getCounter();
