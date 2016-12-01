@@ -169,23 +169,23 @@ public class Server {
 
 	public String generateTransactionFeedback(Account sender, String receiver, String amount) throws Exception{
 		Account receiverAcc;
-		
+
 		receiverAcc = getAccountByUsername(receiver);
 		try{
-				if(receiverAcc != null){
-					sender.debit(Integer.parseInt(amount));
-					receiverAcc.credit(Integer.parseInt(amount));
-					this.status = SUCCESSFUL_TRANSACTION_MSG;
-				}
-				else{
-					//TODO Generate error msg receiver not registered
-					return generateUnsuccessfulFeedback("Receiver not registered.", sender.getCounter());
-				}
-			} catch (AmountToHighException e){
-				return generateUnsuccessfulFeedback("Amount to dam high.", sender.getCounter());
-
+			if(receiverAcc != null){
+				sender.debit(Integer.parseInt(amount));
+				receiverAcc.credit(Integer.parseInt(amount));
+				this.status = SUCCESSFUL_TRANSACTION_MSG;
 			}
-		
+			else{
+				//TODO Generate error msg receiver not registered
+				return generateUnsuccessfulFeedback("Receiver not registered.", sender.getCounter());
+			}
+		} catch (AmountToHighException e){
+			return generateUnsuccessfulFeedback("Amount to damn high.", sender.getCounter());
+
+		}
+
 		//Msg to cipher
 		String toCipher = this.status + "|" + sender.getCounter();
 		byte[] cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);

@@ -39,6 +39,20 @@ public class ServerApplication {
             
             Server server = new Server();
             while(true){
+            	if(server.getStatus().equals(Server.SERVER_SUCCESSFUL_LOGOUT_MSG)){
+                    in.close();
+                    out.close();
+                    
+                    //2. Wait for connection
+                    System.out.println("Waiting for connection");
+                    connection = providerSocket.accept();
+                    System.out.println("Connection received from " + connection.getInetAddress().getHostName());
+                    
+                    //3. get Input and Output streams
+                    out = new ObjectOutputStream(connection.getOutputStream());
+                    out.flush();
+                    in = new ObjectInputStream(connection.getInputStream());
+            	}
 	            while(!server.getStatus().equals(Server.SERVER_SUCCESSFUL_LOGIN_MSG)){
 	            	server = DiffieHellman(server, out, in);            
 	            	server = Login(server, out, in);

@@ -16,6 +16,16 @@ public class ClientApplication {
 		Client client = null;
 		String feedback = Client.ERROR_MSG;
 		try{
+			Console console = System.console();
+			if (console == null) {
+				System.out.println("Couldn't get Console instance");
+				System.exit(0);
+			}
+						
+			String username = readUsername(console, "Please enter your username: ");	
+			String passwordString = readPassword(console, "Please enter your password: ");
+			
+			client = new Client(username, passwordString);
 			
 			//1. Criar o socket para falar com o server
 			requestSocket = new Socket("localhost", 10000);
@@ -26,19 +36,10 @@ public class ClientApplication {
 	        out.flush();
             in = new ObjectInputStream(requestSocket.getInputStream());
 	   
-	        Console console = System.console();
-	        if (console == null) {
-	            System.out.println("Couldn't get Console instance");
-	            System.exit(0);
-	        }
 	        System.out.println("Started...");//Just debugging prints	
 	        while(true){
 		        //TODO Make Deffie Hellman happen once
 		        while(!feedback.equals(Client.SERVER_SUCCESSFUL_LOGIN_MSG)){
-			    	String username = readUsername(console, "Please enter your username: ");	
-			    	String passwordString = readPassword(console, "Please enter your password: ");
-			    	
-			    	client = new Client(username, passwordString);
 			    	
 			    	client = DiffieHellman(client, out, in);	
 			    	client = Login(client, out, in);
@@ -49,7 +50,6 @@ public class ClientApplication {
 		    		System.out.println("Choose one of the following options");
 		    		System.out.println("1 - Transaction");
 		    		System.out.println("2 - Logout");
-		    		System.out.println("3 - Exit");
 		    		String choice = console.readLine();
 		    		if(choice.equals("1")){
 		    			client = Transaction(client, out, in, console);
@@ -57,10 +57,7 @@ public class ClientApplication {
 		    		else if(choice.equals("2")){
 		    			client = Logout(client, out, in);
 		    			feedback = Client.SERVER_SUCCESSFUL_LOGOUT_MSG;
-		    		}
-		    		else if(choice.equals("3")){
-		    			client = Logout(client, out, in);
-		    			feedback = Client.SERVER_SUCCESSFUL_LOGOUT_MSG;
+		    			return;
 		    		}
 		    	}
 	        }
@@ -70,7 +67,7 @@ public class ClientApplication {
             System.err.println("Attempt to connect an unknown server.");
         }
 		catch(FileNotFoundException e){
-			System.err.println("Username not registered. Run the application again.");
+			System.err.println("Username not registered in this phone. Run the application again.");
 		}
         catch(Exception e){
             e.printStackTrace();
@@ -79,9 +76,11 @@ public class ClientApplication {
     	finally{
             //4: Closing connection
             try{
-            	in.close();
-                out.close();
-                requestSocket.close();
+            	if(in != null && out != null && requestSocket != null){
+	            	in.close();
+	                out.close();
+	                requestSocket.close();
+            	}
             }
             catch(IOException ioException){
                 ioException.printStackTrace();
