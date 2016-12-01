@@ -26,10 +26,12 @@ public class Server {
 	public static final String SERVER_SUCCESSFUL_LOGIN_MSG = "LoginOk";
 	public static final String SUCCESSFUL_TRANSACTION_MSG = "TransOk";
 	public static final String SERVER_SUCCESSFUL_LOGOUT_MSG = "LogoutOk";
+	public static final String SERVER_BEGGINING = "Initialized";
 	public static final String ERROR_MSG = "ChamPog";
 	
 	private static final String PRIVATE_KEY_PATH = "keys/PrivateKeyServer";
 	private static final String PUBLIC_KEY_PATH = "keys/PublicKeyServer";
+	public static final String SERVER_LOST_CONNECTION_MSG = "ConnectionKO";
 
 	
 	private ArrayList<Account> accounts;
@@ -48,7 +50,7 @@ public class Server {
     	addAccount(new Account("PT12345678901234567890124", 100, "sigmaJEM", "12345"));
     	addAccount(new Account("PT12345678901234567890125", 100, "Alpha", "12345"));
     	addAccount(new Account("PT12345678901234567890126", 100, "jse", "12345"));
-    	this.status = "Initialized";
+    	this.status = SERVER_BEGGINING;
     	keys = new KeyPair(Crypto.readPubKeyFromFile(PUBLIC_KEY_PATH), Crypto.readPrivKeyFromFile(PRIVATE_KEY_PATH));
 
     }    
@@ -73,7 +75,8 @@ public class Server {
 			//TODO Generate error msg client not registered
 			return generateUnsuccessfulFeedback("User not registered.", 0);
 		}
-		
+		sender.setCounter(0);
+
 		//Deciphering msg
 		decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, this.sharedKey);
 
@@ -163,7 +166,7 @@ public class Server {
 		}
 		else{
 			//TODO Generate error msg for feedback signature compromised
-			return generateUnsuccessfulFeedback("Signature compromised on loggin SMS received", 0);
+			return generateUnsuccessfulFeedback("Signature compromised on loggin SMS received", sender.getCounter());
 		}
     }
 
@@ -244,7 +247,7 @@ public class Server {
 	public String generateLogoutFeedback(Account sender) throws Exception{
 		this.status = SERVER_SUCCESSFUL_LOGOUT_MSG;
 		sender.setCounter(0);
-		
+
 		//Msg to cipher
 		String toCipher = this.status + "|" + sender.getCounter();
 		byte[] cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);

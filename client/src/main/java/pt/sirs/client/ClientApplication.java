@@ -22,10 +22,6 @@ public class ClientApplication {
 				System.exit(0);
 			}
 						
-			String username = readUsername(console, "Please enter your username: ");	
-			String passwordString = readPassword(console, "Please enter your password: ");
-			
-			client = new Client(username, passwordString);
 			
 			//1. Criar o socket para falar com o server
 			requestSocket = new Socket("localhost", 10000);
@@ -40,7 +36,10 @@ public class ClientApplication {
 	        while(true){
 		        //TODO Make Deffie Hellman happen once
 		        while(!feedback.equals(Client.SERVER_SUCCESSFUL_LOGIN_MSG)){
-			    	
+		        	String username = readUsername(console, "Please enter your username: ");	
+					String passwordString = readPassword(console, "Please enter your password: ");
+					
+					client = new Client(username, passwordString);
 			    	client = DiffieHellman(client, out, in);	
 			    	client = Login(client, out, in);
 			    	feedback = client.getStatus();
@@ -57,6 +56,9 @@ public class ClientApplication {
 		    		else if(choice.equals("2")){
 		    			client = Logout(client, out, in);
 		    			feedback = Client.SERVER_SUCCESSFUL_LOGOUT_MSG;
+		    			return;
+		    		}
+		    		if(client.getStatus().equals(Client.SERVER_SUCCESSFUL_LOGOUT_MSG)){
 		    			return;
 		    		}
 		    	}
@@ -137,7 +139,12 @@ public class ClientApplication {
         
         String feedback = (String) in.readObject();
         System.out.println(feedback + " TAMANHO: " + feedback.length());
-        System.out.println(client.processFeedback(feedback, "transaction"));
+        String feedbackProcessed = client.processFeedback(feedback, "transaction");
+        System.out.println(feedbackProcessed);
+        
+        if(feedbackProcessed.equals(Client.FRESHENESS_ERROR_MSG)){
+        	client.setStatus(Client.SERVER_SUCCESSFUL_LOGOUT_MSG);
+        }
 		
 		return client;
 	}
