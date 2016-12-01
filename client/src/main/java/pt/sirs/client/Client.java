@@ -226,18 +226,25 @@ public class Client {
 		String[] splitedSms = this.nonRepudiationString.split("\\|");
 		byte[] byteSig = Crypto.decode(splitedSms[0]);
 		String stringTS  = splitedSms[1];
-				
-		//Verify TimeStamp
-		if(!Crypto.validTS(stringTS)){
-			//TODO send proper error
-			System.out.println("Time stamp used in DH public value invalid, passed more than 1 minute");
+		
+		try{
+			//Verify TimeStamp
+			if(!Crypto.validTS(stringTS)){
+				//TODO send proper error
+				System.out.println("Time stamp used in DH public value invalid, passed more than 1 minute");
+			}
+		}
+		catch (java.text.ParseException e){
+			System.out.println("This user was blocked");
+			this.status = SERVER_SUCCESSFUL_LOGOUT_MSG;
+			return;
 		}
 		
 		//Verify signature
 		String msgToVerify = publicValue + stringTS;
 		if(!Crypto.verifySign(msgToVerify, byteSig, Crypto.readPubKeyFromFile(SERVER_PUBLIC_KEY_PATH))){
 			//TODO send proper error
-			System.out.println("Signature compromised ins DH public value msg");
+			System.out.println("Signature compromised in DH public value msg");
 		}
 		
 		BigInteger sharedKey = publicValue.modPow(secretValue, p);

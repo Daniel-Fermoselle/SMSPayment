@@ -19,6 +19,7 @@ public class Account{
 	private int counter;
 	private PublicKey pubKey;
 	private String mobile;
+	private int trys;
 
 	public Account(String iban, int balance, String username, String password, String mobile) throws Exception{
 		if(password.length()<4 || password.length()>8)
@@ -32,6 +33,7 @@ public class Account{
 		this.counter = 0;
 		this.setMobile(mobile);
 		this.pubKey = Crypto.readPubKeyFromFile("keys/" + username + "PublicKey" );
+		this.setTrys(0);
 	}
 	
 	public void debit(int amount){
@@ -108,6 +110,14 @@ public class Account{
 
 	public void setMobile(String mobile) {
 		this.mobile = mobile;
+	}
+
+	public int getTrys() {
+		return trys;
+	}
+
+	public void setTrys(int trys) {
+		this.trys = trys;
 	}
 
 }

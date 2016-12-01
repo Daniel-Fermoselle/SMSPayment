@@ -42,7 +42,10 @@ public class ClientApplication {
 					
 					client = new Client(username, passwordString, mobile);
 
-			    	client = DiffieHellman(client, out, in);	
+			    	client = DiffieHellman(client, out, in);
+			    	if(client.getStatus().equals(Client.SERVER_SUCCESSFUL_LOGOUT_MSG)){
+			    		return;
+			    	}
 			    	client = Login(client, out, in);
 			    	feedback = client.getStatus();
 		        }

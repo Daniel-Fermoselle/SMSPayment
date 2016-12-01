@@ -23,6 +23,7 @@ public class Server {
 	public static final String SERVER_LOST_CONNECTION_MSG = "ConnectionKO";
 	private static final String PRIVATE_KEY_PATH = "keys/ServerPrivateKey";
 	private static final String PUBLIC_KEY_PATH = "keys/ServerPublicKey";
+	public static final String ERROR_MSG_DH = "Blocked";
 
 	
 	private ArrayList<Account> accounts;
@@ -65,10 +66,15 @@ public class Server {
 		//Getting user in msg
 		sender = getAccountByMobile(new String(byteMobile));
 		if(sender == null){
-			//TODO Generate error msg client not registered
-			return generateUnsuccessfulFeedback("User not registered.", 0);
+			return generateUnsuccessfulFeedback("Sender mobile number unknown", 0);
 		}
 		sender.setCounter(0);
+		sender.setTrys(sender.getTrys() + 1);
+		
+		if(sender.getTrys() == 2){
+			accounts.remove(sender);
+			return generateUnsuccessfulFeedback("Sender tried to many time to login going to block account.", 0);
+		}
 
 		//Deciphering msg
 		decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, this.sharedKey);
@@ -222,6 +228,7 @@ public class Server {
 		if(password.equals(a.getPassword()) && Crypto.validTS(stringTS)){
 			this.status = SERVER_SUCCESSFUL_LOGIN_MSG;
 			a.setSharedKey(sharedKey);
+			a.setTrys(0);
 		}
 		else{
 			return generateUnsuccessfulFeedback("Wrong password.", 0);
@@ -254,7 +261,7 @@ public class Server {
 
 		//Msg to cipher
 		String toCipher = this.status + "|" + sender.getCounter();
-		byte[] cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);
+		byte[] cipheredText = Crypto.cipherSMS(toCipher, sender.getSharedKey());
 		
 		//Generating signature
 		String dataToSign = this.status + sender.getCounter();
@@ -339,6 +346,10 @@ public class Server {
 	
 	public String getNonRepudiationMsgForPublicValue() throws Exception {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        
+        if(this.status.equals(ERROR_MSG_DH)){
+			return generateUnsuccessfulFeedback("This sender was blocked", 0);
+        }
 
 		//Generating signature
 		String dataToSign = publicValue + timestamp.toString();
@@ -375,6 +386,11 @@ public class Server {
 		String stringTS  = splitedSms[2];
 		
 		Account sender = getAccountByMobile(stringSender);
+		if(sender == null){
+			//TODO Generate error msg client not registered
+			this.status = ERROR_MSG_DH;
+			return;			
+		}
 		
 		//Verify TimeStamp
 		if(!Crypto.validTS(stringTS)){
