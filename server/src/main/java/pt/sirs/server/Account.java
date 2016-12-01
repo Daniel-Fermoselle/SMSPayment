@@ -18,8 +18,9 @@ public class Account{
 	private SecretKeySpec sharedKey;
 	private int counter;
 	private PublicKey pubKey;
+	private String mobile;
 
-	public Account(String iban, int balance, String username, String password) throws Exception{
+	public Account(String iban, int balance, String username, String password, String mobile) throws Exception{
 		if(password.length()<4 || password.length()>7)
 		{ throw new InvalidPasswordException(password); }
 		if(username.length()>10)
@@ -29,6 +30,7 @@ public class Account{
 		this.username = username;
 		this.password = password;
 		this.counter = 0;
+		this.mobile = mobile;
 		this.pubKey = Crypto.readPubKeyFromFile("keys/" + "PublicKey" + username);
 	}
 	
@@ -98,6 +100,14 @@ public class Account{
 
 	public void setPubKey(PublicKey pubKey) {
 		this.pubKey = pubKey;
+	}
+
+	public String getMobile() {
+		return mobile;
+	}
+
+	public void setMobile(String mobile) {
+		this.mobile = mobile;
 	}
 
 }

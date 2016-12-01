@@ -38,11 +38,11 @@ public class Server {
     public Server() throws Exception {
     	
     	this.accounts = new ArrayList<Account>();
-    	addAccount(new Account("PT12345678901234567890123", 100, "nasTyMSR", "12345"));
-    	addAccount(new Account("PT12345678901234567890124", 100, "sigmaJEM", "12345"));
-    	addAccount(new Account("PT12345678901234567890125", 100, "Alpha", "12345"));
-    	addAccount(new Account("PT12345678901234567890126", 100, "jse", "12345"));
-    	addAccount(new Account("PT12345678901234567890127", 10000000, "aaaaaaaaaa", "1234567"));
+    	addAccount(new Account("PT12345678901234567890123", 100, 	  "nasTyMSR",   "12345",   "913534674"));
+    	addAccount(new Account("PT12345678901234567890124", 100, 	  "sigmaJEM",   "12345",   "915667357"));
+    	addAccount(new Account("PT12345678901234567890125", 100, 	  "Alpha"   ,   "12345",   "912436744"));
+    	addAccount(new Account("PT12345678901234567890126", 100, 	  "jse"     ,   "12345",   "912456434"));
+    	addAccount(new Account("PT12345678901234567890127", 10000000, "aaaaaaaaaa", "1234567", "912456423"));
     	this.status = SERVER_BEGGINING;
     	keys = new KeyPair(Crypto.readPubKeyFromFile(PUBLIC_KEY_PATH), Crypto.readPrivKeyFromFile(PRIVATE_KEY_PATH));
 
@@ -58,12 +58,12 @@ public class Server {
 			//TODO Generate error msg client not registered
 			return generateUnsuccessfulFeedback("Wrong message format.", 0);
 		}
-		byte[] byteUsername = Crypto.decode(splitedSms[0]);
+		byte[] byteMobile = Crypto.decode(splitedSms[0]);
 		byte[] byteSignature = Crypto.decode(splitedSms[1]);
 		byte[] byteCipheredMsg = Crypto.decode(splitedSms[2]);
 
 		//Getting user in msg
-		sender = getAccountByUsername(new String(byteUsername));
+		sender = getAccountByMobile(new String(byteMobile));
 		if(sender == null){
 			//TODO Generate error msg client not registered
 			return generateUnsuccessfulFeedback("User not registered.", 0);
@@ -85,7 +85,7 @@ public class Server {
 		System.out.println("Password is:" + password + "   len " + password.length());
 		
 		//Verify signature 
-		String msgToVerify = sender.getUsername() + stringTimestamp + password;
+		String msgToVerify = sender.getMobile() + stringTimestamp + password;
 		
 		if(Crypto.verifySign(msgToVerify, byteSignature, sender.getPubKey())){		
 			return generateLoginFeedback(sender, password, stringTimestamp);
@@ -106,12 +106,12 @@ public class Server {
 			//TODO Generate error msg client not registered
 			return generateUnsuccessfulFeedback("Wrong message format.", 0);
 		}
-		byte[] byteUsername = Crypto.decode(splitedSms[0]);
+		byte[] byteMobile = Crypto.decode(splitedSms[0]);
 		byte[] byteSignature = Crypto.decode(splitedSms[1]);
 		byte[] byteCipheredMsg = Crypto.decode(splitedSms[2]);
 		
 		//Getting user in msg
-		sender = getAccountByUsername(new String(byteUsername));
+		sender = getAccountByMobile(new String(byteMobile));
 		if(sender == null){
 			//TODO Generate error msg client not registered
 			return generateUnsuccessfulFeedback("User not registered.", 0);			
@@ -139,15 +139,22 @@ public class Server {
 		//Verify user counter
 		int smsCounter = Integer.parseInt(counter);
 		if(smsCounter < sender.getCounter()) { return generateUnsuccessfulFeedback("Freshness compromised.", 0); }
-		else { sender.setCounter(smsCounter + 1); }
+		else { 
+			if(sender.getCounter() < Integer.MAX_VALUE)
+				sender.setCounter(smsCounter + 1);
+			else{
+				sender.setCounter(0);
+				System.out.println("User sent too many messages. Going to force logout");
+			}
+		}
 		
 		//Verify signature 
 		String msgToVerify;
 		if(splitedMsg.length == 3){
-			msgToVerify = sender.getUsername() + receiver + amount + counter;
+			msgToVerify = sender.getMobile() + receiver + amount + counter;
 		}
 		else{
-			msgToVerify = sender.getUsername() + receiver + counter;
+			msgToVerify = sender.getMobile() + receiver + counter;
 		}    
 		if(Crypto.verifySign(msgToVerify, byteSignature, sender.getPubKey())){				
 			//Check if it's a logout message
@@ -182,6 +189,7 @@ public class Server {
 
 		}
 
+		sender.setCounter(Integer.MAX_VALUE);
 		//Msg to cipher
 		String toCipher = this.status + "|" + sender.getCounter();
 		byte[] cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);
@@ -307,6 +315,15 @@ public class Server {
 		return null;
 	}
 	
+	public Account getAccountByMobile(String msg){
+		for(Account user : this.accounts){
+			if(msg.equals(user.getMobile())){
+				return user;
+			}
+		}
+		return null;
+	}
+	
 	public Account getAccountByIban(String msg){
 		for(Account user : this.accounts){
 			if(msg.contains(user.getIban())){
@@ -357,7 +374,7 @@ public class Server {
 		byte[] byteSig = Crypto.decode(splitedSms[1]);
 		String stringTS  = splitedSms[2];
 		
-		Account sender = getAccountByUsername(stringSender);
+		Account sender = getAccountByMobile(stringSender);
 		
 		//Verify TimeStamp
 		if(!Crypto.validTS(stringTS)){

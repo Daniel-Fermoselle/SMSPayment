@@ -6,12 +6,9 @@ import pt.sirs.client.Client;
 
 public class ClientApplication {
 	
-	public static final String IBAN = "PT01234567890123456789012";
-	public static final int INITMONEY = 0;
-	
 	public static void main(String[] args) {
-		Socket requestSocket = null;//CUIDADO
-		ObjectOutputStream out = null;//CUIDADO
+		Socket requestSocket = null;
+		ObjectOutputStream out = null;
 		ObjectInputStream in = null;
 		Client client = null;
 		String feedback = Client.ERROR_MSG;
@@ -36,10 +33,12 @@ public class ClientApplication {
 	        while(true){
 		        //TODO Make Deffie Hellman happen once
 		        while(!feedback.equals(Client.SERVER_SUCCESSFUL_LOGIN_MSG)){
+		        	String mobile 	= readMobile(console, "Please enter your mobilenumber: ");	
 		        	String username = readUsername(console, "Please enter your username: ");	
 					String passwordString = readPassword(console, "Please enter your password: ");
 					
-					client = new Client(username, passwordString);
+					client = new Client(username, passwordString, mobile);
+
 			    	client = DiffieHellman(client, out, in);	
 			    	client = Login(client, out, in);
 			    	feedback = client.getStatus();
@@ -164,6 +163,17 @@ public class ClientApplication {
         System.out.println(client.processFeedback(feedback, "logout"));
 		
 		return client;
+	}
+	
+	public static String readMobile(Console console, String msg) throws Exception{
+		console.printf(msg);
+		String username = console.readLine();
+		while(username.length() != 9){
+			System.out.println("The inserted mobilenumber has to be 9 digits long. Try again!");
+			console.printf(msg);
+			username = console.readLine();
+		}
+		return username;
 	}
 	
 	public static String readUsername(Console console, String msg) throws Exception{
