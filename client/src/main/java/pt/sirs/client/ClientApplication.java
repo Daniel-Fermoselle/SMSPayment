@@ -35,11 +35,8 @@ public class ClientApplication {
 	        while(true){
 		        //TODO Make Deffie Hellman happen once
 		        while(!feedback.equals(Client.SERVER_SUCCESSFUL_LOGIN_MSG)){
-			    	console.printf("Please enter your username: ");
-			    	String username = console.readLine();	    	
-			    	console.printf("Please enter your password: ");
-			    	char[] passwordChars = console.readPassword();
-			    	String passwordString = new String(passwordChars);
+			    	String username = readUsername(console, "Please enter your username: ");	
+			    	String passwordString = readPassword(console, "Please enter your password: ");
 			    	
 			    	client = new Client(username, passwordString);
 			    	
@@ -52,6 +49,7 @@ public class ClientApplication {
 		    		System.out.println("Choose one of the following options");
 		    		System.out.println("1 - Transaction");
 		    		System.out.println("2 - Logout");
+		    		System.out.println("3 - Exit");
 		    		String choice = console.readLine();
 		    		if(choice.equals("1")){
 		    			client = Transaction(client, out, in, console);
@@ -60,12 +58,16 @@ public class ClientApplication {
 		    			client = Logout(client, out, in);
 		    			feedback = Client.SERVER_SUCCESSFUL_LOGOUT_MSG;
 		    		}
+		    		else if(choice.equals("3")){
+		    			client = Logout(client, out, in);
+		    			feedback = Client.SERVER_SUCCESSFUL_LOGOUT_MSG;
+		    		}
 		    	}
 	        }
 		}
 		
 		catch(UnknownHostException e){
-            System.err.println("Attempto to connect an unknown server.");
+            System.err.println("Attempt to connect an unknown server.");
         }
 		catch(FileNotFoundException e){
 			System.err.println("Username not registered. Run the application again.");
@@ -77,6 +79,7 @@ public class ClientApplication {
     	finally{
             //4: Closing connection
             try{
+            	in.close();
                 out.close();
                 requestSocket.close();
             }
@@ -124,11 +127,9 @@ public class ClientApplication {
 		
 		String iban, amount;
 		
-    	console.printf("Please enter the username to transfer: ");
-    	iban = console.readLine();
+    	iban = readUsername(console, "Please enter the username to transfer: ");
     	
-    	console.printf("Please enter an amount to transfer: ");
-    	amount = console.readLine();
+    	amount = readAmount(console, "Please enter an amount to transfer: ");
     	
     	String transaction = client.generateTransactionSms(iban, amount);
     	System.out.println(transaction + " TAMANHO: " + transaction.length());
@@ -154,6 +155,41 @@ public class ClientApplication {
         System.out.println(client.processFeedback(feedback, "logout"));
 		
 		return client;
+	}
+	
+	public static String readUsername(Console console, String msg) throws Exception{
+		console.printf(msg);
+		String username = console.readLine();
+		while(username.length() > 10){
+			System.out.println("The inserted username is too big, usernames only have at most 10 characters. Try again!");
+			console.printf(msg);
+			username = console.readLine();
+		}
+		return username;
+	}
+	
+	public static String readPassword(Console console, String msg) throws Exception{
+		console.printf(msg);
+    	char[] passwordChars = console.readPassword();
+    	String passwordString = new String(passwordChars);
+		while(passwordString.length() > 8 || passwordString.length() < 4){
+			System.out.println("The inserted password is incorrect, passwords only have at most 8 and at least 4 characters. Try again!");
+			console.printf(msg);
+			passwordChars = console.readPassword();
+	    	passwordString = new String(passwordChars);
+		}
+		return passwordString;
+	}
+	
+	public static String readAmount(Console console, String msg) throws Exception{
+		console.printf(msg);
+		String amount = console.readLine();
+		while(amount.length() > 10){
+			System.out.println("The inserted amount is too big, you can oly transfer up to 99.999.999. Try again!");
+			console.printf(msg);
+			amount = console.readLine();
+		}
+		return amount;
 	}
     
 }
