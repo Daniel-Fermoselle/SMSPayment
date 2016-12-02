@@ -19,27 +19,14 @@ public class ServerApplication {
     	ServerSocket providerSocket = null;
     	ObjectOutputStream out = null;
     	ObjectInputStream in = null;
-        try{
-        	
+        try{        	
             //1. creating a server socket
             providerSocket = new ServerSocket(SERVER_PORT, QUEUE_SIZE);
-            
-            //2. Wait for connection
-            System.out.println("Waiting for connection");
-            Socket connection = providerSocket.accept();
-            System.out.println("Connection received from " + connection.getInetAddress().getHostName());
-            
-            //3. get Input and Output streams
-            out = new ObjectOutputStream(connection.getOutputStream());
-            out.flush();
-            in = new ObjectInputStream(connection.getInputStream());
+            Socket connection;            
             
             Server server = new Server();
             while(true){
             	if(server.getStatus().equals(Server.SERVER_SUCCESSFUL_LOGOUT_MSG)  || server.getStatus().equals(Server.SERVER_LOST_CONNECTION_MSG)){
-                    in.close();
-                    out.close();
-                    
                     server.setStatus(Server.SERVER_BEGGINING);
                     
                     //2. Wait for connection
