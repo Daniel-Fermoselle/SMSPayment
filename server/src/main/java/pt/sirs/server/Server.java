@@ -2,16 +2,16 @@ package pt.sirs.server;
 
 import java.math.BigInteger;
 import java.security.KeyPair;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 
 import javax.crypto.spec.SecretKeySpec;
 
 import pt.sirs.crypto.Crypto;
 import pt.sirs.server.Exceptions.AmountToHighException;
-import pt.sirs.server.Exceptions.IBANAlreadyExistsException;
-import pt.sirs.server.Exceptions.ServerException;
-import pt.sirs.server.Exceptions.UserAlreadyExistsException;
 
 public class Server {
 	public  static final String SERVER_BEGGINING = "Initialized";
@@ -24,9 +24,9 @@ public class Server {
 	private static final String PRIVATE_KEY_PATH = "keys/ServerPrivateKey";
 	private static final String PUBLIC_KEY_PATH = "keys/ServerPublicKey";
 	private static final int    NUMBER_OF_UNSUCCESSFULL_LOGIN_TRYS = 3;
+	public  static final String MYSQL_ID = "root";
+	public  static final String MYSQL_PASSWORD = "root";
 
-	
-	private ArrayList<Account> accounts;
 	private BigInteger p;
 	private BigInteger g;
 	private BigInteger secretValue;
@@ -35,20 +35,37 @@ public class Server {
 	private String status;
 	private KeyPair keys;
 	private String nonRepudiationString;
+	private String mysqlId;
+	private String mysqlPassword;
 	
-    public Server() throws Exception {
-    	
-    	this.accounts = new ArrayList<Account>();
-    	addAccount(new Account("PT12345678901234567890123", 100, 	  "nasTyMSR",   "12345",   "913534674"));
-    	addAccount(new Account("PT12345678901234567890124", 100, 	  "sigmaJEM",   "12345",   "915667357"));
-    	addAccount(new Account("PT12345678901234567890125", 100, 	  "Alpha"   ,   "12345",   "912436744"));
-    	addAccount(new Account("PT12345678901234567890126", 100, 	  "jse"     ,   "12345",   "912456434"));
-    	addAccount(new Account("PT12345678901234567890127", 10000000, "aaaaaaaaaa", "1234567", "912456423"));
+	/***
+	 * This is the constructor for the Server, this constructor 
+	 * will be called at the start of the ServerApplication. 
+	 * action 
+	 * @param mysqlId
+	 * @param mysqlId
+	 * @throws Exception
+	 */
+    public Server(String mysqlId, String mysqlPassword) throws Exception {
+    	this.mysqlId = mysqlId;
+    	this.mysqlPassword = mysqlPassword;
     	this.status = SERVER_BEGGINING;
     	keys = new KeyPair(Crypto.readPubKeyFromFile(PUBLIC_KEY_PATH), Crypto.readPrivKeyFromFile(PRIVATE_KEY_PATH));
 
-    }    
+    }        
     
+	/***
+	 * This function is used to process login sms' received from the client and
+	 * it checks if the message is composed by
+	 * (mobile|)signature|cipheredText where 
+	 * signature = {mobile + TS + password}Kcs and cipheredText = {TS|pass}Ks
+	 * and if this parameters are correct
+	 * Kcs = client private key
+	 * Ks = shared key
+	 * @param sms
+	 * @return String
+	 * @throws Exception
+	 */
     public String processLoginSms(String sms) throws Exception{
 		String decipheredMsg;
 		Account sender;
@@ -71,7 +88,7 @@ public class Server {
 		sender.setTrys(sender.getTrys() + 1);
 		
 		if(sender.getTrys() == NUMBER_OF_UNSUCCESSFULL_LOGIN_TRYS){
-			accounts.remove(sender);
+			removeAccount(sender);
 			return generateUnsuccessfulFeedback("Sender tried to many time to login going to block account.", 0);
 		}
 
@@ -103,10 +120,24 @@ public class Server {
 		}
     }
     
+	/***
+	 * This function is used to process transactions sms' received from the client and
+	 * it checks if the message is composed by (mobile|)signature|cipheredText where
+	 * signature = {mobile + receiver + amount + counter}Kcs
+	 * cipheredText = {receiver|amount|counter}Ks
+	 * OR
+	 * signature = {mobile + logout + counter}Kcs
+	 * cipheredText = {logout|counter}Ks
+	 * depending if the message is a logout or transaction
+	 * Kcs = client private key
+	 * Ks = shared key
+	 * @param sms
+	 * @return String
+	 * @throws Exception
+	 */
     public String processTransactionSms(String sms) throws Exception{
 		String decipheredMsg, receiver, amount = "", counter;
 		Account sender;
-		SecretKeySpec sharedKey;
 		
 		String[] splitedSms = sms.split("\\|");
 		if(splitedSms.length != 3){
@@ -121,11 +152,10 @@ public class Server {
 		if(sender == null){
 			return generateUnsuccessfulFeedback("User not registered.", 0);			
 		}
-		sharedKey = sender.getSharedKey();
 		
 		try{
 			//Deciphering msg
-			decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, sharedKey);
+			decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, this.sharedKey);
 		} catch (Exception e){
 			return generateUnsuccessfulFeedback("Cipher was corrupted", 0);
 		}
@@ -181,6 +211,19 @@ public class Server {
 		}
     }
 
+	/***
+	 * This function is used to generate transactions feedback to the client
+	 * the message is composed by signature|cipheredText where
+	 * signature = {status + counter}Kcs
+	 * cipheredText = {status|counter}Ks
+	 * Kcs = client private key
+	 * Ks = shared key
+	 * @param sender
+	 * @param receiver
+	 * @param amount
+	 * @return String
+	 * @throws Exception
+	 */
 	public String generateTransactionFeedback(Account sender, String receiver, String amount) throws Exception{
 		Account receiverAcc;
 
@@ -224,11 +267,23 @@ public class Server {
 		return toSend;		
 	}
 
+	/***
+	 * This function is used to generate login feedback to the client
+	 * the message is composed by signature|cipheredText where
+	 * signature = {status + counter}Kcs
+	 * cipheredText = {status|counter}Ks
+	 * Kcs = client private key
+	 * Ks = shared key
+	 * @param a
+	 * @param password
+	 * @param stringTS
+	 * @return String
+	 * @throws Exception
+	 */
 	public String generateLoginFeedback(Account a, String password, String stringTS) throws Exception{		
 
 		if(password.equals(a.getPassword()) && Crypto.validTS(stringTS)){
 			this.status = SERVER_SUCCESSFUL_LOGIN_MSG;
-			a.setSharedKey(sharedKey);
 			a.setTrys(0);
 		}
 		else{
@@ -237,7 +292,7 @@ public class Server {
 		
 		//Add user counter to msg
 		String feedback = this.status + "|" + a.getCounter();
-		byte[] cipheredText = Crypto.cipherSMS(feedback, sharedKey);
+		byte[] cipheredText = Crypto.cipherSMS(feedback, this.sharedKey);
 		System.out.println(feedback);
 		
 		//Generating signature
@@ -255,13 +310,24 @@ public class Server {
 		return toSend;
 	}
 	
+	/***
+	 * This function is used to generate logout feedback to the client
+	 * the message is composed by signature|cipheredText where
+	 * signature = {status + counter}Kcs
+	 * cipheredText = {status|counter}Ks
+	 * Kcs = client private key
+	 * Ks = shared key
+	 * @param sender
+	 * @return String
+	 * @throws Exception
+	 */
 	public String generateLogoutFeedback(Account sender) throws Exception{
 		this.status = SERVER_SUCCESSFUL_LOGOUT_MSG;
 		sender.setCounter(0);
 
 		//Msg to cipher
 		String toCipher = this.status + "|" + sender.getCounter();
-		byte[] cipheredText = Crypto.cipherSMS(toCipher, sender.getSharedKey());
+		byte[] cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);
 		
 		//Generating signature
 		String dataToSign = this.status + sender.getCounter();
@@ -278,6 +344,19 @@ public class Server {
 		return toSend;		
 	}
 	
+	/***
+	 * This function is used to generate an unsuccessful feedback when 
+	 * an error occurs to the client
+	 * the message is composed by signature|cipheredText where
+	 * signature = {status + counter}Kcs
+	 * cipheredText = {status|counter}Ks
+	 * Kcs = client private key
+	 * Ks = shared key
+	 * @param msg
+	 * @param counter
+	 * @return String
+	 * @throws Exception
+	 */
 	public String generateUnsuccessfulFeedback(String msg,int counter) throws Exception{
 		System.out.println(msg);
 		this.status = ERROR_MSG;
@@ -300,44 +379,84 @@ public class Server {
 
 		return toSend;
 	}
+	
+	/***
+	 * This function sends a query to the database asking 
+	 * for an account with the username msg
+	 * @param msg
+	 * @return String
+	 * @throws Exception
+	 */
+	public Account getAccountByUsername(String msg) throws Exception{
+        String iban = "", username = "", password = "", mobile = "";
+        int balance = 0;
+		// Step 1: Allocate a database "Connection" object
+        Connection conn = DriverManager.getConnection(
+              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", this.mysqlId, this.mysqlPassword); // MySQL
 
-	public void addAccount(Account account) throws ServerException{
-    	for(Account a : this.accounts){
-    		if(a.getIban().equals(account.getIban())){
-    			throw new IBANAlreadyExistsException(account.getIban());
-    		}
-    		if(a.getUsername().equals(account.getUsername())){
-    			throw new UserAlreadyExistsException(account.getUsername());
-    		}
-    	}
-    	this.accounts.add(account);
-    }
-	
-	public Account getAccountByUsername(String msg){
-		for(Account user : this.accounts){
-			if(msg.equals(user.getUsername())){
-				return user;
-			}
-		}
-		return null;
+        // Step 2: Allocate a "Statement" object in the Connection
+        Statement stmt = conn.createStatement();
+        
+        // Step 3: Execute a SQL SELECT query, the query result
+        String strSelect = "select iban, balance, username, password, mobile from accountsms where username = '" + msg + "'";
+        ResultSet rset = stmt.executeQuery(strSelect);
+
+        // Step 4: Process the ResultSet by scrolling the cursor forward via next().
+        System.out.println("The records selected are:");
+        int rowCount = 0;
+        while(rset.next()) {   // Move the cursor to the next row
+            iban = rset.getString("iban");
+            balance = rset.getInt("balance");
+            username = rset.getString("username");
+            password = rset.getString("password");
+            mobile = rset.getString("mobile");
+           ++rowCount;
+        }
+        if(rowCount == 0){
+        	return null;
+        }
+        else{
+        	return new Account(iban, balance, username, password, mobile, this);
+        }
 	}
 	
-	public Account getAccountByMobile(String msg){
-		for(Account user : this.accounts){
-			if(msg.equals(user.getMobile())){
-				return user;
-			}
-		}
-		return null;
-	}
-	
-	public Account getAccountByIban(String msg){
-		for(Account user : this.accounts){
-			if(msg.contains(user.getIban())){
-				return user;
-			}
-		}
-		return null;
+	/***
+	 * This function sends a query to the database asking 
+	 * for an account with the mobile number msg
+	 * @param msg
+	 * @return String
+	 * @throws Exception
+	 */
+	public Account getAccountByMobile(String msg) throws Exception{
+        String iban = "", username = "", password = "", mobile = "";
+        int balance = 0;
+		// Step 1: Allocate a database "Connection" object
+        Connection conn = DriverManager.getConnection(
+              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", this.mysqlId, this.mysqlPassword); // MySQL
+
+        // Step 2: Allocate a "Statement" object in the Connection
+        Statement stmt = conn.createStatement();
+        
+        // Step 3: Execute a SQL SELECT query, the query result
+        String strSelect = "select iban, balance, username, password, mobile from accountsms where mobile = '" + msg + "'";
+
+        // Step 4: Process the ResultSet by scrolling the cursor forward via next().
+        ResultSet rset = stmt.executeQuery(strSelect);
+        int rowCount = 0;
+        while(rset.next()) {   // Move the cursor to the next row
+            iban = rset.getString("iban");
+            balance = rset.getInt("balance");
+            username = rset.getString("username");
+            password = rset.getString("password");
+            mobile = rset.getString("mobile");
+           ++rowCount;
+        }
+        if(rowCount == 0){
+        	return null;
+        }
+        else{
+        	return new Account(iban, balance, username, password, mobile, this);
+        }
 	}
 
 	public void generateSecretValue() {
@@ -436,5 +555,41 @@ public class Server {
 
 	public void setSharedKey(SecretKeySpec sharedKey) {
 		this.sharedKey = sharedKey;
+	}
+	
+	/***
+	 * This function sends a query to the database 
+	 * to remove an account a
+	 * @param a
+	 * @return String
+	 * @throws Exception
+	 */
+	public void removeAccount(Account a) throws Exception{
+		// Step 1: Allocate a database "Connection" object
+		Connection conn = DriverManager.getConnection(
+				"jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", this.mysqlId, this.mysqlPassword); // MySQL
+
+		// Step 2: Allocate a "Statement" object in the Connection
+		Statement stmt = conn.createStatement();
+
+		// Step 3: Execute a SQL DELETE query, the query result
+		String sqlDelete = "delete from accountsms where mobile = '" + a.getMobile() + "'";
+		stmt.executeUpdate(sqlDelete);
+	}
+
+	public String getMysqlId() {
+		return mysqlId;
+	}
+
+	public void setMysqlId(String mysqlId) {
+		this.mysqlId = mysqlId;
+	}
+
+	public String getMysqlPassword() {
+		return mysqlPassword;
+	}
+
+	public void setMysqlPassword(String mysqlPassword) {
+		this.mysqlPassword = mysqlPassword;
 	}
 }

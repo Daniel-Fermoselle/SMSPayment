@@ -2,6 +2,8 @@ package pt.sirs.client;
 
 import java.io.*;
 import java.net.*;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -9,7 +11,18 @@ import pt.sirs.client.Client;
 
 public class ClientApplication {
 	
+	public static final int TIMER = 40000;
+	
+	public ClientApplication(){
+		
+	}
+	
 	public static void main(String[] args) {
+		ClientApplication ca = new ClientApplication();
+		ca.run(args[0], args[1]);
+	}
+	
+	public void run(String port, String host) {
 		Socket requestSocket = null;
 		ObjectOutputStream out = null;
 		ObjectInputStream in = null;
@@ -24,8 +37,8 @@ public class ClientApplication {
 						
 			
 			//1. Criar o socket para falar com o server
-			requestSocket = new Socket("localhost", 10000);
-	        System.out.println("Connected to localhost in port 10000");//Just debugging prints
+			requestSocket = new Socket(host, Integer.parseInt(port));
+	        System.out.println("Connected to localhost in port " + port);//Just debugging prints
 	        
 	        //2. Criar o socket para enviar coisas para o server
 	        out = new ObjectOutputStream(requestSocket.getOutputStream());
@@ -36,9 +49,13 @@ public class ClientApplication {
 	        while(true){
 		        //TODO Make Deffie Hellman happen once
 		        while(!feedback.equals(Client.SERVER_SUCCESSFUL_LOGIN_MSG)){
+		        	Timer timerLog = new Timer();
+		        	timerLog.schedule(new TimerCheck(), TIMER);
 		        	String mobile 	= readMobile(console, "Please enter your mobilenumber: ");	
 		        	String username = readUsername(console, "Please enter your username: ");	
 					String passwordString = readPassword(console, "Please enter your password: ");
+					timerLog.cancel();
+					timerLog.purge();
 					
 					client = new Client(username, passwordString, mobile);
 
@@ -54,7 +71,13 @@ public class ClientApplication {
 		    		System.out.println("Choose one of the following options");
 		    		System.out.println("1 - Transaction");
 		    		System.out.println("2 - Logout");
+		    		
+		        	Timer timerTran = new Timer();
+		        	timerTran.schedule(new TimerCheck(), TIMER);
 		    		String choice = console.readLine();
+					timerTran.cancel();
+					timerTran.purge();
+					
 		    		if(choice.equals("1")){
 		    			client = Transaction(client, out, in, console);
 		    		}
@@ -230,5 +253,12 @@ public class ClientApplication {
 		}
 		return amount;
 	}
+	
+	  class TimerCheck extends TimerTask {
+		    public void run() {
+		      System.out.println("Time's up!");
+		      System.exit(0); //Stops the AWT thread (and everything else)
+		    }
+	  }
     
 }
