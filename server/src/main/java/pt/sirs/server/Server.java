@@ -2,6 +2,10 @@ package pt.sirs.server;
 
 import java.math.BigInteger;
 import java.security.KeyPair;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 
@@ -26,7 +30,6 @@ public class Server {
 	private static final int    NUMBER_OF_UNSUCCESSFULL_LOGIN_TRYS = 3;
 
 	
-	private ArrayList<Account> accounts;
 	private BigInteger p;
 	private BigInteger g;
 	private BigInteger secretValue;
@@ -37,13 +40,6 @@ public class Server {
 	private String nonRepudiationString;
 	
     public Server() throws Exception {
-    	
-    	this.accounts = new ArrayList<Account>();
-    	addAccount(new Account("PT12345678901234567890123", 100, 	  "nasTyMSR",   "12345",   "913534674"));
-    	addAccount(new Account("PT12345678901234567890124", 100, 	  "sigmaJEM",   "12345",   "915667357"));
-    	addAccount(new Account("PT12345678901234567890125", 100, 	  "Alpha"   ,   "12345",   "912436744"));
-    	addAccount(new Account("PT12345678901234567890126", 100, 	  "jse"     ,   "12345",   "912456434"));
-    	addAccount(new Account("PT12345678901234567890127", 10000000, "aaaaaaaaaa", "1234567", "912456423"));
     	this.status = SERVER_BEGGINING;
     	keys = new KeyPair(Crypto.readPubKeyFromFile(PUBLIC_KEY_PATH), Crypto.readPrivKeyFromFile(PRIVATE_KEY_PATH));
 
@@ -71,7 +67,7 @@ public class Server {
 		sender.setTrys(sender.getTrys() + 1);
 		
 		if(sender.getTrys() == NUMBER_OF_UNSUCCESSFULL_LOGIN_TRYS){
-			accounts.remove(sender);
+			removeAccount(sender);
 			return generateUnsuccessfulFeedback("Sender tried to many time to login going to block account.", 0);
 		}
 
@@ -106,7 +102,6 @@ public class Server {
     public String processTransactionSms(String sms) throws Exception{
 		String decipheredMsg, receiver, amount = "", counter;
 		Account sender;
-		SecretKeySpec sharedKey;
 		
 		String[] splitedSms = sms.split("\\|");
 		if(splitedSms.length != 3){
@@ -121,11 +116,10 @@ public class Server {
 		if(sender == null){
 			return generateUnsuccessfulFeedback("User not registered.", 0);			
 		}
-		sharedKey = sender.getSharedKey();
 		
 		try{
 			//Deciphering msg
-			decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, sharedKey);
+			decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, this.sharedKey);
 		} catch (Exception e){
 			return generateUnsuccessfulFeedback("Cipher was corrupted", 0);
 		}
@@ -228,7 +222,6 @@ public class Server {
 
 		if(password.equals(a.getPassword()) && Crypto.validTS(stringTS)){
 			this.status = SERVER_SUCCESSFUL_LOGIN_MSG;
-			a.setSharedKey(sharedKey);
 			a.setTrys(0);
 		}
 		else{
@@ -237,7 +230,7 @@ public class Server {
 		
 		//Add user counter to msg
 		String feedback = this.status + "|" + a.getCounter();
-		byte[] cipheredText = Crypto.cipherSMS(feedback, sharedKey);
+		byte[] cipheredText = Crypto.cipherSMS(feedback, this.sharedKey);
 		System.out.println(feedback);
 		
 		//Generating signature
@@ -261,7 +254,7 @@ public class Server {
 
 		//Msg to cipher
 		String toCipher = this.status + "|" + sender.getCounter();
-		byte[] cipheredText = Crypto.cipherSMS(toCipher, sender.getSharedKey());
+		byte[] cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);
 		
 		//Generating signature
 		String dataToSign = this.status + sender.getCounter();
@@ -300,44 +293,84 @@ public class Server {
 
 		return toSend;
 	}
+	
+	public Account getAccountByUsername(String msg) throws Exception{
+        String iban = "", username = "", password = "", mobile = "";
+        int balance = 0;
+		// Step 1: Allocate a database "Connection" object
+        Connection conn = DriverManager.getConnection(
+              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", "tiagomsr", "root"); // MySQL
 
-	public void addAccount(Account account) throws ServerException{
-    	for(Account a : this.accounts){
-    		if(a.getIban().equals(account.getIban())){
-    			throw new IBANAlreadyExistsException(account.getIban());
-    		}
-    		if(a.getUsername().equals(account.getUsername())){
-    			throw new UserAlreadyExistsException(account.getUsername());
-    		}
-    	}
-    	this.accounts.add(account);
-    }
-	
-	public Account getAccountByUsername(String msg){
-		for(Account user : this.accounts){
-			if(msg.equals(user.getUsername())){
-				return user;
-			}
-		}
-		return null;
+        // Step 2: Allocate a "Statement" object in the Connection
+        Statement stmt = conn.createStatement();
+        // Step 3: Execute a SQL SELECT query, the query result
+        //  is returned in a "ResultSet" object.
+        String strSelect = "select iban, balance, username, password, mobile from accountsms where username = '" + msg + "'";
+        System.out.println("The SQL query is: " + strSelect); // Echo For debugging
+        System.out.println();
+
+        ResultSet rset = stmt.executeQuery(strSelect);
+
+        // Step 4: Process the ResultSet by scrolling the cursor forward via next().
+        //  For each row, retrieve the contents of the cells with getXxx(columnName).
+        System.out.println("The records selected are:");
+        int rowCount = 0;
+        while(rset.next()) {   // Move the cursor to the next row
+            iban = rset.getString("iban");
+            balance = rset.getInt("balance");
+            username = rset.getString("username");
+            password = rset.getString("password");
+            mobile = rset.getString("mobile");
+           ++rowCount;
+        }
+        if(rowCount == 0){
+        	return null;
+        }
+        else{
+        	return new Account(iban, balance, username, password, mobile);
+        }
 	}
 	
-	public Account getAccountByMobile(String msg){
-		for(Account user : this.accounts){
-			if(msg.equals(user.getMobile())){
-				return user;
-			}
-		}
-		return null;
-	}
-	
-	public Account getAccountByIban(String msg){
-		for(Account user : this.accounts){
-			if(msg.contains(user.getIban())){
-				return user;
-			}
-		}
-		return null;
+	public Account getAccountByMobile(String msg) throws Exception{
+        String iban = "", username = "", password = "", mobile = "";
+        int balance = 0;
+		// Step 1: Allocate a database "Connection" object
+        Connection conn = DriverManager.getConnection(
+              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", "tiagomsr", "root"); // MySQL
+
+        // Step 2: Allocate a "Statement" object in the Connection
+        Statement stmt = conn.createStatement();
+        // Step 3: Execute a SQL SELECT query, the query result
+        //  is returned in a "ResultSet" object.
+        String strSelect = "select iban, balance, username, password, mobile from accountsms where mobile = '" + msg + "'";
+        System.out.println("The SQL query is: " + strSelect); // Echo For debugging
+        System.out.println();
+
+        ResultSet rset = stmt.executeQuery(strSelect);
+
+        // Step 4: Process the ResultSet by scrolling the cursor forward via next().
+        //  For each row, retrieve the contents of the cells with getXxx(columnName).
+        System.out.println("The records selected are:");
+        int rowCount = 0;
+        while(rset.next()) {   // Move the cursor to the next row
+            iban = rset.getString("iban");
+            System.out.println(iban);
+            balance = rset.getInt("balance");
+            System.out.println(balance);
+            username = rset.getString("username");
+            System.out.println(username);
+            password = rset.getString("password");
+            System.out.println(password);
+            mobile = rset.getString("mobile");
+            System.out.println(mobile);
+           ++rowCount;
+        }
+        if(rowCount == 0){
+        	return null;
+        }
+        else{
+        	return new Account(iban, balance, username, password, mobile);
+        }
 	}
 
 	public void generateSecretValue() {
@@ -436,5 +469,21 @@ public class Server {
 
 	public void setSharedKey(SecretKeySpec sharedKey) {
 		this.sharedKey = sharedKey;
+	}
+	
+	public void removeAccount(Account a) throws Exception{
+        Connection conn = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", "tiagomsr", "root"); // MySQL
+  
+          // Step 2: Allocate a "Statement" object in the Connection
+          Statement stmt = conn.createStatement();
+          
+          // Step 3 & 4: Execute a SQL INSERT|DELETE statement via executeUpdate(),
+          //   which returns an int indicating the number of rows affected.
+  
+          // DELETE records with id>=3000 and id<4000
+          String sqlDelete = "delete from accountsms where mobile = '" + a.getMobile() + "'";
+          int countDeleted = stmt.executeUpdate(sqlDelete);
+          System.out.println("Deleted " + countDeleted + "account.");
 	}
 }

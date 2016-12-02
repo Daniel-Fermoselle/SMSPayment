@@ -1,8 +1,9 @@
 package pt.sirs.server;
 
 import java.security.PublicKey;
-
-import javax.crypto.spec.SecretKeySpec;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 
 import pt.sirs.crypto.Crypto;
 import pt.sirs.server.Exceptions.AmountToHighException;
@@ -15,7 +16,6 @@ public class Account{
 	private int balance;
 	private String username;
 	private String password;
-	private SecretKeySpec sharedKey;
 	private int counter;
 	private PublicKey pubKey;
 	private String mobile;
@@ -33,19 +33,19 @@ public class Account{
 		this.counter = 0;
 		this.setMobile(mobile);
 		this.pubKey = Crypto.readPubKeyFromFile("keys/" + username + "PublicKey" );
-		this.setTrys(0);
+		this.trys = 0;
 	}
 	
-	public void debit(int amount){
+	public void debit(int amount) throws Exception{
 		if(this.balance < amount){
 			Integer amountS = amount;
 			throw new AmountToHighException(amountS.toString());
 		}
-		this.balance = this.balance - amount;
+		setBalance(this.balance - amount);
 	}
 
-	public void credit(int amount){
-		this.balance = this.balance + amount;
+	public void credit(int amount) throws Exception{
+		setBalance(this.balance + amount);
 	}
 	
 	public String getIban() {
@@ -60,8 +60,22 @@ public class Account{
 		return balance;
 	}
 	
-	public void setBalance(int balance) {
+	public void setBalance(int balance) throws Exception{
 		this.balance = balance;
+		
+        Connection conn = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", "tiagomsr", "root"); // MySQL
+
+          // Step 2: Allocate a "Statement" object in the Connection
+          Statement stmt = conn.createStatement();
+        
+          // Step 3 & 4: Execute a SQL UPDATE via executeUpdate()
+          //   which returns an int indicating the number of rows affected.
+          // Increase the price by 7% and qty by 1 for id=1001
+          String strUpdate = "update accountsms set balance = " + balance + " where mobile = '" + this.mobile + "'";
+          System.out.println("The SQL query is: " + strUpdate);  // Echo for debugging
+          int countUpdated = stmt.executeUpdate(strUpdate);
+          System.out.println(countUpdated + " records affected.");
 	}
 
 	public String getUsername() {
@@ -79,21 +93,27 @@ public class Account{
 	public void setPassword(String password) {
 		this.password = password;
 	}
-	
-	public SecretKeySpec getSharedKey() {
-		return sharedKey;
-	}
-
-	public void setSharedKey(SecretKeySpec sharedKey) {
-		this.sharedKey = sharedKey;
-	}
 
 	public int getCounter() {
 		return counter;
 	}
 
-	public void setCounter(int counter) {
+	public void setCounter(int counter) throws Exception{
 		this.counter = counter;
+		
+        Connection conn = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", "tiagomsr", "root"); // MySQL
+
+          // Step 2: Allocate a "Statement" object in the Connection
+          Statement stmt = conn.createStatement();
+        
+          // Step 3 & 4: Execute a SQL UPDATE via executeUpdate()
+          //   which returns an int indicating the number of rows affected.
+          // Increase the price by 7% and qty by 1 for id=1001
+          String strUpdate = "update accountsms set counter = " + counter + " where mobile = '" + this.mobile + "'";
+          System.out.println("The SQL query is: " + strUpdate);  // Echo for debugging
+          int countUpdated = stmt.executeUpdate(strUpdate);
+          System.out.println(countUpdated + " records affected.");
 	}
 
 	public PublicKey getPubKey() {
@@ -116,8 +136,23 @@ public class Account{
 		return trys;
 	}
 
-	public void setTrys(int trys) {
+	public void setTrys(int trys) throws Exception{
 		this.trys = trys;
+		
+
+        Connection conn = DriverManager.getConnection(
+              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", "tiagomsr", "root"); // MySQL
+
+        // Step 2: Allocate a "Statement" object in the Connection
+        Statement stmt = conn.createStatement();
+      
+        // Step 3 & 4: Execute a SQL UPDATE via executeUpdate()
+        //   which returns an int indicating the number of rows affected.
+        // Increase the price by 7% and qty by 1 for id=1001
+        String strUpdate = "update accountsms set tries = " + trys + " where mobile = '" + this.mobile + "'";
+        System.out.println("The SQL query is: " + strUpdate);  // Echo for debugging
+        int countUpdated = stmt.executeUpdate(strUpdate);
+        System.out.println(countUpdated + " records affected.");
 	}
 
 }
