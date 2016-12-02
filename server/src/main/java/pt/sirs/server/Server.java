@@ -7,15 +7,11 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 
 import javax.crypto.spec.SecretKeySpec;
 
 import pt.sirs.crypto.Crypto;
 import pt.sirs.server.Exceptions.AmountToHighException;
-import pt.sirs.server.Exceptions.IBANAlreadyExistsException;
-import pt.sirs.server.Exceptions.ServerException;
-import pt.sirs.server.Exceptions.UserAlreadyExistsException;
 
 public class Server {
 	public  static final String SERVER_BEGGINING = "Initialized";
@@ -31,7 +27,6 @@ public class Server {
 	public  static final String MYSQL_ID = "root";
 	public  static final String MYSQL_PASSWORD = "root";
 
-	
 	private BigInteger p;
 	private BigInteger g;
 	private BigInteger secretValue;
@@ -43,14 +38,34 @@ public class Server {
 	private String mysqlId;
 	private String mysqlPassword;
 	
+	/***
+	 * This is the constructor for the Server, this constructor 
+	 * will be called at the start of the ServerApplication. 
+	 * action 
+	 * @param mysqlId
+	 * @param mysqlId
+	 * @throws Exception
+	 */
     public Server(String mysqlId, String mysqlPassword) throws Exception {
     	this.mysqlId = mysqlId;
     	this.mysqlPassword = mysqlPassword;
     	this.status = SERVER_BEGGINING;
     	keys = new KeyPair(Crypto.readPubKeyFromFile(PUBLIC_KEY_PATH), Crypto.readPrivKeyFromFile(PRIVATE_KEY_PATH));
 
-    }    
+    }        
     
+	/***
+	 * This function is used to process login sms' received from the client and
+	 * it checks if the message is composed by
+	 * (mobile|)signature|cipheredText where 
+	 * signature = {mobile + TS + password}Kcs and cipheredText = {TS|pass}Ks
+	 * and if this parameters are correct
+	 * Kcs = client private key
+	 * Ks = shared key
+	 * @param sms
+	 * @return String
+	 * @throws Exception
+	 */
     public String processLoginSms(String sms) throws Exception{
 		String decipheredMsg;
 		Account sender;
@@ -105,6 +120,21 @@ public class Server {
 		}
     }
     
+	/***
+	 * This function is used to process transactions sms' received from the client and
+	 * it checks if the message is composed by (mobile|)signature|cipheredText where
+	 * signature = {mobile + receiver + amount + counter}Kcs
+	 * cipheredText = {receiver|amount|counter}Ks
+	 * OR
+	 * signature = {mobile + logout + counter}Kcs
+	 * cipheredText = {logout|counter}Ks
+	 * depending if the message is a logout or transaction
+	 * Kcs = client private key
+	 * Ks = shared key
+	 * @param sms
+	 * @return String
+	 * @throws Exception
+	 */
     public String processTransactionSms(String sms) throws Exception{
 		String decipheredMsg, receiver, amount = "", counter;
 		Account sender;
@@ -181,6 +211,19 @@ public class Server {
 		}
     }
 
+	/***
+	 * This function is used to generate transactions feedback to the client
+	 * the message is composed by signature|cipheredText where
+	 * signature = {status + counter}Kcs
+	 * cipheredText = {status|counter}Ks
+	 * Kcs = client private key
+	 * Ks = shared key
+	 * @param sender
+	 * @param receiver
+	 * @param amount
+	 * @return String
+	 * @throws Exception
+	 */
 	public String generateTransactionFeedback(Account sender, String receiver, String amount) throws Exception{
 		Account receiverAcc;
 
@@ -224,6 +267,19 @@ public class Server {
 		return toSend;		
 	}
 
+	/***
+	 * This function is used to generate login feedback to the client
+	 * the message is composed by signature|cipheredText where
+	 * signature = {status + counter}Kcs
+	 * cipheredText = {status|counter}Ks
+	 * Kcs = client private key
+	 * Ks = shared key
+	 * @param a
+	 * @param password
+	 * @param stringTS
+	 * @return String
+	 * @throws Exception
+	 */
 	public String generateLoginFeedback(Account a, String password, String stringTS) throws Exception{		
 
 		if(password.equals(a.getPassword()) && Crypto.validTS(stringTS)){
@@ -254,6 +310,17 @@ public class Server {
 		return toSend;
 	}
 	
+	/***
+	 * This function is used to generate logout feedback to the client
+	 * the message is composed by signature|cipheredText where
+	 * signature = {status + counter}Kcs
+	 * cipheredText = {status|counter}Ks
+	 * Kcs = client private key
+	 * Ks = shared key
+	 * @param sender
+	 * @return String
+	 * @throws Exception
+	 */
 	public String generateLogoutFeedback(Account sender) throws Exception{
 		this.status = SERVER_SUCCESSFUL_LOGOUT_MSG;
 		sender.setCounter(0);
@@ -277,6 +344,19 @@ public class Server {
 		return toSend;		
 	}
 	
+	/***
+	 * This function is used to generate an unsuccessful feedback when 
+	 * an error occurs to the client
+	 * the message is composed by signature|cipheredText where
+	 * signature = {status + counter}Kcs
+	 * cipheredText = {status|counter}Ks
+	 * Kcs = client private key
+	 * Ks = shared key
+	 * @param msg
+	 * @param counter
+	 * @return String
+	 * @throws Exception
+	 */
 	public String generateUnsuccessfulFeedback(String msg,int counter) throws Exception{
 		System.out.println(msg);
 		this.status = ERROR_MSG;
@@ -300,6 +380,13 @@ public class Server {
 		return toSend;
 	}
 	
+	/***
+	 * This function sends a query to the database asking 
+	 * for an account with the username msg
+	 * @param msg
+	 * @return String
+	 * @throws Exception
+	 */
 	public Account getAccountByUsername(String msg) throws Exception{
         String iban = "", username = "", password = "", mobile = "";
         int balance = 0;
@@ -333,6 +420,13 @@ public class Server {
         }
 	}
 	
+	/***
+	 * This function sends a query to the database asking 
+	 * for an account with the mobile number msg
+	 * @param msg
+	 * @return String
+	 * @throws Exception
+	 */
 	public Account getAccountByMobile(String msg) throws Exception{
         String iban = "", username = "", password = "", mobile = "";
         int balance = 0;
@@ -463,6 +557,13 @@ public class Server {
 		this.sharedKey = sharedKey;
 	}
 	
+	/***
+	 * This function sends a query to the database 
+	 * to remove an account a
+	 * @param a
+	 * @return String
+	 * @throws Exception
+	 */
 	public void removeAccount(Account a) throws Exception{
 		// Step 1: Allocate a database "Connection" object
 		Connection conn = DriverManager.getConnection(

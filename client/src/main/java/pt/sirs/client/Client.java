@@ -37,7 +37,7 @@ public class Client {
 	/***
 	 * This is the constructor for the Client this constructor can only 
 	 * be called when we have generated a private and a public key for 
-	 * the myUsername parameter. User main in crypto to preform this 
+	 * the myUsername parameter. User main in crypto to perform this 
 	 * action 
 	 * @param myUsername
 	 * @param myPassword
