@@ -1,9 +1,6 @@
 package pt.sirs.client;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-
-
 import javax.crypto.spec.SecretKeySpec;
 
 import org.junit.Test;
@@ -12,29 +9,31 @@ import pt.sirs.crypto.Crypto;
 
 public class ClientTest extends AbstractClientTest{
   
-	private  static final String MOBILE1 = "913534674";
+	private  static final String MOBILE1 = "911111111";
 	private  static final String USERNAME1 = "nasTyMSR";
 	private  static final String PASSWORD1 = "12345";
-	private  static final String MOBILE2 = "912436744";
-	private  static final String USERNAME2 = "Alpha";
+	private  static final String MOBILE2 = "914444444";
+	private  static final String USERNAME2 = "alpha";
 	private  static final String PASSWORD2 = "12345";
-	private  static final String MOBILE3 = "912456423";
-	private  static final String USERNAME3 = "aaaaaaaaaa";
+	private  static final String MOBILE3 = "917777777";
+	private  static final String USERNAME3 = "austrolopi";
 	private  static final String PASSWORD3 = "1234567";
 
-	private  static final SecretKeySpec SHARED_KEY1 = new SecretKeySpec(Crypto.decode("Y3gNMPdxtqc6F0YCJKu2gg=="),"AES");
+	private  static final SecretKeySpec SHARED_KEY1 = new SecretKeySpec(Crypto.decode("FQsZUeftgb4uPM8o7krQkw=="),"AES");
 	private  static final SecretKeySpec SHARED_KEY2 = new SecretKeySpec(Crypto.decode("RLai0vYrXHkQFrDecgvSTw=="),"AES");
 
+	private  static final String U1_WELL_FORMED_LOGIN_SMS_FEEDBACK = "MCwCFDiIOg0WuNYVA0EGQJ3fBPzY3fy7AhQ3PZIvZOc7j48Yy0DF5HbKtc8lBA==|PhZu9XMegjszEMAIVaD/Cg==";
+	private  static final String U1_BAD_SIG_LOGIN_SMS_FEEDBACK = "MCwCFDiIOg0WuNYVA0EGQJ3fBPzY3fy7AhQ3PZIvZOc7j48Yy0DF5HbKtC8lBA==|PhZu9XMegjszEMAIVaD/Cg==";
+	private  static final String U1_BAD_CIPHER_LOGIN_SMS_FEEDBACK = "MCwCFDiIOg0WuNYVA0EGQJ3fBPzY3fy7AhQ3PZIvZOc7j48Yy0DF5HbKtc8lBA==|PhZu9xMegjszEMAIVaD/Cg==";
 	
-	private  static final String U1_WELL_FORMED_LOGIN_SMS_FEEDBACK = "MCwCFFAvsuCQqjcjWZeWBhkeGyMoDoVdAhRqz6/+gxxJ7HW5ipotZcEw7VCoDg==|GrfjNMTYWZ0FQ6qd2uXKWw==";
-	private  static final String U1_BAD_SIG_LOGIN_SMS_FEEDBACK = "MCwCFFAvsuCQqjcjWZeWBhkeGyMoDoVdAhRqz6/+fxxJ7HW5ipotZcEw7VCoDg==|GrfjNMTYWZ0FQ6qd2uXKWw==";
-	private  static final String U1_BAD_CIPHER_LOGIN_SMS_FEEDBACK = "MCwCFFAvsuCQqjcjWZeWBhkeGyMoDoVdAhRqz6/+gxxJ7HW5ipotZcEw7VCoDg==|GrfjNMTYWZ0FQ6qd2uXKZz==";
-	private  static final String U1_WELL_FORMED_TRANSACTION_SMS_FEEDBACK = "MC4CFQCdpGSwgZL2ewz8GOou/MNPFh9WPAIVALQjWLxupEjLcLNaJwKfOaWt5k6q|eP3ZttMHqisuURo81+0gJw==";
-	private  static final String U1_BAD_SIG_TRANSACTION_SMS_FEEDBACK = "MC4CFQCdpGSwgZL2ezz8GOou/MNPFh9WPAIVALQjWLxupEjLcLNaJwKfOaWt5k6q|eP3ZttMHqisuURo81+0gJw==";
-	private  static final String U1_BAD_CIPHERD_TRANSACTION_SMS_FEEDBACK = "MC4CFQCdpGSwgZL2ewz8GOou/MNPFh9WPAIVALQjWLxupEjLcLNaJwKfOaWt5k6q|eP3ZttMHqisuURo91+0gJw==";
-	private  static final String U1_WELL_FORMED_LOGOUT_SMS_FEEDBACK = "MC4CFQCTzjkJvSWYxl9Wh3q+DBQs9DHNegIVAL8wdSLKsuheL06e3Fu81uNgQPT5|YOlcblAAy9uK7PE8yLkq/Q==";
-	private  static final String U1_BAD_SIG_LOGOUT_SMS_FEEDBACK = "MC4CFQCTzjkJvSWYxl9Wh3q+DBQs9DHNegIVAL8wdSLKsuheL06e3Fu91uNgQPT5|YOlcblAAy9uK7PE8yLkq/Q==";
-	private  static final String U1_BAD_CIPHERD_LOGOUT_SMS_FEEDBACK = "MC4CFQCTzjkJvSWYxl9Wh3q+DBQs9DHNegIVAL8wdSLKsuheL06e3Fu81uNgQPT5|YOlcblAAy9uK7PE8yLkk/Q==";
+	private  static final String U1_WELL_FORMED_TRANSACTION_SMS_FEEDBACK = "MC0CFQCnHUjTJkLCYlJfTzmslhaNv0L3JQIUJc7IBPnVynfgF4K4ckqShIBkd7s=|sVCRmCiZ+ePE4Pm/A/s+Tg==";
+	private  static final String U1_BAD_SIG_TRANSACTION_SMS_FEEDBACK = "MC0CFQCnHUjTJkLCYlJfTzmslhaNv0L3JQIUJc7IBPnVynfgF4K4ckQShIBkd7s=|sVCRmCiZ+ePE4Pm/A/s+Tg==";
+	private  static final String U1_BAD_CIPHERD_TRANSACTION_SMS_FEEDBACK = "MC0CFQCnHUjTJkLCYlJfTzmslhaNv0L3JQIUJc7IBPnVynfgF4K4ckqShIBkd7s=|sVCRMCiZ+ePE4Pm/A/s+Tg==";
+	
+	private  static final String U1_WELL_FORMED_LOGOUT_SMS_FEEDBACK = "MC4CFQDE2McfPKFV0FhxMDvR4Jf/V80xxAIVAJgz7Ej3jr6sLLwUkno/YZzeRwpK|u0Ju3xEvbVFCaRWH27wbpA==";
+	private  static final String U1_BAD_SIG_LOGOUT_SMS_FEEDBACK = "MC4CFQDE2McfPKFV0FhxMDvR4Jf/V80xxAIVAJgz7Ej3jr6sLLwUkno/YzzeRwpK|u0Ju3xEvbVFCaRWH27wbpA==";
+	private  static final String U1_BAD_CIPHERD_LOGOUT_SMS_FEEDBACK = "MC4CFQDE2McfPKFV0FhxMDvR4Jf/V80xxAIVAJgz7Ej3jr6sLLwUkno/YZzeRwpK|u0Ju3xEvbvFCaRWH27wbpA==";
+	
 	private  static final String STATE_LOGIN_FEEDBACK = "login";
 	private  static final String STATE_TRANSACTION_FEEDBACK = "transaction";
 	private  static final String STATE_LOGOUT_FEEDBACK = "logout";
@@ -44,12 +43,9 @@ public class ClientTest extends AbstractClientTest{
 	private  static final String RETURN_TRANSACTION_FEEDBACK = "TransOk";
 	private  static final String RETURN_LOGOUT_FEEDBACK = "LogoutOk";
 
-
-
 	Client client1;
 	Client client2;
 	Client client3;
-
 
 	@Override
 	protected void populate() {

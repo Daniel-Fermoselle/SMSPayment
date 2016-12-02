@@ -40,7 +40,6 @@ public class CryptoTest extends AbstractCryptoTest{
 
 	}
 
-	
 	@Test
 	public void cipher_success() throws Exception {
 		byte cipher[] = Crypto.cipherSMS(PLAINTEXT_1, SHARED_KEY1);
