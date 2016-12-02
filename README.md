@@ -27,6 +27,7 @@ Linux
 ```
 cd ~
 mkdir Project
+cd Project
 ```
 
 [2] Obter código fonte do projeto (versão entregue)
@@ -36,10 +37,21 @@ git clone  https://github.com/JoaoBraveCoding/SMSPayment.git
 git checkout tags/SIRS_R1
 ```
 
-[3] Instalar módulos de bibliotecas auxiliares
+[3] Setup da base de dados 
 
 ```
-cd crypto
+cd server
+Entrar no mysql com uma conta: mysql -uroot -p (para entrar com root, tem de saber a password)
+source bank.sql;
+\q (para sair do mysql)
+
+```
+
+[4] Instalar módulos de bibliotecas auxiliares
+
+```
+
+cd ../crypto
 mvn clean install
 cd ../server
 mvn install exec:java -Dexec.args="port" (deixar a correr num terminal a parte) por exemplo port=10000
@@ -48,7 +60,7 @@ mvn install exec:java -Dexec.args="port host" por exemplo port=100000 e host=loc
 
 ```
 
-[4] Clientes já disponiveis
+[5] Clientes já disponiveis
 
 Mobile: 911111111 username: nasTyMSR     password: 12345  
 Mobile: 912222222 username: sigmaJEM     password: 12345  
@@ -58,7 +70,7 @@ Mobile: 915555555 username: poghcamp     password: 12345
 Mobile: 916666666 username: bravo        password: 12345  
 Mobile: 917777777 username: austrolopi   password: 1234567  
   
-[5] Caso queria utilizar outros utilizadores
+[6] Caso queria utilizar outros utilizadores
 
 Adicionar na um "insert into" no script bank.sql da pasta server. 
 Gerar as chaves para esse utilizador correndo a aplicação crypto da seguinte maneira:  
