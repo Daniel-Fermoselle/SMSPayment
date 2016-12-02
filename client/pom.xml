@@ -21,7 +21,14 @@
         <mainclass>pt.sirs.client.ClientApplication</mainclass>
     </properties>
 
-    <dependencies>    
+    <dependencies> 
+    	<!-- JUnit -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>   
 		<dependency>
 			<groupId>pt.sirs.a10</groupId>
 	    	<artifactId>crypto</artifactId>

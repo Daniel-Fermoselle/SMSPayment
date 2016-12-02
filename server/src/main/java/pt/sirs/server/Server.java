@@ -75,9 +75,13 @@ public class Server {
 			return generateUnsuccessfulFeedback("Sender tried to many time to login going to block account.", 0);
 		}
 
+		try{
 		//Deciphering msg
 		decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, this.sharedKey);
-
+		} catch (Exception e){
+			return generateUnsuccessfulFeedback("Cipher was corrupted", 0);
+		}
+		
 		//Obtaining time stamp and password
 		String[] splitedMsg = decipheredMsg.split("\\|");
 		if(splitedMsg.length != 2){
@@ -119,8 +123,12 @@ public class Server {
 		}
 		sharedKey = sender.getSharedKey();
 		
-		//Deciphering msg
-		decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, sharedKey);
+		try{
+			//Deciphering msg
+			decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, sharedKey);
+		} catch (Exception e){
+			return generateUnsuccessfulFeedback("Cipher was corrupted", 0);
+		}
 		
 		//Obtaining time stamp and password
 		String[] splitedMsg = decipheredMsg.split("\\|");
@@ -224,7 +232,7 @@ public class Server {
 			a.setTrys(0);
 		}
 		else{
-			return generateUnsuccessfulFeedback("Wrong password.", 0);
+			return generateUnsuccessfulFeedback("Wrong password or TS compromised.", 0);
 		}
 		
 		//Add user counter to msg
@@ -421,4 +429,12 @@ public class Server {
 	public void setStatus(String status) {
 		this.status = status;
 	}	
+	
+	public SecretKeySpec getSharedKey() {
+		return sharedKey;
+	}
+
+	public void setSharedKey(SecretKeySpec sharedKey) {
+		this.sharedKey = sharedKey;
+	}
 }
