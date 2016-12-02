@@ -38,7 +38,7 @@ public class ClientApplication {
 			
 			//1. Criar o socket para falar com o server
 			requestSocket = new Socket(host, Integer.parseInt(port));
-	        System.out.println("Connected to localhost in port 10000");//Just debugging prints
+	        System.out.println("Connected to localhost in port " + port);//Just debugging prints
 	        
 	        //2. Criar o socket para enviar coisas para o server
 	        out = new ObjectOutputStream(requestSocket.getOutputStream());
