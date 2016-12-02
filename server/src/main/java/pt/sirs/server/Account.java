@@ -64,7 +64,7 @@ public class Account{
 		this.balance = balance;
 		
         Connection conn = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", "tiagomsr", "root"); // MySQL
+                "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", Server.MYSQL_ID, Server.MYSQL_PASSWORD); // MySQL
 
           // Step 2: Allocate a "Statement" object in the Connection
           Statement stmt = conn.createStatement();
@@ -102,7 +102,7 @@ public class Account{
 		this.counter = counter;
 		
         Connection conn = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", "tiagomsr", "root"); // MySQL
+                "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", Server.MYSQL_ID, Server.MYSQL_PASSWORD); // MySQL
 
           // Step 2: Allocate a "Statement" object in the Connection
           Statement stmt = conn.createStatement();
@@ -141,7 +141,7 @@ public class Account{
 		
 
         Connection conn = DriverManager.getConnection(
-              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", "tiagomsr", "root"); // MySQL
+              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", Server.MYSQL_ID, Server.MYSQL_PASSWORD); // MySQL
 
         // Step 2: Allocate a "Statement" object in the Connection
         Statement stmt = conn.createStatement();

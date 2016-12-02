@@ -28,6 +28,8 @@ public class Server {
 	private static final String PRIVATE_KEY_PATH = "keys/ServerPrivateKey";
 	private static final String PUBLIC_KEY_PATH = "keys/ServerPublicKey";
 	private static final int    NUMBER_OF_UNSUCCESSFULL_LOGIN_TRYS = 3;
+	public  static final String MYSQL_ID = "root";
+	public  static final String MYSQL_PASSWORD = "root";
 
 	
 	private BigInteger p;
@@ -299,7 +301,7 @@ public class Server {
         int balance = 0;
 		// Step 1: Allocate a database "Connection" object
         Connection conn = DriverManager.getConnection(
-              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", "tiagomsr", "root"); // MySQL
+              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", MYSQL_ID, MYSQL_PASSWORD); // MySQL
 
         // Step 2: Allocate a "Statement" object in the Connection
         Statement stmt = conn.createStatement();
@@ -336,7 +338,7 @@ public class Server {
         int balance = 0;
 		// Step 1: Allocate a database "Connection" object
         Connection conn = DriverManager.getConnection(
-              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", "tiagomsr", "root"); // MySQL
+              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", MYSQL_ID, MYSQL_PASSWORD); // MySQL
 
         // Step 2: Allocate a "Statement" object in the Connection
         Statement stmt = conn.createStatement();
@@ -473,7 +475,7 @@ public class Server {
 	
 	public void removeAccount(Account a) throws Exception{
         Connection conn = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", "tiagomsr", "root"); // MySQL
+                "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", MYSQL_ID, MYSQL_PASSWORD); // MySQL
   
           // Step 2: Allocate a "Statement" object in the Connection
           Statement stmt = conn.createStatement();
