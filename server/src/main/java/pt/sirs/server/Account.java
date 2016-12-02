@@ -22,19 +22,19 @@ public class Account{
 	private int trys;
 	private Server server;
 
-	public Account(String iban, int balance, String username, String password, String mobile, Server server) throws Exception{
-		if(password.length()<4 || password.length()>8)
+	public Account(String iban, int balance, String username, String password, String mobile, int tries, int counter, Server server) throws Exception{
+		if(password.length() < 4 || password.length() > 7)
 		{ throw new InvalidPasswordException(password); }
-		if(username.length()>10)
+		if(username.length() > 10)
 		{ throw new InvalidUsernameException(username); }
 		this.iban = iban;
 		this.balance = balance;
 		this.username = username;
 		this.password = password;
-		this.counter = 0;
+		this.counter = counter;
 		this.setMobile(mobile);
 		this.pubKey = Crypto.readPubKeyFromFile("keys/" + username + "PublicKey" );
-		this.trys = 0;
+		this.trys = tries;
 		this.server = server;
 	}
 	
@@ -128,7 +128,7 @@ public class Account{
 	}
 
 	public int getTrys() {
-		return trys;
+		return this.trys;
 	}
 
 	public void setTrys(int trys) throws Exception{

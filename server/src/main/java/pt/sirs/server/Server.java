@@ -23,7 +23,8 @@ public class Server {
 	public  static final String SERVER_LOST_CONNECTION_MSG = "ConnectionKO";
 	private static final String PRIVATE_KEY_PATH = "keys/ServerPrivateKey";
 	private static final String PUBLIC_KEY_PATH = "keys/ServerPublicKey";
-	private static final int    NUMBER_OF_UNSUCCESSFULL_LOGIN_TRYS = 3;
+	//Care if you want 3 chances the number of tries must be 4
+	private static final int    NUMBER_OF_UNSUCCESSFULL_LOGIN_TRYS = 4;
 	public  static final String MYSQL_ID = "root";
 	public  static final String MYSQL_PASSWORD = "root";
 
@@ -381,6 +382,37 @@ public class Server {
 	}
 	
 	/***
+	 * This function is used to generate an unsuccessful feedback when 
+	 * an error occurs to the client
+	 * the message is composed by signature|status where
+	 * signature = {status}Kcs
+	 * Kcs = client private key
+	 * Ks = shared key
+	 * @param msg
+	 * @param counter
+	 * @return String
+	 * @throws Exception
+	 */
+	public String generateUnsuccessfulFeedbackDH(String msg) throws Exception{
+		System.out.println(msg);
+		this.status = ERROR_MSG;
+		//Generating signature
+		String dataToSign = this.status;
+		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
+		
+		//Concatenate signature with status --> signature|status
+		//cipheredText = {status|counter}Ks
+		String stringSig = Crypto.encode(signature);
+		String toSend = stringSig + "|" + this.status;
+		
+		this.status = SERVER_BEGGINING;
+		
+		System.out.println("Size of logout feedback SMS message: " + toSend.length());
+
+		return toSend;
+	}
+	
+	/***
 	 * This function sends a query to the database asking 
 	 * for an account with the username msg
 	 * @param msg
@@ -389,7 +421,7 @@ public class Server {
 	 */
 	public Account getAccountByUsername(String msg) throws Exception{
         String iban = "", username = "", password = "", mobile = "";
-        int balance = 0;
+        int balance = 0, tries = 0, counter = 0;
 		// Step 1: Allocate a database "Connection" object
         Connection conn = DriverManager.getConnection(
               "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", this.mysqlId, this.mysqlPassword); // MySQL
@@ -398,11 +430,10 @@ public class Server {
         Statement stmt = conn.createStatement();
         
         // Step 3: Execute a SQL SELECT query, the query result
-        String strSelect = "select iban, balance, username, password, mobile from accountsms where username = '" + msg + "'";
+        String strSelect = "select iban, balance, username, password, mobile, counter, tries from accountsms where username = '" + msg + "'";
         ResultSet rset = stmt.executeQuery(strSelect);
 
         // Step 4: Process the ResultSet by scrolling the cursor forward via next().
-        System.out.println("The records selected are:");
         int rowCount = 0;
         while(rset.next()) {   // Move the cursor to the next row
             iban = rset.getString("iban");
@@ -410,13 +441,16 @@ public class Server {
             username = rset.getString("username");
             password = rset.getString("password");
             mobile = rset.getString("mobile");
+            tries = rset.getInt("tries");
+            counter = rset.getInt("counter");
            ++rowCount;
         }
+        
         if(rowCount == 0){
         	return null;
         }
         else{
-        	return new Account(iban, balance, username, password, mobile, this);
+        	return new Account(iban, balance, username, password, mobile, tries, counter, this);
         }
 	}
 	
@@ -429,7 +463,7 @@ public class Server {
 	 */
 	public Account getAccountByMobile(String msg) throws Exception{
         String iban = "", username = "", password = "", mobile = "";
-        int balance = 0;
+        int balance = 0, tries = 0, counter = 0;
 		// Step 1: Allocate a database "Connection" object
         Connection conn = DriverManager.getConnection(
               "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", this.mysqlId, this.mysqlPassword); // MySQL
@@ -438,7 +472,7 @@ public class Server {
         Statement stmt = conn.createStatement();
         
         // Step 3: Execute a SQL SELECT query, the query result
-        String strSelect = "select iban, balance, username, password, mobile from accountsms where mobile = '" + msg + "'";
+        String strSelect = "select iban, balance, username, password, mobile, counter, tries from accountsms where mobile = '" + msg + "'";
 
         // Step 4: Process the ResultSet by scrolling the cursor forward via next().
         ResultSet rset = stmt.executeQuery(strSelect);
@@ -449,13 +483,15 @@ public class Server {
             username = rset.getString("username");
             password = rset.getString("password");
             mobile = rset.getString("mobile");
+            tries = rset.getInt("tries");
+            counter = rset.getInt("counter");
            ++rowCount;
         }
         if(rowCount == 0){
         	return null;
         }
         else{
-        	return new Account(iban, balance, username, password, mobile, this);
+        	return new Account(iban, balance, username, password, mobile, tries, counter, this);
         }
 	}
 
@@ -467,7 +503,7 @@ public class Server {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         
         if(this.status.equals(ERROR_MSG_DH)){
-			return generateUnsuccessfulFeedback("This sender was blocked", 0);
+			return generateUnsuccessfulFeedbackDH("This sender was blocked");
         }
 
 		//Generating signature
@@ -499,19 +535,20 @@ public class Server {
 		byte[] bytePublicValue = Crypto.decode(stringPublicValue);
 		BigInteger publicValue = new BigInteger(bytePublicValue);
 		
+		
 		//Verify publicValue
 		String[] splitedSms = this.nonRepudiationString.split("\\|");
 		String stringSender = splitedSms[0];
 		byte[] byteSig = Crypto.decode(splitedSms[1]);
 		String stringTS  = splitedSms[2];
+
 		
 		Account sender = getAccountByMobile(stringSender);
-		if(sender == null){
-			System.out.println("This sender was blocked");
+		System.out.println("OLA1");
+		if(sender == null){			
 			this.status = ERROR_MSG_DH;
 			return;			
 		}
-		
 		//Verify TimeStamp
 		if(!Crypto.validTS(stringTS)){
 			System.out.println("Time stamp used in DH public value invalid, passed more than 1 minute");

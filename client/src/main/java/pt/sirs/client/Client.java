@@ -352,6 +352,11 @@ public class Client {
 		byte[] byteSig = Crypto.decode(splitedSms[0]);
 		String stringTS  = splitedSms[1];
 		
+		if(splitedSms[1].equals(ERROR_MSG)){
+			System.out.println("There was a problem establishing shared. This user was blocked.");
+			this.status = SERVER_SUCCESSFUL_LOGOUT_MSG;
+			return;
+		}
 		try{
 			//Verify TimeStamp
 			if(!Crypto.validTS(stringTS)){
@@ -361,7 +366,7 @@ public class Client {
 			}
 		}
 		catch (java.text.ParseException e){
-			System.out.println("There was a problem establishing shared. Sender could be blocked or message integrity send violated");
+			System.out.println("There was a problem establishing shared. Message integrity send violated");
 			this.status = SERVER_SUCCESSFUL_LOGOUT_MSG;
 			return;
 		}

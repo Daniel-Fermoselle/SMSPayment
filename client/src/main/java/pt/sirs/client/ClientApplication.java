@@ -227,7 +227,7 @@ public class ClientApplication {
     	Pattern p = Pattern.compile("[^0-9 ]", Pattern.CASE_INSENSITIVE);
     	Matcher m = p.matcher(passwordString);
     	boolean b = m.find();
-		while(passwordString.length() > 8 || passwordString.length() < 4 || b){
+		while(passwordString.length() > 7 || passwordString.length() < 4 || b){
 			System.out.println("The inserted password is incorrect, passwords only have at most 8 and at least 4 digits, no letters or special char alowed. Try again!");
 			console.printf(msg);
 			passwordChars = console.readPassword();
