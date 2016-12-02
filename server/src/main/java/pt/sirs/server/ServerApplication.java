@@ -9,14 +9,14 @@ public class ServerApplication {
 	public static final int SERVER_PORT = 10000;
 	//Number of connects that the server will have on his queue
 	public static final int QUEUE_SIZE = 10;
-	public static final int TIME_WAITING = 20000;
+	public static final int TIME_WAITING = 40000;
 
 	public static void main(String args[])
     {
-        run();
+        run(args[0]);
     }
 	
-    private static void run() {
+    private static void run(String port) {
     	ServerSocket providerSocket = null;
     	ObjectOutputStream out = null;
     	ObjectInputStream in = null;
@@ -24,7 +24,7 @@ public class ServerApplication {
         	Server server = getServerDatabase();
         	
             //1. creating a server socket
-            providerSocket = new ServerSocket(SERVER_PORT, QUEUE_SIZE);
+            providerSocket = new ServerSocket(Integer.parseInt(port), QUEUE_SIZE);
             Socket connection;            
             
             while(true){

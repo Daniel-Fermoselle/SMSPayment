@@ -11,7 +11,7 @@ import pt.sirs.client.Client;
 
 public class ClientApplication {
 	
-	public static final int TIMER = 10000;
+	public static final int TIMER = 40000;
 	
 	public ClientApplication(){
 		
@@ -19,10 +19,10 @@ public class ClientApplication {
 	
 	public static void main(String[] args) {
 		ClientApplication ca = new ClientApplication();
-		ca.run();
+		ca.run(args[0], args[1]);
 	}
 	
-	public void run() {
+	public void run(String port, String host) {
 		Socket requestSocket = null;
 		ObjectOutputStream out = null;
 		ObjectInputStream in = null;
@@ -37,7 +37,7 @@ public class ClientApplication {
 						
 			
 			//1. Criar o socket para falar com o server
-			requestSocket = new Socket("localhost", 10000);
+			requestSocket = new Socket(host, Integer.parseInt(port));
 	        System.out.println("Connected to localhost in port 10000");//Just debugging prints
 	        
 	        //2. Criar o socket para enviar coisas para o server
