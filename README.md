@@ -41,30 +41,31 @@ git checkout tags/SIRS_R1
 ```
 cd crypto
 mvn clean install
-cd server
-mvn install exec:java (deixar a correr num terminal a parte)
-cd client
-mvn install exec:java
+cd ../server
+mvn install exec:java -Dexec.args="port" (deixar a correr num terminal a parte) por exemplo port=10000
+cd ../client
+mvn install exec:java -Dexec.args="port host" por exemplo port=100000 e host=localhost
 
 ```
 
 [4] Clientes já disponiveis
 
-Mobile: 913534674 username: nasTyMSR   password: 12345  
-Mobile: 915667357 username: sigmaJEM   password: 12345  
-Mobile: 912436744 username: Alpha      password: 12345  
-Mobile: 912456434 username: jse        password: 12345  
-Mobile: 912456423 username: aaaaaaaaaa password: 1234567  
+Mobile: 911111111 username: nasTyMSR     password: 12345  
+Mobile: 912222222 username: sigmaJEM     password: 12345  
+Mobile: 913333333 username: jse          password: 12345  
+Mobile: 914444444 username: alpha        password: 12345  
+Mobile: 915555555 username: poghcamp     password: 12345  
+Mobile: 916666666 username: bravo        password: 12345  
+Mobile: 917777777 username: austrolopi   password: 1234567  
   
 [5] Caso queria utilizar outros utilizadores
 
-Adicionar utilizador ao construtor da classe Server.java  
+Adicionar na um "insert into" no script bank.sql da pasta server. 
 Gerar as chaves para esse utilizador correndo a aplicação crypto da seguinte maneira:  
  
 ```
 cd crypto
-mvn exec:java -Dexec.args="username"
-
+mvn exec:java -Dexec.args="server username1 username2" (server é sempre necessário)
 ```
  
 -------------------------------------------------------------------------------
