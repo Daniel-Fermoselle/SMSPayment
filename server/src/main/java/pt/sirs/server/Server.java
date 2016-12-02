@@ -40,8 +40,12 @@ public class Server {
 	private String status;
 	private KeyPair keys;
 	private String nonRepudiationString;
+	private String mysqlId;
+	private String mysqlPassword;
 	
-    public Server() throws Exception {
+    public Server(String mysqlId, String mysqlPassword) throws Exception {
+    	this.mysqlId = mysqlId;
+    	this.mysqlPassword = mysqlPassword;
     	this.status = SERVER_BEGGINING;
     	keys = new KeyPair(Crypto.readPubKeyFromFile(PUBLIC_KEY_PATH), Crypto.readPrivKeyFromFile(PRIVATE_KEY_PATH));
 
@@ -301,7 +305,7 @@ public class Server {
         int balance = 0;
 		// Step 1: Allocate a database "Connection" object
         Connection conn = DriverManager.getConnection(
-              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", MYSQL_ID, MYSQL_PASSWORD); // MySQL
+              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", this.mysqlId, this.mysqlPassword); // MySQL
 
         // Step 2: Allocate a "Statement" object in the Connection
         Statement stmt = conn.createStatement();
@@ -329,7 +333,7 @@ public class Server {
         	return null;
         }
         else{
-        	return new Account(iban, balance, username, password, mobile);
+        	return new Account(iban, balance, username, password, mobile, this);
         }
 	}
 	
@@ -338,7 +342,7 @@ public class Server {
         int balance = 0;
 		// Step 1: Allocate a database "Connection" object
         Connection conn = DriverManager.getConnection(
-              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", MYSQL_ID, MYSQL_PASSWORD); // MySQL
+              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", this.mysqlId, this.mysqlPassword); // MySQL
 
         // Step 2: Allocate a "Statement" object in the Connection
         Statement stmt = conn.createStatement();
@@ -371,7 +375,7 @@ public class Server {
         	return null;
         }
         else{
-        	return new Account(iban, balance, username, password, mobile);
+        	return new Account(iban, balance, username, password, mobile, this);
         }
 	}
 
@@ -475,7 +479,7 @@ public class Server {
 	
 	public void removeAccount(Account a) throws Exception{
         Connection conn = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", MYSQL_ID, MYSQL_PASSWORD); // MySQL
+                "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", this.mysqlId, this.mysqlPassword); // MySQL
   
           // Step 2: Allocate a "Statement" object in the Connection
           Statement stmt = conn.createStatement();
@@ -487,5 +491,21 @@ public class Server {
           String sqlDelete = "delete from accountsms where mobile = '" + a.getMobile() + "'";
           int countDeleted = stmt.executeUpdate(sqlDelete);
           System.out.println("Deleted " + countDeleted + "account.");
+	}
+
+	public String getMysqlId() {
+		return mysqlId;
+	}
+
+	public void setMysqlId(String mysqlId) {
+		this.mysqlId = mysqlId;
+	}
+
+	public String getMysqlPassword() {
+		return mysqlPassword;
+	}
+
+	public void setMysqlPassword(String mysqlPassword) {
+		this.mysqlPassword = mysqlPassword;
 	}
 }

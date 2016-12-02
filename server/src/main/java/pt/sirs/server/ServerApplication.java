@@ -19,12 +19,13 @@ public class ServerApplication {
     	ServerSocket providerSocket = null;
     	ObjectOutputStream out = null;
     	ObjectInputStream in = null;
-        try{        	
+        try{  
+        	Server server = getServerDatabase();
+        	
             //1. creating a server socket
             providerSocket = new ServerSocket(SERVER_PORT, QUEUE_SIZE);
             Socket connection;            
             
-            Server server = new Server();
             while(true){
             	if(server.getStatus().equals(Server.SERVER_SUCCESSFUL_LOGOUT_MSG)  || server.getStatus().equals(Server.SERVER_LOST_CONNECTION_MSG)){
                     server.setStatus(Server.SERVER_BEGGINING);
@@ -112,4 +113,18 @@ public class ServerApplication {
 		return server;
 	}
     
+	private static Server getServerDatabase() throws Exception{
+		Console console = System.console();
+		if (console == null) {
+			System.out.println("Couldn't get Console instance");
+			System.exit(0);
+		}
+		console.printf("Insert your mysql id: ");
+		String id = console.readLine();
+		console.printf("Insert your mysql password: ");
+    	char[] passwordChars = console.readPassword();
+    	String passwordString = new String(passwordChars);
+    	
+    	return new Server(id, passwordString);
+	}
 }

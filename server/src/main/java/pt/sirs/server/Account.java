@@ -20,8 +20,9 @@ public class Account{
 	private PublicKey pubKey;
 	private String mobile;
 	private int trys;
+	private Server server;
 
-	public Account(String iban, int balance, String username, String password, String mobile) throws Exception{
+	public Account(String iban, int balance, String username, String password, String mobile, Server server) throws Exception{
 		if(password.length()<4 || password.length()>8)
 		{ throw new InvalidPasswordException(password); }
 		if(username.length()>10)
@@ -34,6 +35,7 @@ public class Account{
 		this.setMobile(mobile);
 		this.pubKey = Crypto.readPubKeyFromFile("keys/" + username + "PublicKey" );
 		this.trys = 0;
+		this.server = server;
 	}
 	
 	public void debit(int amount) throws Exception{
@@ -64,7 +66,7 @@ public class Account{
 		this.balance = balance;
 		
         Connection conn = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", Server.MYSQL_ID, Server.MYSQL_PASSWORD); // MySQL
+                "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", server.getMysqlId(), server.getMysqlPassword()); // MySQL
 
           // Step 2: Allocate a "Statement" object in the Connection
           Statement stmt = conn.createStatement();
@@ -102,7 +104,7 @@ public class Account{
 		this.counter = counter;
 		
         Connection conn = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", Server.MYSQL_ID, Server.MYSQL_PASSWORD); // MySQL
+                "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", server.getMysqlId(), server.getMysqlPassword()); // MySQL
 
           // Step 2: Allocate a "Statement" object in the Connection
           Statement stmt = conn.createStatement();
@@ -141,7 +143,7 @@ public class Account{
 		
 
         Connection conn = DriverManager.getConnection(
-              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", Server.MYSQL_ID, Server.MYSQL_PASSWORD); // MySQL
+              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", server.getMysqlId(), server.getMysqlPassword()); // MySQL
 
         // Step 2: Allocate a "Statement" object in the Connection
         Statement stmt = conn.createStatement();
@@ -153,6 +155,14 @@ public class Account{
         System.out.println("The SQL query is: " + strUpdate);  // Echo for debugging
         int countUpdated = stmt.executeUpdate(strUpdate);
         System.out.println(countUpdated + " records affected.");
+	}
+
+	public Server getServer() {
+		return server;
+	}
+
+	public void setServer(Server server) {
+		this.server = server;
 	}
 
 }
