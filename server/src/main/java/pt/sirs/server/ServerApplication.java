@@ -9,6 +9,7 @@ public class ServerApplication {
 	public static final int SERVER_PORT = 10000;
 	//Number of connects that the server will have on his queue
 	public static final int QUEUE_SIZE = 10;
+	public static final int TIME_WAITING = 20000;
 
 	public static void main(String args[])
     {
@@ -33,6 +34,7 @@ public class ServerApplication {
                     //2. Wait for connection
                     System.out.println("Waiting for connection");
                     connection = providerSocket.accept();
+                    connection.setSoTimeout(TIME_WAITING);
                     System.out.println("Connection received from " + connection.getInetAddress().getHostName());
                     
                     //3. get Input and Output streams
