@@ -309,16 +309,12 @@ public class Server {
 
         // Step 2: Allocate a "Statement" object in the Connection
         Statement stmt = conn.createStatement();
+        
         // Step 3: Execute a SQL SELECT query, the query result
-        //  is returned in a "ResultSet" object.
         String strSelect = "select iban, balance, username, password, mobile from accountsms where username = '" + msg + "'";
-        System.out.println("The SQL query is: " + strSelect); // Echo For debugging
-        System.out.println();
-
         ResultSet rset = stmt.executeQuery(strSelect);
 
         // Step 4: Process the ResultSet by scrolling the cursor forward via next().
-        //  For each row, retrieve the contents of the cells with getXxx(columnName).
         System.out.println("The records selected are:");
         int rowCount = 0;
         while(rset.next()) {   // Move the cursor to the next row
@@ -346,29 +342,19 @@ public class Server {
 
         // Step 2: Allocate a "Statement" object in the Connection
         Statement stmt = conn.createStatement();
+        
         // Step 3: Execute a SQL SELECT query, the query result
-        //  is returned in a "ResultSet" object.
         String strSelect = "select iban, balance, username, password, mobile from accountsms where mobile = '" + msg + "'";
-        System.out.println("The SQL query is: " + strSelect); // Echo For debugging
-        System.out.println();
-
-        ResultSet rset = stmt.executeQuery(strSelect);
 
         // Step 4: Process the ResultSet by scrolling the cursor forward via next().
-        //  For each row, retrieve the contents of the cells with getXxx(columnName).
-        System.out.println("The records selected are:");
+        ResultSet rset = stmt.executeQuery(strSelect);
         int rowCount = 0;
         while(rset.next()) {   // Move the cursor to the next row
             iban = rset.getString("iban");
-            System.out.println(iban);
             balance = rset.getInt("balance");
-            System.out.println(balance);
             username = rset.getString("username");
-            System.out.println(username);
             password = rset.getString("password");
-            System.out.println(password);
             mobile = rset.getString("mobile");
-            System.out.println(mobile);
            ++rowCount;
         }
         if(rowCount == 0){
@@ -478,19 +464,16 @@ public class Server {
 	}
 	
 	public void removeAccount(Account a) throws Exception{
-        Connection conn = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", this.mysqlId, this.mysqlPassword); // MySQL
-  
-          // Step 2: Allocate a "Statement" object in the Connection
-          Statement stmt = conn.createStatement();
-          
-          // Step 3 & 4: Execute a SQL INSERT|DELETE statement via executeUpdate(),
-          //   which returns an int indicating the number of rows affected.
-  
-          // DELETE records with id>=3000 and id<4000
-          String sqlDelete = "delete from accountsms where mobile = '" + a.getMobile() + "'";
-          int countDeleted = stmt.executeUpdate(sqlDelete);
-          System.out.println("Deleted " + countDeleted + "account.");
+		// Step 1: Allocate a database "Connection" object
+		Connection conn = DriverManager.getConnection(
+				"jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", this.mysqlId, this.mysqlPassword); // MySQL
+
+		// Step 2: Allocate a "Statement" object in the Connection
+		Statement stmt = conn.createStatement();
+
+		// Step 3: Execute a SQL DELETE query, the query result
+		String sqlDelete = "delete from accountsms where mobile = '" + a.getMobile() + "'";
+		stmt.executeUpdate(sqlDelete);
 	}
 
 	public String getMysqlId() {

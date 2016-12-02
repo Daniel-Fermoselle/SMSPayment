@@ -64,20 +64,17 @@ public class Account{
 	
 	public void setBalance(int balance) throws Exception{
 		this.balance = balance;
-		
-        Connection conn = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", server.getMysqlId(), server.getMysqlPassword()); // MySQL
 
-          // Step 2: Allocate a "Statement" object in the Connection
-          Statement stmt = conn.createStatement();
-        
-          // Step 3 & 4: Execute a SQL UPDATE via executeUpdate()
-          //   which returns an int indicating the number of rows affected.
-          // Increase the price by 7% and qty by 1 for id=1001
-          String strUpdate = "update accountsms set balance = " + balance + " where mobile = '" + this.mobile + "'";
-          System.out.println("The SQL query is: " + strUpdate);  // Echo for debugging
-          int countUpdated = stmt.executeUpdate(strUpdate);
-          System.out.println(countUpdated + " records affected.");
+		// Step 1: Allocate a database "Connection" object
+		Connection conn = DriverManager.getConnection(
+				"jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", server.getMysqlId(), server.getMysqlPassword()); // MySQL
+
+		// Step 2: Allocate a "Statement" object in the Connection
+		Statement stmt = conn.createStatement();
+
+		// Step 3 & 4: Execute a SQL UPDATE via executeUpdate()
+		String strUpdate = "update accountsms set balance = " + balance + " where mobile = '" + this.mobile + "'";
+		stmt.executeUpdate(strUpdate);
 	}
 
 	public String getUsername() {
@@ -102,20 +99,16 @@ public class Account{
 
 	public void setCounter(int counter) throws Exception{
 		this.counter = counter;
-		
-        Connection conn = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", server.getMysqlId(), server.getMysqlPassword()); // MySQL
+		// Step 1: Allocate a database "Connection" object
+		Connection conn = DriverManager.getConnection(
+				"jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", server.getMysqlId(), server.getMysqlPassword()); // MySQL
 
-          // Step 2: Allocate a "Statement" object in the Connection
-          Statement stmt = conn.createStatement();
-        
-          // Step 3 & 4: Execute a SQL UPDATE via executeUpdate()
-          //   which returns an int indicating the number of rows affected.
-          // Increase the price by 7% and qty by 1 for id=1001
-          String strUpdate = "update accountsms set counter = " + counter + " where mobile = '" + this.mobile + "'";
-          System.out.println("The SQL query is: " + strUpdate);  // Echo for debugging
-          int countUpdated = stmt.executeUpdate(strUpdate);
-          System.out.println(countUpdated + " records affected.");
+		// Step 2: Allocate a "Statement" object in the Connection
+		Statement stmt = conn.createStatement();
+
+		// Step 3 & 4: Execute a SQL UPDATE via executeUpdate()
+		String strUpdate = "update accountsms set counter = " + counter + " where mobile = '" + this.mobile + "'";
+		stmt.executeUpdate(strUpdate);
 	}
 
 	public PublicKey getPubKey() {
@@ -141,7 +134,7 @@ public class Account{
 	public void setTrys(int trys) throws Exception{
 		this.trys = trys;
 		
-
+		// Step 1: Allocate a database "Connection" object
         Connection conn = DriverManager.getConnection(
               "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", server.getMysqlId(), server.getMysqlPassword()); // MySQL
 
@@ -149,12 +142,8 @@ public class Account{
         Statement stmt = conn.createStatement();
       
         // Step 3 & 4: Execute a SQL UPDATE via executeUpdate()
-        //   which returns an int indicating the number of rows affected.
-        // Increase the price by 7% and qty by 1 for id=1001
         String strUpdate = "update accountsms set tries = " + trys + " where mobile = '" + this.mobile + "'";
-        System.out.println("The SQL query is: " + strUpdate);  // Echo for debugging
-        int countUpdated = stmt.executeUpdate(strUpdate);
-        System.out.println(countUpdated + " records affected.");
+        stmt.executeUpdate(strUpdate);
 	}
 
 	public Server getServer() {
