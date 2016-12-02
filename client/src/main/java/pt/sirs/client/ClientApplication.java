@@ -44,6 +44,7 @@ public class ClientApplication {
 	        out = new ObjectOutputStream(requestSocket.getOutputStream());
 	        out.flush();
             in = new ObjectInputStream(requestSocket.getInputStream());
+            requestSocket.setSoTimeout(TIMER);
 	   
 	        System.out.println("Started...");//Just debugging prints	
 	        while(true){
@@ -60,7 +61,7 @@ public class ClientApplication {
 					client = new Client(username, passwordString, mobile);
 
 			    	client = DiffieHellman(client, out, in);
-			    	if(client.getStatus().equals(Client.SERVER_SUCCESSFUL_LOGOUT_MSG)){
+			    	if(client.getStatus().equals(Client.SERVER_SUCCESSFUL_LOGOUT_MSG) || client.getSharedKey() == null){
 			    		return;
 			    	}
 			    	client = Login(client, out, in);
@@ -127,13 +128,13 @@ public class ClientApplication {
         out.flush();
         //Generate secret value
         client.generateSecretValue();
-        
+
         //Generate client public value
         out.writeObject(client.getNonRepudiationMsgForPublicValue());
         out.flush();
         out.writeObject(client.generatePublicValue());
         out.flush();
- 
+
         //Generate sharedKey
         client.receiveNonRepudiationMsgForPublicValue((String) in.readObject());
         client.generateSharedKey((String) in.readObject());
@@ -147,6 +148,7 @@ public class ClientApplication {
 		out.writeObject(login);
         out.flush();
         
+
         String feedback = (String) in.readObject();
         System.out.println(client.processFeedback(feedback, "login"));
         

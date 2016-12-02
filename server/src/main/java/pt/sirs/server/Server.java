@@ -544,7 +544,6 @@ public class Server {
 
 		
 		Account sender = getAccountByMobile(stringSender);
-		System.out.println("OLA1");
 		if(sender == null){			
 			this.status = ERROR_MSG_DH;
 			return;			

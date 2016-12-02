@@ -92,8 +92,7 @@ public class Client {
 		
 		//Final message to be sent
 		String toSend = mobile + "|" + stringSig + "|" + stringCiphertext;
-		System.out.println("Shared key: " + Crypto.encode(this.sharedKey.getEncoded()));
-		System.out.println("Well formed login sms " + toSend);
+	
 		System.out.println("Size of login SMS message: " + (stringSig + "|" + stringCiphertext).length());
 		return toSend;
 	}
@@ -131,9 +130,6 @@ public class Client {
 		//Final message to be sent
 		String toSend = mobile + "|" + stringSig + "|" + stringCiphertext;
 		
-		System.out.println("Counter for logout: " + this.counter);
-		System.out.println("Well formed logout sms " + toSend);
-
 		System.out.println("Size of logout SMS message: " + (stringSig + "|" + stringCiphertext).length());
 		return toSend;
 		
@@ -171,11 +167,6 @@ public class Client {
 		
 		String toSend = mobile + "|" + stringSig + "|" + stringCiphertext;
 		
-		System.out.println("amount for transaction: " + amount);
-		System.out.println("receiver for transaction: " + receiver);
-		System.out.println("Counter for transaction: " + this.counter);
-		System.out.println("Well formed transaction sms " + toSend);
-		
 		System.out.println("Size of transaction SMS message: " + (stringSig + "|" + stringCiphertext).length());
 		return toSend;
 	}
@@ -192,10 +183,7 @@ public class Client {
 	 * @throws Exception
 	 */
 	public String processFeedback(String sms, String state) throws Exception{
-		String decipheredMsg;
-		
-		System.out.println("sms for feedback: " + sms);
-		System.out.println("state for feedback: " + state);	
+		String decipheredMsg;	
 		
 		String[] splitedSms = sms.split("\\|");
 		byte[] byteSignature = Crypto.decode(splitedSms[0]);
@@ -215,9 +203,7 @@ public class Client {
 			System.out.println("Freshness compromised in " + state + " feedback!!");
 			return FRESHNESS_ERROR_MSG;
 		}
-		
-		System.out.println("return form feedback: " + splitedMsg[0]);	
-		
+				
 		this.counter = Integer.parseInt(splitedMsg[1]);
 		this.status = splitedMsg[0];
 		
