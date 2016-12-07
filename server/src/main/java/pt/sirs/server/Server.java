@@ -8,8 +8,6 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Timestamp;
 
-import javax.crypto.spec.SecretKeySpec;
-
 import pt.sirs.crypto.Crypto;
 import pt.sirs.server.Exceptions.AmountToHighException;
 
@@ -28,14 +26,10 @@ public class Server {
 	public  static final String MYSQL_ID = "root";
 	public  static final String MYSQL_PASSWORD = "root";
 
-	private BigInteger p;
-	private BigInteger g;
 	private BigInteger secretValue;
 	private BigInteger publicValue;
-	private SecretKeySpec sharedKey;
 	private String status;
 	private KeyPair keys;
-	private String nonRepudiationString;
 	private String mysqlId;
 	private String mysqlPassword;
 	
@@ -81,27 +75,27 @@ public class Server {
 		//Getting user in msg
 		sender = getAccountByMobile(new String(byteMobile));
 		if(sender == null){
-			return generateUnsuccessfulFeedback("Sender mobile number unknown", 0);
+			return generateUnsuccessfulFeedbackOffSession("Sender mobile number unknown", 0);
 		}
 		sender.setCounter(0);
 		sender.setTrys(sender.getTrys() + 1);
 		
 		if(sender.getTrys() == NUMBER_OF_UNSUCCESSFULL_LOGIN_TRYS){
 			removeAccount(sender);
-			return generateUnsuccessfulFeedback("Sender tried to many time to login going to block account.", 0);
+			return generateUnsuccessfulFeedbackOnSession(sender, "Sender tried to many time to login going to block account.", 0);
 		}
 
 		try{
 		//Deciphering msg
-		decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, this.sharedKey);
+		decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, sender.getSharedKey());
 		} catch (Exception e){
-			return generateUnsuccessfulFeedback("Cipher was corrupted", 0);
+			return generateUnsuccessfulFeedbackOnSession(sender, "Cipher was corrupted in loggin message", 0);
 		}
 		
 		//Obtaining time stamp and password
 		String[] splitedMsg = decipheredMsg.split("\\|");
 		if(splitedMsg.length != 2){
-			return generateUnsuccessfulFeedback("Deciphered content not expected.", 0);
+			return generateUnsuccessfulFeedbackOnSession(sender, "Deciphered content in loggin sms not well formated.", 0);
 		}
 		stringTimestamp = splitedMsg[0];
 		password = splitedMsg[1];
@@ -115,7 +109,7 @@ public class Server {
 			return generateLoginFeedback(sender, password, stringTimestamp);
 		}
 		else{
-			return generateUnsuccessfulFeedback("Signature compromised on loggin SMS received.", 0);
+			return generateUnsuccessfulFeedbackOnSession(sender, "Signature compromised on loggin SMS received.", 0);
 		}
     }
     
@@ -147,35 +141,31 @@ public class Server {
 		//Getting user in msg
 		sender = getAccountByMobile(new String(byteMobile));
 		if(sender == null){
-			return generateUnsuccessfulFeedback("User not registered.", 0);			
+			return generateUnsuccessfulFeedbackOffSession("User not registered in transaction.", 0);			
 		}
 		
 		try{
 			//Deciphering msg
-			decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, this.sharedKey);
+			decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, sender.getSharedKey());
 		} catch (Exception e){
-			return generateUnsuccessfulFeedback("Cipher was corrupted", 0);
+			return generateUnsuccessfulFeedbackOnSession(sender, "Cipher in transaction sms was corrupted", 0);
 		}
 		
-		//Obtaining time stamp and password
+		//Obtaining receiver amount and counter
 		String[] splitedMsg = decipheredMsg.split("\\|");
-		if(splitedMsg.length == 2){
-			receiver = splitedMsg[0];
-			counter  = splitedMsg[1];
-		}
-		else if(splitedMsg.length == 3){
+		if(splitedMsg.length == 3){
 			receiver = splitedMsg[0];
 			amount   = splitedMsg[1];
 			counter  = splitedMsg[2];
 		}
 		else{
-			return generateUnsuccessfulFeedback("Deciphered content not expected.", 0);
+			return generateUnsuccessfulFeedbackOnSession(sender, "Deciphered content in transaction sms not well formated.", 0);
 		}
 		
 		//Verify user counter
 		int smsCounter = Integer.parseInt(counter);
 		if(smsCounter < sender.getCounter()) { 
-			return generateUnsuccessfulFeedback("Freshness compromised.", 0); 
+			return generateUnsuccessfulFeedbackOnSession(sender, "Freshness compromised.", 0); 
 		}
 		else { 
 			if(sender.getCounter() < Integer.MAX_VALUE){
@@ -188,23 +178,14 @@ public class Server {
 		}
 		
 		//Verify signature 
-		String msgToVerify;
-		if(splitedMsg.length == 3){
-			msgToVerify = sender.getMobile() + receiver + amount + counter;
-		}
-		else{
-			msgToVerify = sender.getMobile() + receiver + counter;
-		}    
+		String msgToVerify = sender.getMobile() + receiver + amount + counter;
+   
 		if(Crypto.verifySign(msgToVerify, byteSignature, sender.getPubKey())){				
-			//Check if it's a logout message
-			if(receiver.equals("logout")){
-				return generateLogoutFeedback(sender); 
-			}
 			
 			return generateTransactionFeedback(sender, receiver, amount);
 		}
 		else{
-			return generateUnsuccessfulFeedback("Signature compromised on loggin SMS received", sender.getCounter());
+			return generateUnsuccessfulFeedbackOnSession(sender, "Signature compromised on loggin SMS received", sender.getCounter());
 		}
     }
 
@@ -232,16 +213,16 @@ public class Server {
 				this.status = SUCCESSFUL_TRANSACTION_MSG;
 			}
 			else{
-				return generateUnsuccessfulFeedback("Receiver not registered.", sender.getCounter());
+				return generateUnsuccessfulFeedbackOnSession(sender, "Receiver not registered.", sender.getCounter());
 			}
 		} catch (AmountToHighException e){
-			return generateUnsuccessfulFeedback("Amount to damn high.", sender.getCounter());
+			return generateUnsuccessfulFeedbackOnSession(sender, "Amount to damn high.", sender.getCounter());
 
 		}
 
 		//Msg to cipher
 		String toCipher = this.status + "|" + sender.getCounter();
-		byte[] cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);
+		byte[] cipheredText = Crypto.cipherSMS(toCipher, sender.getSharedKey());
 		
 		//Generating signature
 		String dataToSign = this.status + sender.getCounter();
@@ -284,12 +265,12 @@ public class Server {
 			a.setTrys(0);
 		}
 		else{
-			return generateUnsuccessfulFeedback("Wrong password or TS compromised.", 0);
+			return generateUnsuccessfulFeedbackOnSession(a, "Wrong password or TS compromised.", 0);
 		}
 		
 		//Add user counter to msg
 		String feedback = this.status + "|" + a.getCounter();
-		byte[] cipheredText = Crypto.cipherSMS(feedback, this.sharedKey);
+		byte[] cipheredText = Crypto.cipherSMS(feedback, a.getSharedKey());
 		System.out.println(feedback);
 		
 		//Generating signature
@@ -324,7 +305,7 @@ public class Server {
 
 		//Msg to cipher
 		String toCipher = this.status + "|" + sender.getCounter();
-		byte[] cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);
+		byte[] cipheredText = Crypto.cipherSMS(toCipher, sender.getSharedKey());
 		
 		//Generating signature
 		String dataToSign = this.status + sender.getCounter();
@@ -354,13 +335,13 @@ public class Server {
 	 * @return String
 	 * @throws Exception
 	 */
-	public String generateUnsuccessfulFeedback(String msg,int counter) throws Exception{
+	public String generateUnsuccessfulFeedbackOnSession(Account sender, String msg,int counter) throws Exception{
 		System.out.println(msg);
 		this.status = ERROR_MSG;
 		
 		//Msg to cipher
 		String toCipher = this.status + "|" + counter;
-		byte[] cipheredText = Crypto.cipherSMS(toCipher, this.sharedKey);
+		byte[] cipheredText = Crypto.cipherSMS(toCipher, sender.getSharedKey());
 		
 		//Generating signature
 		String dataToSign = this.status + counter;
@@ -371,6 +352,40 @@ public class Server {
 		String stringSig = Crypto.encode(signature);
 		String stringCiphertext = Crypto.encode(cipheredText);
 		String toSend = stringSig + "|" + stringCiphertext;
+		
+		System.out.println("Size of logout feedback SMS message: " + toSend.length());
+
+		return toSend;
+	}
+	
+	/***
+	 * This function is used to generate an unsuccessful feedback when 
+	 * an error occurs to the client
+	 * the message is composed by signature|cipheredText where
+	 * signature = {status + counter}Kcs
+	 * cipheredText = {status|counter}Ks
+	 * Kcs = client private key
+	 * Ks = shared key
+	 * @param msg
+	 * @param counter
+	 * @return String
+	 * @throws Exception
+	 */
+	public String generateUnsuccessfulFeedbackOffSession(String msg,int counter) throws Exception{
+		System.out.println(msg);
+		this.status = ERROR_MSG;
+		
+		//Msg to cipher
+		String toCipher = this.status + "|" + counter;
+		
+		//Generating signature
+		String dataToSign = this.status + counter;
+		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
+		
+		//Concatenate signature with cipheredText --> signature|cipheredText
+		//cipheredText = {status|counter}Ks
+		String stringSig = Crypto.encode(signature);
+		String toSend = stringSig + "|" + toCipher;
 		
 		System.out.println("Size of logout feedback SMS message: " + toSend.length());
 
@@ -416,7 +431,7 @@ public class Server {
 	 * @throws Exception
 	 */
 	public Account getAccountByUsername(String msg) throws Exception{
-        String iban = "", username = "", password = "", mobile = "";
+        String iban = "", username = "", password = "", mobile = "", p = "", g = "", np = "", sharedKey = "";
         int balance = 0, tries = 0, counter = 0;
 		// Step 1: Allocate a database "Connection" object
         Connection conn = DriverManager.getConnection(
@@ -426,7 +441,7 @@ public class Server {
         Statement stmt = conn.createStatement();
         
         // Step 3: Execute a SQL SELECT query, the query result
-        String strSelect = "select iban, balance, username, password, mobile, counter, tries from accountsms where username = '" + msg + "'";
+        String strSelect = "select iban, balance, username, password, mobile, counter, tries, p, g, np, sharedKey from accountsms where username = '" + msg + "'";
         ResultSet rset = stmt.executeQuery(strSelect);
 
         // Step 4: Process the ResultSet by scrolling the cursor forward via next().
@@ -439,6 +454,11 @@ public class Server {
             mobile = rset.getString("mobile");
             tries = rset.getInt("tries");
             counter = rset.getInt("counter");
+            p = rset.getString("p");
+            g = rset.getString("g");
+            np = rset.getString("np");
+            sharedKey = rset.getString("sharedKey");
+
            ++rowCount;
         }
         
@@ -446,7 +466,7 @@ public class Server {
         	return null;
         }
         else{
-        	return new Account(iban, balance, username, password, mobile, tries, counter, this);
+        	return new Account(iban, balance, username, password, mobile, tries, counter, p, g, np, sharedKey, this);
         }
 	}
 	
@@ -458,7 +478,7 @@ public class Server {
 	 * @throws Exception
 	 */
 	public Account getAccountByMobile(String msg) throws Exception{
-        String iban = "", username = "", password = "", mobile = "";
+        String iban = "", username = "", password = "", mobile = "", p = "", g = "", np = "", sharedKey = "";
         int balance = 0, tries = 0, counter = 0;
 		// Step 1: Allocate a database "Connection" object
         Connection conn = DriverManager.getConnection(
@@ -468,7 +488,7 @@ public class Server {
         Statement stmt = conn.createStatement();
         
         // Step 3: Execute a SQL SELECT query, the query result
-        String strSelect = "select iban, balance, username, password, mobile, counter, tries from accountsms where mobile = '" + msg + "'";
+        String strSelect = "select iban, balance, username, password, mobile, counter, tries, p, g, np, sharedKey from accountsms where mobile = '" + msg + "'";
 
         // Step 4: Process the ResultSet by scrolling the cursor forward via next().
         ResultSet rset = stmt.executeQuery(strSelect);
@@ -481,46 +501,27 @@ public class Server {
             mobile = rset.getString("mobile");
             tries = rset.getInt("tries");
             counter = rset.getInt("counter");
+            p = rset.getString("p");
+            g = rset.getString("g");
+            np = rset.getString("np");
+            sharedKey = rset.getString("sharedKey");
            ++rowCount;
         }
         if(rowCount == 0){
         	return null;
         }
         else{
-        	return new Account(iban, balance, username, password, mobile, tries, counter, this);
+        	return new Account(iban, balance, username, password, mobile, tries, counter, p, g, np, sharedKey, this);
         }
 	}
+	
 
 	public void generateSecretValue() {
 		this.secretValue = Crypto.generateSecretValue();
 	}
 	
-	public String getNonRepudiationMsgForPublicValue() throws Exception {
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        
-        if(this.status.equals(ERROR_MSG_DH)){
-			return generateUnsuccessfulFeedbackDH("This sender was blocked");
-        }
-
-		//Generating signature
-		String dataToSign = publicValue + timestamp.toString();
-		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
-
-		String stringSig = Crypto.encode(signature);
-		String toSend =  stringSig + "|" + timestamp.toString();
-		
-		System.out.println("Size of non repudiation msg for public value used in DH SMS message: " + toSend.length());
-
-		return toSend;
-	}
-	
-	public void generatePublicValue(){
-	   publicValue = g.modPow(secretValue, p);
-	}
-	
-	public String getPublicValue(){
-		System.out.println("Size of Server public value used in DH SMS message: " + Crypto.encode(publicValue.toByteArray()).length());
-		return Crypto.encode(publicValue.toByteArray());
+	public void generatePublicValue(Account sender){
+	   publicValue = sender.getG().modPow(secretValue, sender.getP());
 	}
 		
 	/***
@@ -559,6 +560,7 @@ public class Server {
 		this.mysqlPassword = mysqlPassword;
 	}
 
+	
 	public void savePforClient(String senderString, String p) throws Exception {
 		Account sender;
 		
@@ -570,8 +572,9 @@ public class Server {
 			System.out.println("Client not registered");
 		}
 		
-		sender.setP();
+		sender.setP(p);
 	}
+	
 
 	public void saveGforClient(String senderString, String g) throws Exception {
 		Account sender;
@@ -584,8 +587,9 @@ public class Server {
 			System.out.println("Client not registered");
 		}
 		
-		sender.setG();		
+		sender.setG(g);		
 	}
+	
 
 	public void saveNPforClient(String senderString, String stringSig, String TS) throws Exception {
 		Account sender;
@@ -598,8 +602,9 @@ public class Server {
 			System.out.println("Client not registered");
 		}
 		
-		sender.setNP();				
+		sender.setNP(senderString + "|" + stringSig + "|" + TS);				
 	}
+	
 
 	public void savePVforClient(String senderString, String stringPublicValueSender) throws Exception{
 		Account sender;
@@ -638,24 +643,17 @@ public class Server {
 			return;	
 		}
 		
+		//Generate secret value
+		generateSecretValue();
+		generatePublicValue(sender);
+		
 		//Generate SharedKey
-		BigInteger sharedKey = sender.getG().modPow(secretValue, sender.getP());
+		BigInteger sharedKey = publicValue.modPow(secretValue, sender.getP());
 		sender.setSharedKey(Crypto.generateKeyFromBigInt(sharedKey));
 	}
 
-	public String getNonRepudiationMsgForPublicValue(String senderString) throws Exception {
-		Account sender;
-		
+	public String getNonRepudiationMsgForPublicValue() throws Exception {		
 		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-
-		//Get sender
-		byte[] byteMobile = Crypto.decode(senderString);
-
-		//Getting user in msg
-		sender = getAccountByMobile(new String(byteMobile));
-		if(sender == null){
-			System.out.println("Client not registered");
-		}
 	
 		//Generating signature
 		String dataToSign = publicValue + timestamp.toString();
@@ -668,14 +666,66 @@ public class Server {
 
 		return toSend;
 	}
+	
 
-	public String getPublicValueForClient(String sender) {
-		// TODO Auto-generated method stub
-		return null;
+	public String getPublicValueForClient() {
+		System.out.println("Size of Server public value used in DH SMS message: " + Crypto.encode(publicValue.toByteArray()).length());
+		return Crypto.encode(publicValue.toByteArray());
 	}
 
-	public String processLogoutSms(String sender, String stringSig, String stringCiphered) {
-		// TODO Auto-generated method stub
-		return null;
+	public String processLogoutSms(String senderString, String stringSig, String stringCiphered) throws Exception {
+		String decipheredMsg, operation, counter;
+		Account sender;
+		
+		byte[] byteMobile = Crypto.decode(senderString);
+		byte[] byteSignature = Crypto.decode(stringSig);
+		byte[] byteCipheredMsg = Crypto.decode(stringCiphered);
+		
+		//Getting user in msg
+		sender = getAccountByMobile(new String(byteMobile));
+		if(sender == null){
+			return generateUnsuccessfulFeedbackOffSession("User not registered.", 0);			
+		}
+		
+		try{
+			//Deciphering msg
+			decipheredMsg = Crypto.decipherSMS(byteCipheredMsg, sender.getSharedKey());
+		} catch (Exception e){
+			return generateUnsuccessfulFeedbackOnSession(sender, "Cipher was corrupted", 0);
+		}
+		
+		//Obtaining time stamp and password
+		String[] splitedMsg = decipheredMsg.split("\\|");
+		if(splitedMsg.length == 2){
+			operation = splitedMsg[0];
+			counter  = splitedMsg[1];
+		}	
+		else{
+			return generateUnsuccessfulFeedbackOnSession(sender, "Deciphered content not well formated.", 0);
+		}
+		
+		//Verify user counter
+		int smsCounter = Integer.parseInt(counter);
+		if(smsCounter < sender.getCounter()) { 
+			return generateUnsuccessfulFeedbackOnSession(sender, "Freshness compromised.", 0); 
+		}
+		
+		//Verify signature 
+		String msgToVerify;
+		msgToVerify = sender.getMobile() + operation + counter;
+	
+		if(Crypto.verifySign(msgToVerify, byteSignature, sender.getPubKey())){				
+			//Check if it's a logout message
+			if(operation.equals("logout")){
+				return generateLogoutFeedback(sender); 
+			}
+			else{
+				return generateUnsuccessfulFeedbackOnSession(sender, "Logout message but operation in message didn't match.", 0); 
+			}
+			
+		}
+		else{
+			return generateUnsuccessfulFeedbackOnSession(sender, "Signature compromised on logout SMS received", sender.getCounter());
+		}
 	}
 }

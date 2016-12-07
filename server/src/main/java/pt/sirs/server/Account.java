@@ -23,9 +23,13 @@ public class Account{
 	private PublicKey pubKey;
 	private String mobile;
 	private int trys;
+	private String p;
+	private String g;
+	private String np;
+	private String sharedKey;
 	private Server server;
 
-	public Account(String iban, int balance, String username, String password, String mobile, int tries, int counter, Server server) throws Exception{
+	public Account(String iban, int balance, String username, String password, String mobile, int tries, int counter, String p, String g, String np, String sharedKey, Server server) throws Exception{
 		if(password.length() < 4 || password.length() > 7)
 		{ throw new InvalidPasswordException(password); }
 		if(username.length() > 10)
@@ -38,6 +42,10 @@ public class Account{
 		this.setMobile(mobile);
 		this.pubKey = Crypto.readPubKeyFromFile("keys/" + username + "PublicKey" );
 		this.trys = tries;
+		this.p = p;
+		this.g= g;
+		this.np = np;
+		this.sharedKey = sharedKey;
 		this.server = server;
 	}
 	
@@ -157,39 +165,85 @@ public class Account{
 		this.server = server;
 	}
 
-	public void setP() {
-		// TODO Auto-generated method stub
+	public void setP(String p) throws Exception {
+		this.p = p;
 		
-	}
+		// Step 1: Allocate a database "Connection" object
+        Connection conn = DriverManager.getConnection(
+              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", server.getMysqlId(), server.getMysqlPassword()); // MySQL
 
-	public void setG() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void setNP() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public String getnonRepudiationString() {
-		// TODO Auto-generated method stub
-		return null;
+        // Step 2: Allocate a "Statement" object in the Connection
+        Statement stmt = conn.createStatement();
+      
+        // Step 3 & 4: Execute a SQL UPDATE via executeUpdate()
+        String strUpdate = "update accountsms set p = " + p + " where mobile = '" + this.mobile + "'";
+        stmt.executeUpdate(strUpdate);		
 	}
 
 	public BigInteger getP() {
-		// TODO Auto-generated method stub
-		return null;
+		byte[] byteP = Crypto.decode(p);
+		return new BigInteger(byteP);
 	}
+	
+	public void setG(String g) throws Exception {
+		this.g = g;
+		
+		// Step 1: Allocate a database "Connection" object
+        Connection conn = DriverManager.getConnection(
+              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", server.getMysqlId(), server.getMysqlPassword()); // MySQL
+
+        // Step 2: Allocate a "Statement" object in the Connection
+        Statement stmt = conn.createStatement();
+      
+        // Step 3 & 4: Execute a SQL UPDATE via executeUpdate()
+        String strUpdate = "update accountsms set g = " + g + " where mobile = '" + this.mobile + "'";
+        stmt.executeUpdate(strUpdate);		}
 
 	public BigInteger getG() {
-		// TODO Auto-generated method stub
-		return null;
+		byte[] byteG = Crypto.decode(g);
+		return new BigInteger(byteG);
 	}
 
-	public void setSharedKey(SecretKeySpec generateKeyFromBigInt) {
-		// TODO Auto-generated method stub
+	public void setNP(String np) throws Exception {
+		this.np = np;
 		
+		// Step 1: Allocate a database "Connection" object
+        Connection conn = DriverManager.getConnection(
+              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", server.getMysqlId(), server.getMysqlPassword()); // MySQL
+
+        // Step 2: Allocate a "Statement" object in the Connection
+        Statement stmt = conn.createStatement();
+      
+        // Step 3 & 4: Execute a SQL UPDATE via executeUpdate()
+        String strUpdate = "update accountsms set np = " + np + " where mobile = '" + this.mobile + "'";
+        stmt.executeUpdate(strUpdate);		
+	}
+
+	public String getnonRepudiationString() {
+		return np;
+	}
+
+
+	public void setSharedKey(SecretKeySpec generateKeyFromBigInt) throws Exception {
+		// TODO Auto-generated method stub
+		String stringSharedKey = Crypto.encode(generateKeyFromBigInt.getEncoded());
+		this.sharedKey = stringSharedKey;
+		
+		// Step 1: Allocate a database "Connection" object
+        Connection conn = DriverManager.getConnection(
+              "jdbc:mysql://localhost:3306/serverdbsms?useSSL=false", server.getMysqlId(), server.getMysqlPassword()); // MySQL
+
+        // Step 2: Allocate a "Statement" object in the Connection
+        Statement stmt = conn.createStatement();
+      
+        // Step 3 & 4: Execute a SQL UPDATE via executeUpdate()
+        String strUpdate = "update accountsms set sharedKey = " + sharedKey + " where mobile = '" + this.mobile + "'";
+        stmt.executeUpdate(strUpdate);		
+	}
+
+	public SecretKeySpec getSharedKey() {
+		SecretKeySpec sharedKey = new SecretKeySpec(Crypto.decode(this.sharedKey), "AES");
+		return sharedKey;
 	}
 
 }
