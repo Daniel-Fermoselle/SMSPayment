@@ -64,21 +64,19 @@ public class Server {
 	 * Kcs = client private key
 	 * Ks = shared key
 	 * @param sms
+	 * @param splittedMsg2 
+	 * @param splittedMsg 
 	 * @return String
 	 * @throws Exception
 	 */
-    public String processLoginSms(String sms) throws Exception{
+    public String processLoginSms(String senderString, String stringSig, String stringCiphered) throws Exception{
 		String decipheredMsg;
 		Account sender;
 		String stringTimestamp, password;
 
-		String[] splitedSms = sms.split("\\|");
-		if(splitedSms.length != 3){
-			return generateUnsuccessfulFeedback("Wrong message format.", 0);
-		}
-		byte[] byteMobile = Crypto.decode(splitedSms[0]);
-		byte[] byteSignature = Crypto.decode(splitedSms[1]);
-		byte[] byteCipheredMsg = Crypto.decode(splitedSms[2]);
+		byte[] byteMobile = Crypto.decode(senderString);
+		byte[] byteSignature = Crypto.decode(stringSig);
+		byte[] byteCipheredMsg = Crypto.decode(stringCiphered);
 
 		//Getting user in msg
 		sender = getAccountByMobile(new String(byteMobile));
@@ -133,20 +131,18 @@ public class Server {
 	 * Kcs = client private key
 	 * Ks = shared key
 	 * @param sms
+	 * @param splittedMsg2 
+	 * @param splittedMsg 
 	 * @return String
 	 * @throws Exception
 	 */
-    public String processTransactionSms(String sms) throws Exception{
+    public String processTransactionSms(String senderString, String stringSig, String stringCiphered) throws Exception{
 		String decipheredMsg, receiver, amount = "", counter;
 		Account sender;
 		
-		String[] splitedSms = sms.split("\\|");
-		if(splitedSms.length != 3){
-			return generateUnsuccessfulFeedback("Wrong message format.", 0);
-		}
-		byte[] byteMobile = Crypto.decode(splitedSms[0]);
-		byte[] byteSignature = Crypto.decode(splitedSms[1]);
-		byte[] byteCipheredMsg = Crypto.decode(splitedSms[2]);
+		byte[] byteMobile = Crypto.decode(senderString);
+		byte[] byteSignature = Crypto.decode(stringSig);
+		byte[] byteCipheredMsg = Crypto.decode(stringCiphered);
 		
 		//Getting user in msg
 		sender = getAccountByMobile(new String(byteMobile));
@@ -526,73 +522,7 @@ public class Server {
 		System.out.println("Size of Server public value used in DH SMS message: " + Crypto.encode(publicValue.toByteArray()).length());
 		return Crypto.encode(publicValue.toByteArray());
 	}
-	
-	public void receiveNonRepudiationMsgForPublicValue(String readObject) {
-		this.nonRepudiationString = readObject;
-	}
-	
-	public void generateSharedKey(String stringPublicValue) throws Exception{
-		byte[] bytePublicValue = Crypto.decode(stringPublicValue);
-		BigInteger publicValue = new BigInteger(bytePublicValue);
 		
-		
-		//Verify publicValue
-		String[] splitedSms = this.nonRepudiationString.split("\\|");
-		String stringSender = splitedSms[0];
-		byte[] byteSig = Crypto.decode(splitedSms[1]);
-		String stringTS  = splitedSms[2];
-
-		
-		Account sender = getAccountByMobile(stringSender);
-		if(sender == null){			
-			this.status = ERROR_MSG_DH;
-			return;			
-		}
-		//Verify TimeStamp
-		if(!Crypto.validTS(stringTS)){
-			System.out.println("Time stamp used in DH public value invalid, passed more than 1 minute");
-			this.status = ERROR_MSG_DH;
-			return;	
-		}
-		
-		//Verify signature
-		String msgToVerify = stringSender + publicValue + stringTS;
-		if(!Crypto.verifySign(msgToVerify, byteSig, sender.getPubKey())){
-			System.out.println("Signature compromised ins DH public value msg");
-			this.status = ERROR_MSG_DH;
-			return;	
-		}
-		
-		BigInteger sharedKey = publicValue.modPow(secretValue, p);
-		this.sharedKey = Crypto.generateKeyFromBigInt(sharedKey);
-	}
-    
-	public void setP(String p) {
-		byte[] byteP = Crypto.decode(p);
-		this.p = new BigInteger(byteP);
-	}
-
-	public void setG(String g) {
-		byte[] byteG = Crypto.decode(g);
-		this.g = new BigInteger(byteG);		
-	}
-
-	public String getStatus() {
-		return status;
-	}
-
-	public void setStatus(String status) {
-		this.status = status;
-	}	
-	
-	public SecretKeySpec getSharedKey() {
-		return sharedKey;
-	}
-
-	public void setSharedKey(SecretKeySpec sharedKey) {
-		this.sharedKey = sharedKey;
-	}
-	
 	/***
 	 * This function sends a query to the database 
 	 * to remove an account a
@@ -627,5 +557,125 @@ public class Server {
 
 	public void setMysqlPassword(String mysqlPassword) {
 		this.mysqlPassword = mysqlPassword;
+	}
+
+	public void savePforClient(String senderString, String p) throws Exception {
+		Account sender;
+		
+		byte[] byteMobile = Crypto.decode(senderString);
+
+		//Getting user in msg
+		sender = getAccountByMobile(new String(byteMobile));
+		if(sender == null){
+			System.out.println("Client not registered");
+		}
+		
+		sender.setP();
+	}
+
+	public void saveGforClient(String senderString, String g) throws Exception {
+		Account sender;
+		
+		byte[] byteMobile = Crypto.decode(senderString);
+
+		//Getting user in msg
+		sender = getAccountByMobile(new String(byteMobile));
+		if(sender == null){
+			System.out.println("Client not registered");
+		}
+		
+		sender.setG();		
+	}
+
+	public void saveNPforClient(String senderString, String stringSig, String TS) throws Exception {
+		Account sender;
+		
+		byte[] byteMobile = Crypto.decode(senderString);
+
+		//Getting user in msg
+		sender = getAccountByMobile(new String(byteMobile));
+		if(sender == null){
+			System.out.println("Client not registered");
+		}
+		
+		sender.setNP();				
+	}
+
+	public void savePVforClient(String senderString, String stringPublicValueSender) throws Exception{
+		Account sender;
+		
+		byte[] bytePublicValue = Crypto.decode(stringPublicValueSender);
+		BigInteger publicValue = new BigInteger(bytePublicValue);
+		
+		//Get sender
+		byte[] byteMobile = Crypto.decode(senderString);
+
+		//Getting user in msg
+		sender = getAccountByMobile(new String(byteMobile));
+		if(sender == null){
+			System.out.println("Client not registered");
+		}
+		
+		//Get nonRepudiationString from client
+		String nonRepudiationString = sender.getnonRepudiationString();
+		
+		//Verify publicValue
+		String[] splitedSms = nonRepudiationString.split("\\|");
+		String stringSender = splitedSms[0];
+		byte[] byteSig = Crypto.decode(splitedSms[1]);
+		String stringTS  = splitedSms[2];
+
+		//Verify TimeStamp
+		if(!Crypto.validTS(stringTS)){
+			System.out.println("Time stamp used in DH public value invalid, passed more than 1 minute");
+			return;	
+		}
+		
+		//Verify signature
+		String msgToVerify = stringSender + publicValue + stringTS;
+		if(!Crypto.verifySign(msgToVerify, byteSig, sender.getPubKey())){
+			System.out.println("Signature compromised in DH public value msg");
+			return;	
+		}
+		
+		//Generate SharedKey
+		BigInteger sharedKey = sender.getG().modPow(secretValue, sender.getP());
+		sender.setSharedKey(Crypto.generateKeyFromBigInt(sharedKey));
+	}
+
+	public String getNonRepudiationMsgForPublicValue(String senderString) throws Exception {
+		Account sender;
+		
+		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+
+		//Get sender
+		byte[] byteMobile = Crypto.decode(senderString);
+
+		//Getting user in msg
+		sender = getAccountByMobile(new String(byteMobile));
+		if(sender == null){
+			System.out.println("Client not registered");
+		}
+	
+		//Generating signature
+		String dataToSign = publicValue + timestamp.toString();
+		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
+
+		String stringSig = Crypto.encode(signature);
+		String toSend =  stringSig + "|" + timestamp.toString();
+		
+		System.out.println("Size of non repudiation msg for public value used in DH SMS message: " + toSend.length());
+
+		return toSend;
+	}
+
+	public String getPublicValueForClient(String sender) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public String processLogoutSms(String sender, String stringSig, String stringCiphered) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

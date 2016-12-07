@@ -1,9 +1,12 @@
 package pt.sirs.server;
 
+import java.math.BigInteger;
 import java.security.PublicKey;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
+
+import javax.crypto.spec.SecretKeySpec;
 
 import pt.sirs.crypto.Crypto;
 import pt.sirs.server.Exceptions.AmountToHighException;
@@ -152,6 +155,41 @@ public class Account{
 
 	public void setServer(Server server) {
 		this.server = server;
+	}
+
+	public void setP() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void setG() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void setNP() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public String getnonRepudiationString() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public BigInteger getP() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public BigInteger getG() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public void setSharedKey(SecretKeySpec generateKeyFromBigInt) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
