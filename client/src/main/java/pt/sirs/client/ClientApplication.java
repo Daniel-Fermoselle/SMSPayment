@@ -150,8 +150,13 @@ public class ClientApplication {
         
 
         String feedback = (String) in.readObject();
-        System.out.println(client.processFeedback(feedback, "login"));
-        
+        String feedbackProcessed = client.processFeedback(feedback, "login");
+        if(feedbackProcessed.equals(client.ERROR_MSG)){
+        	System.out.println("Error in login, verify if you are using your phone and the password inputed is correct");        	
+        }
+        else{
+        	System.out.println(feedbackProcessed);        	
+        }        
 		return client;
 	}
 	
@@ -169,7 +174,13 @@ public class ClientApplication {
         
         String feedback = (String) in.readObject();
         String feedbackProcessed = client.processFeedback(feedback, "transaction");
-        System.out.println(feedbackProcessed);
+        
+        if(feedbackProcessed.equals(client.ERROR_MSG)){
+        	System.out.println("Error in transaction, verify if user and amount inputed are correct");        	
+        }
+        else{
+        	System.out.println(feedbackProcessed);        	
+        }
         
         if(feedbackProcessed.equals(Client.FRESHNESS_ERROR_MSG)){
         	client.setStatus(Client.SERVER_SUCCESSFUL_LOGOUT_MSG);

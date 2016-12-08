@@ -338,7 +338,7 @@ public class Client {
 		String stringTS  = splitedSms[1];
 		
 		if(splitedSms[1].equals(ERROR_MSG)){
-			System.out.println("There was a problem establishing shared. This user was blocked.");
+			System.out.println("There was a problem establishing shared. This user was blocked or you are not using the right phone.");
 			this.status = SERVER_SUCCESSFUL_LOGOUT_MSG;
 			return;
 		}
