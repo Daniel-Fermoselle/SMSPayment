@@ -51,7 +51,6 @@ public class Client {
 		BigInteger[] pair = Crypto.GeneratePandG();
 		p = pair[0];
 		g = pair[1];
-		this.secretValue = Crypto.generateSecretValue();
 		this.status = "Initialized";
 		
 		PublicKey pubKey = Crypto.readPubKeyFromFile("keys/" + this.myUsername +"PublicKey" );
