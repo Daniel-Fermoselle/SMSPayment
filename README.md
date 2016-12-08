@@ -20,7 +20,11 @@ Repositório:
 
 [0] Iniciar sistema operativo
 
-Linux
+Ubuntu 16.04 LTS (OS usado para desenvolvimento do projecto Mac OSx versão 10.11.6 arch: x86_64)  
+Java version "1.8.0_111" (versão usada para desenvolvimento do projecto)  
+MySQL version 5.7.16 (versão usada para desenvolvimento do projecto)  
+Apache Maven version 3.3.9 (versão usada para desenvolvimento do projecto)  
+O utilizador têm de ter sun.security.ec.SunEC, sun.security.provider.Sun e BouncyCastel como security providers  
 
 [1] Criar pasta temporária
 
@@ -41,7 +45,7 @@ git checkout tags/SIRS_R1
 
 ```
 cd server
-Entrar no mysql com uma conta: mysql -uroot -p (para entrar com root, tem de saber a password)
+Entrar no mysql com uma conta: mysql -uroot -p (para entrar com root, tem de saber a password, poderá utilizar outro utilizador se ja o tiver configurado)
 source bank.sql;
 \q (para sair do mysql)
 
@@ -56,7 +60,7 @@ mvn clean install
 cd ../server
 mvn install exec:java -Dexec.args="port" (deixar a correr num terminal a parte) por exemplo port=10000
 cd ../client
-mvn install exec:java -Dexec.args="port host" por exemplo port=100000 e host=localhost
+mvn install exec:java -Dexec.args="port host" por exemplo port=10000 e host=localhost
 
 ```
 
@@ -69,15 +73,19 @@ Mobile: 914444444 username: alpha        password: 12345
 Mobile: 915555555 username: poghcamp     password: 12345  
 Mobile: 916666666 username: bravo        password: 12345  
 Mobile: 917777777 username: austrolopi   password: 1234567  
+Mobile: 918888888 username: bob          password: 1234567  
+Mobile: 919999999 username: alice        password: 1234567  
+Mobile: 921111111 username: mallory      password: 1234567  
+
   
 [6] Caso queria utilizar outros utilizadores
 
-Adicionar na um "insert into" no script bank.sql da pasta server. 
+Adicionar um "insert into" no script bank.sql da pasta server. 
 Gerar as chaves para esse utilizador correndo a aplicação crypto da seguinte maneira:  
  
 ```
 cd crypto
-mvn exec:java -Dexec.args="server username1 username2" (server é sempre necessário)
+mvn exec:java -Dexec.args="username1 username2" (caso queira gerar uma nova chave para o server basta passar como argumeno "server")
 ```
  
 -------------------------------------------------------------------------------
