@@ -2,8 +2,6 @@ package pt.sirs.client;
 
 import java.io.*;
 import java.net.*;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -11,60 +9,52 @@ import pt.sirs.client.Client;
 
 public class ClientApplication {
 	
-	public static final int TIMER = 40000;
+	private static DatagramSocket clientSocket = null;
+	private static InetAddress IPAddress = null;
+	private static int port;
+	private static byte[] sendData = new byte[1024];
+	private static byte[] receiveData = new byte[1024];
 	
-	public ClientApplication(){
-		
-	}
+	public ClientApplication() {	}
 	
 	public static void main(String[] args) {
 		ClientApplication ca = new ClientApplication();
 		ca.run(args[0], args[1]);
+
 	}
 	
-	public void run(String port, String host) {
-		Socket requestSocket = null;
-		ObjectOutputStream out = null;
-		ObjectInputStream in = null;
+	public void run(String stringPort, String host) {
 		Client client = null;
 		String feedback = Client.ERROR_MSG;
+	    
 		try{
 			Console console = System.console();
 			if (console == null) {
 				System.out.println("Couldn't get Console instance");
 				System.exit(0);
 			}
-						
 			
 			//1. Criar o socket para falar com o server
-			requestSocket = new Socket(host, Integer.parseInt(port));
-	        System.out.println("Connected to localhost in port " + port);//Just debugging prints
+			clientSocket = new DatagramSocket();
+		    IPAddress = InetAddress.getByName(host);
+		    port = Integer.parseInt(stringPort);
+		    System.out.println("Connected to localhost in port " + port);
 	        
-	        //2. Criar o socket para enviar coisas para o server
-	        out = new ObjectOutputStream(requestSocket.getOutputStream());
-	        out.flush();
-            in = new ObjectInputStream(requestSocket.getInputStream());
-            requestSocket.setSoTimeout(TIMER);
-	   
-	        System.out.println("Started...");//Just debugging prints	
+	        System.out.println("Started...");
 	        while(true){
-		        //TODO Make Deffie Hellman happen once
 		        while(!feedback.equals(Client.SERVER_SUCCESSFUL_LOGIN_MSG)){
-		        	Timer timerLog = new Timer();
-		        	timerLog.schedule(new TimerCheck(), TIMER);
 		        	String mobile 	= readMobile(console, "Please enter your mobilenumber: ");	
 		        	String username = readUsername(console, "Please enter your username: ");	
 					String passwordString = readPassword(console, "Please enter your password: ");
-					timerLog.cancel();
-					timerLog.purge();
 					
 					client = new Client(username, passwordString, mobile);
 
-			    	client = DiffieHellman(client, out, in);
+			    	client = DiffieHellman(client);
+			    	
 			    	if(client.getStatus().equals(Client.SERVER_SUCCESSFUL_LOGOUT_MSG) || client.getSharedKey() == null){
 			    		return;
 			    	}
-			    	client = Login(client, out, in);
+			    	client = Login(client);
 			    	feedback = client.getStatus();
 		        }
 		    	
@@ -73,17 +63,13 @@ public class ClientApplication {
 		    		System.out.println("1 - Transaction");
 		    		System.out.println("2 - Logout");
 		    		
-		        	Timer timerTran = new Timer();
-		        	timerTran.schedule(new TimerCheck(), TIMER);
 		    		String choice = console.readLine();
-					timerTran.cancel();
-					timerTran.purge();
-					
+
 		    		if(choice.equals("1")){
-		    			client = Transaction(client, out, in, console);
+		    			client = Transaction(client, console);
 		    		}
 		    		else if(choice.equals("2")){
-		    			client = Logout(client, out, in);
+		    			client = Logout(client);
 		    			feedback = Client.SERVER_SUCCESSFUL_LOGOUT_MSG;
 		    			return;
 		    		}
@@ -105,57 +91,43 @@ public class ClientApplication {
         }
 		
     	finally{
-            //4: Closing connection
-            try{
-            	if(in != null && out != null && requestSocket != null){
-	            	in.close();
-	                out.close();
-	                requestSocket.close();
-            	}
-            }
-            catch(IOException ioException){
-                ioException.printStackTrace();
-            }
+            if(clientSocket != null){
+			    clientSocket.close();
+			}
         }
     }
 	
-	public static Client DiffieHellman(Client client, ObjectOutputStream out, ObjectInputStream in) throws Exception{
+	public static Client DiffieHellman(Client client) throws Exception{
 		
 		//Sharing values p and g
-    	out.writeObject(client.generateValueSharingSMS("p"));
-        out.flush();
-    	out.writeObject(client.generateValueSharingSMS("g"));
-        out.flush();
+		sendMsg(client.generateValueSharingSMS("p"));
+		sendMsg(client.generateValueSharingSMS("g"));
+
         //Generate secret value
         client.generateSecretValue();
 
         //Generate client public value
-        out.writeObject(client.getNonRepudiationMsgForPublicValue());
-        out.flush();
-        out.writeObject(client.generatePublicValue());
-        out.flush();
+        sendMsg(client.getNonRepudiationMsgForPublicValue());
+        sendMsg(client.generatePublicValue());
 
         //Generate sharedKey
-        client.receiveNonRepudiationMsgForPublicValue((String) in.readObject());
-        client.generateSharedKey((String) in.readObject());
+        client.receiveNonRepudiationMsgForPublicValue(receiveMsg());
+        client.generateSharedKey(receiveMsg());
 		
 		return client;
 	}
 	
-	public static Client Login(Client client, ObjectOutputStream out, ObjectInputStream in) throws Exception{
+	public static Client Login(Client client) throws Exception{
 		
-    	String login = client.generateLoginSms();
-		out.writeObject(login);
-        out.flush();
+        sendMsg(client.generateLoginSms());
         
-
-        String feedback = (String) in.readObject();
+        String feedback = receiveMsg();
         System.out.println(client.processFeedback(feedback, "login"));
         
 		return client;
 	}
 	
-	public static Client Transaction(Client client, ObjectOutputStream out, ObjectInputStream in, Console console) throws Exception{
+	public static Client Transaction(Client client, Console console) throws Exception{
 		
 		String iban, amount;
 		
@@ -164,10 +136,9 @@ public class ClientApplication {
     	amount = readAmount(console, "Please enter an amount to transfer: ");
     	
     	String transaction = client.generateTransactionSms(iban, amount);
-		out.writeObject(transaction);
-        out.flush();
+		sendMsg(transaction);
         
-        String feedback = (String) in.readObject();
+        String feedback = receiveMsg();
         String feedbackProcessed = client.processFeedback(feedback, "transaction");
         System.out.println(feedbackProcessed);
         
@@ -178,13 +149,11 @@ public class ClientApplication {
 		return client;
 	}
 	
-	public static Client Logout(Client client, ObjectOutputStream out, ObjectInputStream in) throws Exception{
+	public static Client Logout(Client client) throws Exception{
 		
-    	String logout = client.generateLogoutSms();
-		out.writeObject(logout);
-        out.flush();
+        sendMsg(client.generateLogoutSms());
         
-        String feedback = (String) in.readObject();
+        String feedback = receiveMsg();
         System.out.println(client.processFeedback(feedback, "logout"));
 		
 		return client;
@@ -256,11 +225,16 @@ public class ClientApplication {
 		return amount;
 	}
 	
-	  class TimerCheck extends TimerTask {
-		    public void run() {
-		      System.out.println("Time's up!");
-		      System.exit(0); //Stops the AWT thread (and everything else)
-		    }
-	  }
+	  
+    public static void sendMsg(String msg) throws IOException{
+    	sendData = msg.getBytes();
+	    DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
+	    clientSocket.send(sendPacket);
+    }
     
+    public static String receiveMsg() throws IOException{
+    	DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+	    clientSocket.receive(receivePacket);
+	    return new String(receivePacket.getData());
+    }
 }

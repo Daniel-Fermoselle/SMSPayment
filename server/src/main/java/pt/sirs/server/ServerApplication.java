@@ -30,7 +30,7 @@ public class ServerApplication {
             	
             	DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
             	serverSocket.receive(receivePacket);
-            	String msg = new String( receivePacket.getData());
+            	String msg = new String(receivePacket.getData());
             	InetAddress IPAddress = receivePacket.getAddress();
                 int senderPort = receivePacket.getPort();
                 //verify type of message
@@ -41,6 +41,10 @@ public class ServerApplication {
          		   continue;
             	}
             	String typeOfMsg = splittedMsg[1];
+            	
+            	for(int i = 0; i < splittedMsg.length; i++){
+            		System.out.println(splittedMsg[i]);
+            	}
                 
                 String feedback = "";
                 switch (typeOfMsg) {
@@ -48,7 +52,7 @@ public class ServerApplication {
                              break;
                     case "G":  server.saveGforClient(splittedMsg[0], splittedMsg[2]);
                              break;
-                    case "NR": server.saveNPforClient(splittedMsg[0], splittedMsg[2], splittedMsg[3]);
+                    case "NP": server.saveNPforClient(splittedMsg[0], splittedMsg[2], splittedMsg[3]);
                              break;
                     case "PV": server.savePVforClient(splittedMsg[0], splittedMsg[2]);
                     		   SendMsg(server.getNonRepudiationMsgForPublicValue(), IPAddress, senderPort);

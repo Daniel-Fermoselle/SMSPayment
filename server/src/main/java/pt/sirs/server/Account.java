@@ -176,7 +176,7 @@ public class Account{
         Statement stmt = conn.createStatement();
       
         // Step 3 & 4: Execute a SQL UPDATE via executeUpdate()
-        String strUpdate = "update accountsms set p = " + p + " where mobile = '" + this.mobile + "'";
+        String strUpdate = "update accountsms set p = '" + p + "' where mobile = '" + this.mobile + "'";
         stmt.executeUpdate(strUpdate);		
 	}
 
@@ -196,7 +196,7 @@ public class Account{
         Statement stmt = conn.createStatement();
       
         // Step 3 & 4: Execute a SQL UPDATE via executeUpdate()
-        String strUpdate = "update accountsms set g = " + g + " where mobile = '" + this.mobile + "'";
+        String strUpdate = "update accountsms set g = '" + g + "' where mobile = '" + this.mobile + "'";
         stmt.executeUpdate(strUpdate);		}
 
 	public BigInteger getG() {
@@ -215,7 +215,7 @@ public class Account{
         Statement stmt = conn.createStatement();
       
         // Step 3 & 4: Execute a SQL UPDATE via executeUpdate()
-        String strUpdate = "update accountsms set np = " + np + " where mobile = '" + this.mobile + "'";
+        String strUpdate = "update accountsms set np = '" + np + "' where mobile = '" + this.mobile + "'";
         stmt.executeUpdate(strUpdate);		
 	}
 
@@ -237,7 +237,7 @@ public class Account{
         Statement stmt = conn.createStatement();
       
         // Step 3 & 4: Execute a SQL UPDATE via executeUpdate()
-        String strUpdate = "update accountsms set sharedKey = " + sharedKey + " where mobile = '" + this.mobile + "'";
+        String strUpdate = "update accountsms set sharedKey = '" + sharedKey + "' where mobile = '" + this.mobile + "'";
         stmt.executeUpdate(strUpdate);		
 	}
 

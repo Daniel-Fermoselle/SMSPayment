@@ -91,9 +91,9 @@ public class Client {
 		String stringCiphertext = Crypto.encode(cipheredText);
 		
 		//Final message to be sent
-		String toSend = mobile + "|" + stringSig + "|" + stringCiphertext;
+		String toSend = mobile + "|" + "L" + "|" + stringSig + "|" + stringCiphertext;
 	
-		System.out.println("Size of login SMS message: " + (stringSig + "|" + stringCiphertext).length());
+		System.out.println("Size of login SMS message: " + ("L" + "|" + stringSig + "|" + stringCiphertext).length());
 		return toSend;
 	}
 	
@@ -128,7 +128,7 @@ public class Client {
 		String stringCiphertext = Crypto.encode(cipheredText);
 		
 		//Final message to be sent
-		String toSend = mobile + "|" + stringSig + "|" + stringCiphertext;
+		String toSend = mobile + "|" + "O" + "|" + stringSig + "|" + stringCiphertext;
 		
 		System.out.println("Size of logout SMS message: " + (stringSig + "|" + stringCiphertext).length());
 		return toSend;
@@ -165,7 +165,7 @@ public class Client {
 		String stringSig = Crypto.encode(signature);
 		String stringCiphertext = Crypto.encode(cipheredText);
 		
-		String toSend = mobile + "|" + stringSig + "|" + stringCiphertext;
+		String toSend = mobile + "|" + "T" + "|" + stringSig + "|" + stringCiphertext;
 		
 		System.out.println("Size of transaction SMS message: " + (stringSig + "|" + stringCiphertext).length());
 		return toSend;
@@ -264,12 +264,12 @@ public class Client {
 	 */
 	public String generateValueSharingSMS(String value){
 		if(value.equals("p")){
-			System.out.println("Size of public value p (prime) used in DH SMS message: " + Crypto.encode(this.p.toByteArray()).length());
-			return Crypto.encode(this.p.toByteArray());
+			System.out.println("Size of public value p (prime) used in DH SMS message: " +  ("P" + "|" + Crypto.encode(this.p.toByteArray())).length());
+			return this.mobile + "|" + "P" + "|" + Crypto.encode(this.p.toByteArray());
 		}
 		if(value.equals("g")){
-			System.out.println("Size of public value g (module) used in DH SMS message: " + Crypto.encode(this.g.toByteArray()).length());
-			return Crypto.encode(this.g.toByteArray());
+			System.out.println("Size of public value g (module) used in DH SMS message: " + ("G" + "|" + Crypto.encode(this.g.toByteArray())).length());
+			return this.mobile + "|" + "G" + "|" + Crypto.encode(this.g.toByteArray());
 		}
 		else{
 			System.out.println("Function not used properly pass as argument p or g");
@@ -297,17 +297,18 @@ public class Client {
 	 * @throws Exception
 	 */
 	public String getNonRepudiationMsgForPublicValue() throws Exception {
-		publicValue = g.modPow(secretValue, p);
+		this.publicValue = g.modPow(secretValue, p);
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
 		//Generating signature
-		String dataToSign = this.mobile + publicValue + timestamp.toString();
+		String dataToSign = this.mobile + this.publicValue + timestamp.toString();
 		byte[] signature = Crypto.sign(dataToSign, keys.getPrivate());
 
 		String stringSig = Crypto.encode(signature);
-		String toSend = this.mobile + "|" + stringSig + "|" + timestamp.toString();
+		System.out.println(stringSig);
+		String toSend = this.mobile + "|" + "NP" + "|" + stringSig + "|" + timestamp.toString();
 		
-		System.out.println("Size of non repudiation msg for public value used in DH SMS message: " + toSend.length());
+		System.out.println("Size of non repudiation msg for public value used in DH SMS message: " + ("NP" + "|" + stringSig + "|" + timestamp.toString()).length());
 
 		return toSend;
 	}
@@ -318,8 +319,8 @@ public class Client {
 	 * @return
 	 */
 	public String generatePublicValue(){
-		System.out.println("Size of Client public value used in DH SMS message: " + Crypto.encode(publicValue.toByteArray()).length());
-		return Crypto.encode(publicValue.toByteArray());
+		System.out.println("Size of Client public value used in DH SMS message: " + ("PV" + "|" + Crypto.encode(this.publicValue.toByteArray())).length());
+		return this.mobile + "|" + "PV" + "|" + Crypto.encode(this.publicValue.toByteArray());
 	}
 	
 	/***

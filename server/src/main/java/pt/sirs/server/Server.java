@@ -489,7 +489,7 @@ public class Server {
         
         // Step 3: Execute a SQL SELECT query, the query result
         String strSelect = "select iban, balance, username, password, mobile, counter, tries, p, g, np, sharedKey from accountsms where mobile = '" + msg + "'";
-
+        
         // Step 4: Process the ResultSet by scrolling the cursor forward via next().
         ResultSet rset = stmt.executeQuery(strSelect);
         int rowCount = 0;
@@ -564,10 +564,8 @@ public class Server {
 	public void savePforClient(String senderString, String p) throws Exception {
 		Account sender;
 		
-		byte[] byteMobile = Crypto.decode(senderString);
-
 		//Getting user in msg
-		sender = getAccountByMobile(new String(byteMobile));
+		sender = getAccountByMobile(senderString);
 		if(sender == null){
 			System.out.println("Client not registered");
 		}
@@ -579,10 +577,8 @@ public class Server {
 	public void saveGforClient(String senderString, String g) throws Exception {
 		Account sender;
 		
-		byte[] byteMobile = Crypto.decode(senderString);
-
 		//Getting user in msg
-		sender = getAccountByMobile(new String(byteMobile));
+		sender = getAccountByMobile(senderString);
 		if(sender == null){
 			System.out.println("Client not registered");
 		}
@@ -594,10 +590,8 @@ public class Server {
 	public void saveNPforClient(String senderString, String stringSig, String TS) throws Exception {
 		Account sender;
 		
-		byte[] byteMobile = Crypto.decode(senderString);
-
 		//Getting user in msg
-		sender = getAccountByMobile(new String(byteMobile));
+		sender = getAccountByMobile(senderString);
 		if(sender == null){
 			System.out.println("Client not registered");
 		}
@@ -612,11 +606,8 @@ public class Server {
 		byte[] bytePublicValue = Crypto.decode(stringPublicValueSender);
 		BigInteger publicValue = new BigInteger(bytePublicValue);
 		
-		//Get sender
-		byte[] byteMobile = Crypto.decode(senderString);
-
 		//Getting user in msg
-		sender = getAccountByMobile(new String(byteMobile));
+		sender = getAccountByMobile(senderString);
 		if(sender == null){
 			System.out.println("Client not registered");
 		}
@@ -629,6 +620,10 @@ public class Server {
 		String stringSender = splitedSms[0];
 		byte[] byteSig = Crypto.decode(splitedSms[1]);
 		String stringTS  = splitedSms[2];
+		
+		for(int i = 0; i < splitedSms.length; i++){
+			System.out.println(splitedSms[i]);
+		}
 
 		//Verify TimeStamp
 		if(!Crypto.validTS(stringTS)){
