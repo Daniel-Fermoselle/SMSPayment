@@ -27,6 +27,8 @@ public class Server {
 	private static final int    NUMBER_OF_UNSUCCESSFULL_LOGIN_TRYS = 4;
 	public  static final String MYSQL_ID = "root";
 	public  static final String MYSQL_PASSWORD = "root";
+	private static final boolean SHOW_CIPHERED_MSG = false;
+
 
 	private BigInteger p;
 	private BigInteger g;
@@ -263,7 +265,15 @@ public class Server {
 		String stringCiphertext = Crypto.encode(cipheredText);
 		String toSend = stringSig + "|" + stringCiphertext;
 		
+		System.out.println("----------------------------------------------");
+		System.out.println("Transaction feedback SMS message: {" + this.status + sender.getCounter() + "}Kss|{" + this.status + "|" + sender.getCounter() + "}Ks");
+		if(SHOW_CIPHERED_MSG){
+			System.out.println("Transaction feedback SMS ciphered message: " + toSend);
+
+		}
 		System.out.println("Size of transaction feedback SMS message: " + toSend.length());
+		System.out.println("----------------------------------------------");
+
 
 		return toSend;		
 	}
@@ -306,8 +316,15 @@ public class Server {
 		String stringCiphertext = Crypto.encode(cipheredText);
 		String toSend = stringSig + "|" + stringCiphertext;
 		
+		System.out.println("----------------------------------------------");
+		System.out.println("Login feedback SMS message: {" + this.status + a.getCounter() + "}Kss|{" + this.status + "|" + a.getCounter() + "}Ks");
+		if(SHOW_CIPHERED_MSG){
+			System.out.println("Login feedback SMS ciphered message: " + toSend);
+		}
 		System.out.println("Size of login feedback SMS message: " + toSend.length());
+		System.out.println("----------------------------------------------");
 
+		
 		return toSend;
 	}
 	
@@ -340,7 +357,13 @@ public class Server {
 		String stringCiphertext = Crypto.encode(cipheredText);
 		String toSend = stringSig + "|" + stringCiphertext;
 		
+		System.out.println("----------------------------------------------");
+		System.out.println("Logout feedback SMS message: {" +  this.status + sender.getCounter() + "}Kss|{" + this.status + "|" + sender.getCounter() + "}Ks");
+		if(SHOW_CIPHERED_MSG){
+			System.out.println("Logout feedback SMS ciphered message: " + toSend);
+		}
 		System.out.println("Size of logout feedback SMS message: " + toSend.length());
+		System.out.println("----------------------------------------------");
 
 		return toSend;		
 	}

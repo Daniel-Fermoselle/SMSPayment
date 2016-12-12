@@ -18,6 +18,7 @@ public class Client {
 	public static final String ERROR_MSG = "ChamPog";
 	public static final String FRESHNESS_ERROR_MSG = "FreshKo";
 	private static final String SERVER_PUBLIC_KEY_PATH = "keys/ServerPublicKey";
+	private static final boolean SHOW_CIPHERED_MSG = false;
 
 	
 	private int myMoney; 
@@ -92,7 +93,13 @@ public class Client {
 		//Final message to be sent
 		String toSend = mobile + "|" + stringSig + "|" + stringCiphertext;
 	
+		System.out.println("----------------------------------------------");
+		System.out.println("Login SMS message: {" + this.mobile +  timestamp.toString() + this.myPassword + "}Ksc|{" + timestamp.toString() + "|" + this.myPassword + "}Ks");
+		if(SHOW_CIPHERED_MSG){
+			System.out.println("Login SMS ciphered message: " + stringSig + "|" + stringCiphertext);
+		}
 		System.out.println("Size of login SMS message: " + (stringSig + "|" + stringCiphertext).length());
+		System.out.println("----------------------------------------------");
 		return toSend;
 	}
 	
@@ -129,7 +136,13 @@ public class Client {
 		//Final message to be sent
 		String toSend = mobile + "|" + stringSig + "|" + stringCiphertext;
 		
+		System.out.println("----------------------------------------------");
+		System.out.println("Logout SMS message: {" + this.mobile +  "logout" + this.counter + "}Ksc|{" + "logout" + "|" + this.counter + "}Ks");
+		if(SHOW_CIPHERED_MSG){
+			System.out.println("Logout SMS ciphered message: " + stringSig + "|" + stringCiphertext);
+		}
 		System.out.println("Size of logout SMS message: " + (stringSig + "|" + stringCiphertext).length());
+		System.out.println("----------------------------------------------");
 		return toSend;
 		
 	}
@@ -166,7 +179,14 @@ public class Client {
 		
 		String toSend = mobile + "|" + stringSig + "|" + stringCiphertext;
 		
+		System.out.println("----------------------------------------------");
+		System.out.println("Transaction SMS message: {" + this.mobile + receiver + amount + this.counter + "}Ksc|{" + receiver + "|" + amount + "|" + this.counter + "}Ks");
+		if(SHOW_CIPHERED_MSG){
+			System.out.println("Transaction SMS ciphered message: " + stringSig + "|" + stringCiphertext);
+		}
 		System.out.println("Size of transaction SMS message: " + (stringSig + "|" + stringCiphertext).length());
+		System.out.println("----------------------------------------------");
+
 		return toSend;
 	}
 	
@@ -306,7 +326,13 @@ public class Client {
 		String stringSig = Crypto.encode(signature);
 		String toSend = this.mobile + "|" + stringSig + "|" + timestamp.toString();
 		
-		System.out.println("Size of non repudiation msg for public value used in DH SMS message: " + toSend.length());
+		if(SHOW_CIPHERED_MSG){
+			System.out.println("----------------------------------------------");
+			System.out.println("Non repudiation msg for public value used in DH SMS message: {" + this.mobile + publicValue + timestamp.toString()+ "}Ksc|" + timestamp.toString());
+			System.out.println("Non repudiation msg for public value used in DH SMS ciphered message: " + stringSig + "|" + timestamp.toString());
+		}
+		System.out.println("Size of non repudiation msg for public value used in DH SMS message: " + (stringSig + "|" + timestamp.toString()).length());
+		System.out.println("----------------------------------------------");
 
 		return toSend;
 	}
@@ -317,7 +343,12 @@ public class Client {
 	 * @return
 	 */
 	public String generatePublicValue(){
+		if(SHOW_CIPHERED_MSG){
+			System.out.println("----------------------------------------------");
+			System.out.println("Size of Client public value used in DH SMS message: " + publicValue);
+		}
 		System.out.println("Size of Client public value used in DH SMS message: " + Crypto.encode(publicValue.toByteArray()).length());
+		System.out.println("----------------------------------------------");
 		return Crypto.encode(publicValue.toByteArray());
 	}
 	
@@ -366,6 +397,7 @@ public class Client {
 		
 		BigInteger sharedKey = publicValue.modPow(secretValue, p);
 		this.sharedKey = Crypto.generateKeyFromBigInt(sharedKey);
+		
 	}
 	
 	public void receiveNonRepudiationMsgForPublicValue(String readObject) {
