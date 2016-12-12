@@ -9,7 +9,7 @@ public class ServerApplication {
 	public static final int SERVER_PORT = 10000;
 	//Number of connects that the server will have on his queue
 	public static final int QUEUE_SIZE = 10;
-	public static final int TIME_WAITING = 40000;
+	public static final int TIME_WAITING = 40000000;
 
 	public static void main(String args[])
     {

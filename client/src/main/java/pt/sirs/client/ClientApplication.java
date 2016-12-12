@@ -8,10 +8,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import pt.sirs.client.Client;
+import pt.sirs.crypto.Crypto;
 
 public class ClientApplication {
 	
-	public static final int TIMER = 40000;
+	public static final int TIMER = 40000000;
+	private static String mallory = "";
+
 	
 	public ClientApplication(){
 		
@@ -46,7 +49,7 @@ public class ClientApplication {
             in = new ObjectInputStream(requestSocket.getInputStream());
             requestSocket.setSoTimeout(TIMER);
 	   
-	        System.out.println("Started...");//Just debugging prints	
+	        System.out.println("Started...");//Just debugging prints
 	        while(true){
 		        //TODO Make Deffie Hellman happen once
 		        while(!feedback.equals(Client.SERVER_SUCCESSFUL_LOGIN_MSG)){
@@ -86,6 +89,14 @@ public class ClientApplication {
 		    			client = Logout(client, out, in);
 		    			feedback = Client.SERVER_SUCCESSFUL_LOGOUT_MSG;
 		    			return;
+		    		}
+		    		else if(choice.equals("3")){
+		    			System.out.println("Message that mallory is going to replay: " + mallory);
+		    			out.writeObject(mallory);
+		    	        out.flush();
+		    	        
+		    	        String feedbackMallory = (String) in.readObject();
+		    	        String feedbackProcessed = client.processFeedback(feedbackMallory, "transaction");
 		    		}
 		    		if(client.getStatus().equals(Client.SERVER_SUCCESSFUL_LOGOUT_MSG)){
 		    			return;
@@ -169,6 +180,7 @@ public class ClientApplication {
     	amount = readAmount(console, "Please enter an amount to transfer: ");
     	
     	String transaction = client.generateTransactionSms(iban, amount);
+    	mallory = transaction;
 		out.writeObject(transaction);
         out.flush();
         
